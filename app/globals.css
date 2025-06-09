@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+/* From react-org-chart GitHub example :cite[1] */
+{{/* @import "@unicef/react-org-chart/dist/index.css"; */}}
+
+/* Fix SVG rendering */
+svg.react-org-chart {
+  width: 100%;
+  height: auto;
+  min-height: 600px;
+}
+
+.react-org-chart-node {
+  padding: 20px;
+  border: 1px solid #ccc;
+}
