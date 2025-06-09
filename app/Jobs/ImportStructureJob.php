@@ -295,8 +295,6 @@ class ImportStructureJob implements ShouldQueue
             ->get(['id']);
 
 
-
-        // dd($usmRecords);
         $now = Carbon::now();
 
         $histories = $usmRecords->map(function ($usm) use ($now) {

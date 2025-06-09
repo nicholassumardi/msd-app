@@ -6,6 +6,7 @@ use App\Models\IKW;
 use App\Models\JobCode;
 use App\Models\JobDescription;
 use App\Models\JobTask;
+use App\Models\UserStructureMapping;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -29,18 +30,19 @@ class ImportJobTaskDescJob implements ShouldQueue
         $this->cacheKey = $cacheKey;
     }
 
-
     public function handle()
     {
         try {
             DB::beginTransaction();
-            
             $reader = new Reader();
             $reader->open(storage_path('app/public/' . $this->filepath));
             $dataJobTask = [];
             $dataJobDesc = [];
+            $dataIKWJobTask = [];
+            $dataIKWJobDesc = [];
             $jobCode = null;
-            $jobCodeId = null;
+            $jobDescCode = null;
+            $userStructure = null;
 
             foreach ($reader->getSheetIterator() as $key => $sheet) {
                 $sheetCollections[$key] = LazyCollection::make(function () use ($sheet) {
@@ -51,28 +53,42 @@ class ImportJobTaskDescJob implements ShouldQueue
                     }
                 });
             }
-            dd(count($sheetCollections));
-            if (isset($sheetCollections[2])) {
-                $sheetCollections[2]->chunk(200)->each(function ($rows) use (&$dataJobTask, &$dataJobDesc, &$jobCode, &$jobCodeId) {
-                    foreach ($rows as $row) {
-                        $dataJobTask = $this->saveDataJobTaskDesc($dataJobTask, $dataJobDesc, $row, $jobCode, $jobCodeId)["jobTask"];
-                        $dataJobDesc = $this->saveDataJobTaskDesc($dataJobTask, $dataJobDesc, $row, $jobCode, $jobCodeId)["jobDesc"];
+
+
+            $totalSheets = count($sheetCollections);
+            for ($sheetIndex = 0; $sheetIndex < $totalSheets; $sheetIndex++) {
+                if (isset($sheetCollections[$sheetIndex])) {
+                    $sheetCollections[$sheetIndex]->chunk(200)->each(function ($rows) use (&$dataJobTask, &$dataJobDesc, &$dataIKWJobTask, &$dataIKWJobDesc, &$jobCode, &$jobDescCode, &$userStructure) {
+                        foreach ($rows as $row) {
+                            $data = $this->saveDataJobTaskDesc($dataJobTask, $dataJobDesc, $dataIKWJobTask, $dataIKWJobDesc,  $row, $jobCode, $jobDescCode, $userStructure);
+
+
+                            $dataJobTask =  $data["jobTask"];
+                            $dataJobDesc =  $data["jobDesc"];
+                            $dataIKWJobTask =  $data["ikwJobTask"];
+                            $dataIKWJobDesc =  $data["ikwJobDesc"];
+                        }
+
+                        $this->insertChunkJobTask($dataJobTask, $dataIKWJobTask);
+                        $this->insertChunkJobDesc($dataJobDesc, $dataIKWJobDesc);
+
+                        $dataJobTask = [];
+                        $dataJobDesc = [];
+                        $dataIKWJobTask = [];
+                        $dataIKWJobDesc = [];
+                    });
+
+                    if (!empty($dataJobTask)) {
+                        $this->insertChunkJobTask($dataJobTask, $dataIKWJobTask);
+                        $dataJobTask = [];
+                        $dataIKWJobTask = [];
                     }
 
-                    dd($dataJobDesc);
-                    // $this->insertChunkJobTaskDesc($dataTraning);
-                    $dataJobTask = [];
-                    $dataJobDesc = [];
-                });
-
-                if (count($dataJobTask) != 0) {
-                    // $this->insertChunkJobTaskDesc($dataJobTask);
-                    $dataJobTask = [];
-                }
-
-                if (count($dataJobDesc) != 0) {
-                    // $this->insertChunkJobTaskDesc($dataJobTask);
-                    $dataJobDesc = [];
+                    if (!empty($dataJobDesc)) {
+                        $this->insertChunkJobDesc($dataJobDesc, $dataIKWJobDesc);
+                        $dataJobDesc = [];
+                        $dataIKWJobDesc = [];
+                    }
                 }
             }
 
@@ -90,76 +106,102 @@ class ImportJobTaskDescJob implements ShouldQueue
         }
     }
 
-    public function saveDataJobTaskDesc($dataJobTask, $dataJobDesc, $row, &$jobCode, $jobCodeId)
+    public function saveDataJobTaskDesc($dataJobTask, $dataJobDesc, $dataIKWJobTask, $dataIKWJobDesc,  $row, &$jobCode, &$jobDescCode, &$userStructure)
     {
-        if ($row[2] == '') {
-            $jobCodeId = $this->findJobCode($jobCode);
+        $unique = null;
+
+        $jobCode       = $row[2] !== '' ? $row[2] : $jobCode;
+
+        // Determine job description code
+        $jobDescCode = $row[3] !== '' ? $row[3] : $jobDescCode;
+
+        // Determine user structure and build unique key
+        $userStructure = $row[1] !== '' ? $row[1] : $userStructure;
+        $unique        = sprintf("%s-%s", $userStructure, $jobDescCode);
+
+        // Common identifier lookups
+        $userStructureMapping = $this->findUserStructureMapping($userStructure);
+        $ikwId = $this->findIKW($row[6] ?? null)->id ?? null;
+        $taskDescription = $row[5] ?? null;
+        $descDescription = $row[4] ?? null;
+
+        if ($taskDescription) {
+            $dataJobTask[$taskDescription] = [
+                'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
+                'description'                => $taskDescription,
+            ];
         }
 
-        if ($row[2] != '') {
-            $jobCode = $row[2] ?? null;
-            $jobCodeId = $this->findJobCode($jobCode);
+        $dataJobDesc[$unique] = [
+            'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
+            'code'                       => $jobDescCode,
+            'description'                => $descDescription,
+        ];
+
+
+        if ($ikwId) {
+            $dataIKWJobTask[] = [
+                'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
+                'ikw_id'                     => $ikwId,
+                'description'                => $taskDescription,
+            ];
+
+            $dataIKWJobDesc[] = [
+                'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
+                'ikw_id'                     => $ikwId,
+                'code'                       => $jobDescCode,
+            ];
         }
-
-        $dataJobTask[] = [
-            'job_code_id'  => $jobCodeId->id ?? null,
-            'ikw_id'       => $this->findIKW($row[6] ?? null)->id ?? null,
-            'description'  => $row[5] ?? null,
-        ];
-
-        $dataJobDesc[] = [
-            'job_code_id'  => $jobCodeId->id ?? null,
-            'ikw_id'       => $this->findIKW($row[6] ?? null)->id ?? null,
-            'code'         => $row[3] ?? null,
-            'description'  => $row[4] ?? null,
-        ];
 
         return [
-            'jobTask' => $dataJobTask,
-            'jobDesc' => $dataJobDesc,
+            'jobTask'    => $dataJobTask,
+            'jobDesc'    => $dataJobDesc,
+            'ikwJobTask' => $dataIKWJobTask,
+            'ikwJobDesc' => $dataIKWJobDesc,
         ];
     }
 
-    public function insertChunkJobTask($dataJobTask)
+    public function insertChunkJobTask($dataJobTask, $dataIKWJobTask)
     {
-       JobTask::upsert($dataJobTask, ['no_training', 'trainee_id'], [
-            'trainer_id',
-            'assessor_id',
-            'ikw_revision_id',
-            'training_plan_date',
-            'training_realisation_date',
-            'training_duration',
-            'ticket_return_date',
-            'assessment_plan_date',
-            'assessment_realisation_date',
-            'assessment_duration',
-            'status_fa_print',
-            'assessment_result',
-            'status',
-            'description',
-            'status_active',
-        ]);
+        JobTask::insert($dataJobTask);
+
+
+        $this->insertChunkIKWJobTask($dataIKWJobTask);
     }
-    
-    public function insertChunkJobDesc($dataJobDesc)
+
+    public function insertChunkJobDesc($dataJobDesc, $dataIKWJobDesc)
     {
-       JobDescription::upsert($dataJobDesc, ['no_training', 'trainee_id'], [
-            'trainer_id',
-            'assessor_id',
-            'ikw_revision_id',
-            'training_plan_date',
-            'training_realisation_date',
-            'training_duration',
-            'ticket_return_date',
-            'assessment_plan_date',
-            'assessment_realisation_date',
-            'assessment_duration',
-            'status_fa_print',
-            'assessment_result',
-            'status',
-            'description',
-            'status_active',
-        ]);
+        JobDescription::insert($dataJobDesc);
+
+        $this->insertChunkIKWJobDesc($dataIKWJobDesc);
+    }
+
+    public function insertChunkIKWJobTask($dataIKWJobTask)
+    {
+        $insertedData = [];
+
+        foreach ($dataIKWJobTask as $data) {
+
+            $job_task = $this->findJobTask($data['user_structure_mapping_id'], $data['description']);
+            $insertedData[] = [
+                'job_task_id' => $job_task->id ?? null,
+                'ikw_id'      => $data['ikw_id'],
+            ];
+        }
+    }
+
+    public function insertChunkIKWJobDesc($dataIKWJobDesc)
+    {
+        $insertedData = [];
+
+        foreach ($dataIKWJobDesc as $data) {
+
+            $job_description = $this->findJobDescription($data['user_structure_mapping_id'], $data['code']);
+            $insertedData[] = [
+                'job_description_id' => $job_description->id ?? null,
+                'ikw_id'             => $data['ikw_id'],
+            ];
+        }
     }
 
     private function findJobCode($arg1)
@@ -171,6 +213,25 @@ class ImportJobTaskDescJob implements ShouldQueue
     private function findIKW($arg1)
     {
         return IKW::where('code', $arg1)
+            ->first();
+    }
+
+    private function findUserStructureMapping($arg1)
+    {
+        return UserStructureMapping::whereFuzzy('name', $arg1)
+            ->first();
+    }
+
+    private function findJobDescription($arg1, $arg2)
+    {
+        return JobDescription::where('user_structure_mapping_id', $arg1)
+            ->where('code', $arg2)
+            ->first();
+    }
+
+    private function findJobTask($arg1, $arg2)
+    {
+        return JobTask::where('user_structure_mapping_id', $arg1)->where('description', $arg2)
             ->first();
     }
 }

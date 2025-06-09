@@ -84,6 +84,10 @@ class ComposerStaticInita5632aa6c64ac7af6e7acb125645d1d1
             'Ramsey\\Uuid\\' => 12,
             'Ramsey\\Collection\\' => 18,
         ),
+        'Q' => 
+        array (
+            'Quest\\' => 6,
+        ),
         'P' => 
         array (
             'Psy\\' => 4,
@@ -110,6 +114,8 @@ class ComposerStaticInita5632aa6c64ac7af6e7acb125645d1d1
         array (
             'Monolog\\' => 8,
             'Mockery\\' => 8,
+            'Meilisearch\\' => 12,
+            'MeiliSearch\\' => 12,
         ),
         'L' => 
         array (
@@ -125,6 +131,11 @@ class ComposerStaticInita5632aa6c64ac7af6e7acb125645d1d1
         array (
             'Illuminate\\Support\\' => 19,
             'Illuminate\\' => 11,
+        ),
+        'H' => 
+        array (
+            'Http\\Factory\\Guzzle\\' => 20,
+            'Http\\Discovery\\' => 15,
         ),
         'G' => 
         array (
@@ -299,6 +310,10 @@ class ComposerStaticInita5632aa6c64ac7af6e7acb125645d1d1
         array (
             0 => __DIR__ . '/..' . '/ramsey/collection/src',
         ),
+        'Quest\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/caneara/quest/src',
+        ),
         'Psy\\' => 
         array (
             0 => __DIR__ . '/..' . '/psy/psysh/src',
@@ -360,6 +375,14 @@ class ComposerStaticInita5632aa6c64ac7af6e7acb125645d1d1
         array (
             0 => __DIR__ . '/..' . '/mockery/mockery/library/Mockery',
         ),
+        'Meilisearch\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src',
+        ),
+        'MeiliSearch\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src',
+        ),
         'League\\MimeTypeDetection\\' => 
         array (
             0 => __DIR__ . '/..' . '/league/mime-type-detection/src',
@@ -396,6 +419,14 @@ class ComposerStaticInita5632aa6c64ac7af6e7acb125645d1d1
         'Illuminate\\' => 
         array (
             0 => __DIR__ . '/..' . '/laravel/framework/src/Illuminate',
+        ),
+        'Http\\Factory\\Guzzle\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/http-interop/http-factory-guzzle/src',
+        ),
+        'Http\\Discovery\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/php-http/discovery/src',
         ),
         'GuzzleHttp\\Psr7\\' => 
         array (
@@ -1668,6 +1699,35 @@ class ComposerStaticInita5632aa6c64ac7af6e7acb125645d1d1
         'Hamcrest\\Type\\IsString' => __DIR__ . '/..' . '/hamcrest/hamcrest-php/hamcrest/Hamcrest/Type/IsString.php',
         'Hamcrest\\Util' => __DIR__ . '/..' . '/hamcrest/hamcrest-php/hamcrest/Hamcrest/Util.php',
         'Hamcrest\\Xml\\HasXPath' => __DIR__ . '/..' . '/hamcrest/hamcrest-php/hamcrest/Hamcrest/Xml/HasXPath.php',
+        'Http\\Discovery\\ClassDiscovery' => __DIR__ . '/..' . '/php-http/discovery/src/ClassDiscovery.php',
+        'Http\\Discovery\\Exception' => __DIR__ . '/..' . '/php-http/discovery/src/Exception.php',
+        'Http\\Discovery\\Exception\\ClassInstantiationFailedException' => __DIR__ . '/..' . '/php-http/discovery/src/Exception/ClassInstantiationFailedException.php',
+        'Http\\Discovery\\Exception\\DiscoveryFailedException' => __DIR__ . '/..' . '/php-http/discovery/src/Exception/DiscoveryFailedException.php',
+        'Http\\Discovery\\Exception\\NoCandidateFoundException' => __DIR__ . '/..' . '/php-http/discovery/src/Exception/NoCandidateFoundException.php',
+        'Http\\Discovery\\Exception\\NotFoundException' => __DIR__ . '/..' . '/php-http/discovery/src/Exception/NotFoundException.php',
+        'Http\\Discovery\\Exception\\PuliUnavailableException' => __DIR__ . '/..' . '/php-http/discovery/src/Exception/PuliUnavailableException.php',
+        'Http\\Discovery\\Exception\\StrategyUnavailableException' => __DIR__ . '/..' . '/php-http/discovery/src/Exception/StrategyUnavailableException.php',
+        'Http\\Discovery\\HttpAsyncClientDiscovery' => __DIR__ . '/..' . '/php-http/discovery/src/HttpAsyncClientDiscovery.php',
+        'Http\\Discovery\\HttpClientDiscovery' => __DIR__ . '/..' . '/php-http/discovery/src/HttpClientDiscovery.php',
+        'Http\\Discovery\\MessageFactoryDiscovery' => __DIR__ . '/..' . '/php-http/discovery/src/MessageFactoryDiscovery.php',
+        'Http\\Discovery\\NotFoundException' => __DIR__ . '/..' . '/php-http/discovery/src/NotFoundException.php',
+        'Http\\Discovery\\Psr17Factory' => __DIR__ . '/..' . '/php-http/discovery/src/Psr17Factory.php',
+        'Http\\Discovery\\Psr17FactoryDiscovery' => __DIR__ . '/..' . '/php-http/discovery/src/Psr17FactoryDiscovery.php',
+        'Http\\Discovery\\Psr18Client' => __DIR__ . '/..' . '/php-http/discovery/src/Psr18Client.php',
+        'Http\\Discovery\\Psr18ClientDiscovery' => __DIR__ . '/..' . '/php-http/discovery/src/Psr18ClientDiscovery.php',
+        'Http\\Discovery\\Strategy\\CommonClassesStrategy' => __DIR__ . '/..' . '/php-http/discovery/src/Strategy/CommonClassesStrategy.php',
+        'Http\\Discovery\\Strategy\\CommonPsr17ClassesStrategy' => __DIR__ . '/..' . '/php-http/discovery/src/Strategy/CommonPsr17ClassesStrategy.php',
+        'Http\\Discovery\\Strategy\\DiscoveryStrategy' => __DIR__ . '/..' . '/php-http/discovery/src/Strategy/DiscoveryStrategy.php',
+        'Http\\Discovery\\Strategy\\MockClientStrategy' => __DIR__ . '/..' . '/php-http/discovery/src/Strategy/MockClientStrategy.php',
+        'Http\\Discovery\\Strategy\\PuliBetaStrategy' => __DIR__ . '/..' . '/php-http/discovery/src/Strategy/PuliBetaStrategy.php',
+        'Http\\Discovery\\StreamFactoryDiscovery' => __DIR__ . '/..' . '/php-http/discovery/src/StreamFactoryDiscovery.php',
+        'Http\\Discovery\\UriFactoryDiscovery' => __DIR__ . '/..' . '/php-http/discovery/src/UriFactoryDiscovery.php',
+        'Http\\Factory\\Guzzle\\RequestFactory' => __DIR__ . '/..' . '/http-interop/http-factory-guzzle/src/RequestFactory.php',
+        'Http\\Factory\\Guzzle\\ResponseFactory' => __DIR__ . '/..' . '/http-interop/http-factory-guzzle/src/ResponseFactory.php',
+        'Http\\Factory\\Guzzle\\ServerRequestFactory' => __DIR__ . '/..' . '/http-interop/http-factory-guzzle/src/ServerRequestFactory.php',
+        'Http\\Factory\\Guzzle\\StreamFactory' => __DIR__ . '/..' . '/http-interop/http-factory-guzzle/src/StreamFactory.php',
+        'Http\\Factory\\Guzzle\\UploadedFileFactory' => __DIR__ . '/..' . '/http-interop/http-factory-guzzle/src/UploadedFileFactory.php',
+        'Http\\Factory\\Guzzle\\UriFactory' => __DIR__ . '/..' . '/http-interop/http-factory-guzzle/src/UriFactory.php',
         'Illuminate\\Auth\\Access\\AuthorizationException' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Auth/Access/AuthorizationException.php',
         'Illuminate\\Auth\\Access\\Events\\GateEvaluated' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Auth/Access/Events/GateEvaluated.php',
         'Illuminate\\Auth\\Access\\Gate' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Auth/Access/Gate.php',
@@ -3121,6 +3181,69 @@ class ComposerStaticInita5632aa6c64ac7af6e7acb125645d1d1
         'League\\MimeTypeDetection\\GeneratedExtensionToMimeTypeMap' => __DIR__ . '/..' . '/league/mime-type-detection/src/GeneratedExtensionToMimeTypeMap.php',
         'League\\MimeTypeDetection\\MimeTypeDetector' => __DIR__ . '/..' . '/league/mime-type-detection/src/MimeTypeDetector.php',
         'League\\MimeTypeDetection\\OverridingExtensionToMimeTypeMap' => __DIR__ . '/..' . '/league/mime-type-detection/src/OverridingExtensionToMimeTypeMap.php',
+        'Meilisearch\\Client' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Client.php',
+        'Meilisearch\\Contracts\\BatchesQuery' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/BatchesQuery.php',
+        'Meilisearch\\Contracts\\BatchesResults' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/BatchesResults.php',
+        'Meilisearch\\Contracts\\CancelTasksQuery' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/CancelTasksQuery.php',
+        'Meilisearch\\Contracts\\Data' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/Data.php',
+        'Meilisearch\\Contracts\\DeleteTasksQuery' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/DeleteTasksQuery.php',
+        'Meilisearch\\Contracts\\DocumentsQuery' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/DocumentsQuery.php',
+        'Meilisearch\\Contracts\\DocumentsResults' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/DocumentsResults.php',
+        'Meilisearch\\Contracts\\Endpoint' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/Endpoint.php',
+        'Meilisearch\\Contracts\\FacetSearchQuery' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/FacetSearchQuery.php',
+        'Meilisearch\\Contracts\\FederationOptions' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/FederationOptions.php',
+        'Meilisearch\\Contracts\\Http' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/Http.php',
+        'Meilisearch\\Contracts\\HybridSearchOptions' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/HybridSearchOptions.php',
+        'Meilisearch\\Contracts\\Index\\Embedders' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/Index/Embedders.php',
+        'Meilisearch\\Contracts\\Index\\Faceting' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/Index/Faceting.php',
+        'Meilisearch\\Contracts\\Index\\Settings' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/Index/Settings.php',
+        'Meilisearch\\Contracts\\Index\\Synonyms' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/Index/Synonyms.php',
+        'Meilisearch\\Contracts\\Index\\TypoTolerance' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/Index/TypoTolerance.php',
+        'Meilisearch\\Contracts\\IndexesQuery' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/IndexesQuery.php',
+        'Meilisearch\\Contracts\\IndexesResults' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/IndexesResults.php',
+        'Meilisearch\\Contracts\\KeysQuery' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/KeysQuery.php',
+        'Meilisearch\\Contracts\\KeysResults' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/KeysResults.php',
+        'Meilisearch\\Contracts\\MultiSearchFederation' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/MultiSearchFederation.php',
+        'Meilisearch\\Contracts\\SearchQuery' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/SearchQuery.php',
+        'Meilisearch\\Contracts\\SimilarDocumentsQuery' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/SimilarDocumentsQuery.php',
+        'Meilisearch\\Contracts\\TasksQuery' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/TasksQuery.php',
+        'Meilisearch\\Contracts\\TasksResults' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Contracts/TasksResults.php',
+        'Meilisearch\\Endpoints\\Batches' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Batches.php',
+        'Meilisearch\\Endpoints\\Delegates\\HandlesBatches' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Delegates/HandlesBatches.php',
+        'Meilisearch\\Endpoints\\Delegates\\HandlesDocuments' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Delegates/HandlesDocuments.php',
+        'Meilisearch\\Endpoints\\Delegates\\HandlesDumps' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Delegates/HandlesDumps.php',
+        'Meilisearch\\Endpoints\\Delegates\\HandlesIndex' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Delegates/HandlesIndex.php',
+        'Meilisearch\\Endpoints\\Delegates\\HandlesKeys' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Delegates/HandlesKeys.php',
+        'Meilisearch\\Endpoints\\Delegates\\HandlesMultiSearch' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Delegates/HandlesMultiSearch.php',
+        'Meilisearch\\Endpoints\\Delegates\\HandlesSettings' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Delegates/HandlesSettings.php',
+        'Meilisearch\\Endpoints\\Delegates\\HandlesSnapshots' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Delegates/HandlesSnapshots.php',
+        'Meilisearch\\Endpoints\\Delegates\\HandlesSystem' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Delegates/HandlesSystem.php',
+        'Meilisearch\\Endpoints\\Delegates\\HandlesTasks' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Delegates/HandlesTasks.php',
+        'Meilisearch\\Endpoints\\Delegates\\TasksQueryTrait' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Delegates/TasksQueryTrait.php',
+        'Meilisearch\\Endpoints\\Dumps' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Dumps.php',
+        'Meilisearch\\Endpoints\\Health' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Health.php',
+        'Meilisearch\\Endpoints\\Indexes' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Indexes.php',
+        'Meilisearch\\Endpoints\\Keys' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Keys.php',
+        'Meilisearch\\Endpoints\\Snapshots' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Snapshots.php',
+        'Meilisearch\\Endpoints\\Stats' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Stats.php',
+        'Meilisearch\\Endpoints\\Tasks' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Tasks.php',
+        'Meilisearch\\Endpoints\\TenantToken' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/TenantToken.php',
+        'Meilisearch\\Endpoints\\Version' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Endpoints/Version.php',
+        'Meilisearch\\Exceptions\\ApiException' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Exceptions/ApiException.php',
+        'Meilisearch\\Exceptions\\CommunicationException' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Exceptions/CommunicationException.php',
+        'Meilisearch\\Exceptions\\ExceptionInterface' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Exceptions/ExceptionInterface.php',
+        'Meilisearch\\Exceptions\\InvalidArgumentException' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Exceptions/InvalidArgumentException.php',
+        'Meilisearch\\Exceptions\\InvalidResponseBodyException' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Exceptions/InvalidResponseBodyException.php',
+        'Meilisearch\\Exceptions\\JsonDecodingException' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Exceptions/JsonDecodingException.php',
+        'Meilisearch\\Exceptions\\JsonEncodingException' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Exceptions/JsonEncodingException.php',
+        'Meilisearch\\Exceptions\\TimeOutException' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Exceptions/TimeOutException.php',
+        'Meilisearch\\Http\\Client' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Http/Client.php',
+        'Meilisearch\\Http\\Serialize\\Json' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Http/Serialize/Json.php',
+        'Meilisearch\\Http\\Serialize\\SerializerInterface' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Http/Serialize/SerializerInterface.php',
+        'Meilisearch\\Meilisearch' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Meilisearch.php',
+        'Meilisearch\\Search\\FacetSearchResult' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Search/FacetSearchResult.php',
+        'Meilisearch\\Search\\SearchResult' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Search/SearchResult.php',
+        'Meilisearch\\Search\\SimilarDocumentsSearchResult' => __DIR__ . '/..' . '/meilisearch/meilisearch-php/src/Search/SimilarDocumentsSearchResult.php',
         'Mockery\\Adapter\\Phpunit\\MockeryPHPUnitIntegration' => __DIR__ . '/..' . '/mockery/mockery/library/Mockery/Adapter/Phpunit/MockeryPHPUnitIntegration.php',
         'Mockery\\Adapter\\Phpunit\\MockeryPHPUnitIntegrationAssertPostConditions' => __DIR__ . '/..' . '/mockery/mockery/library/Mockery/Adapter/Phpunit/MockeryPHPUnitIntegrationAssertPostConditions.php',
         'Mockery\\Adapter\\Phpunit\\MockeryTestCase' => __DIR__ . '/..' . '/mockery/mockery/library/Mockery/Adapter/Phpunit/MockeryTestCase.php',
@@ -4497,6 +4620,19 @@ class ComposerStaticInita5632aa6c64ac7af6e7acb125645d1d1
         'Psy\\VersionUpdater\\IntervalChecker' => __DIR__ . '/..' . '/psy/psysh/src/VersionUpdater/IntervalChecker.php',
         'Psy\\VersionUpdater\\NoopChecker' => __DIR__ . '/..' . '/psy/psysh/src/VersionUpdater/NoopChecker.php',
         'Psy\\VersionUpdater\\SelfUpdate' => __DIR__ . '/..' . '/psy/psysh/src/VersionUpdater/SelfUpdate.php',
+        'Quest\\Macros\\OrderByFuzzy' => __DIR__ . '/..' . '/caneara/quest/src/Macros/OrderByFuzzy.php',
+        'Quest\\Macros\\WhereFuzzy' => __DIR__ . '/..' . '/caneara/quest/src/Macros/WhereFuzzy.php',
+        'Quest\\Macros\\withMinimumRelevance' => __DIR__ . '/..' . '/caneara/quest/src/Macros/withMinimumRelevance.php',
+        'Quest\\Matchers\\AcronymMatcher' => __DIR__ . '/..' . '/caneara/quest/src/Matchers/AcronymMatcher.php',
+        'Quest\\Matchers\\BaseMatcher' => __DIR__ . '/..' . '/caneara/quest/src/Matchers/BaseMatcher.php',
+        'Quest\\Matchers\\ConsecutiveCharactersMatcher' => __DIR__ . '/..' . '/caneara/quest/src/Matchers/ConsecutiveCharactersMatcher.php',
+        'Quest\\Matchers\\ExactMatcher' => __DIR__ . '/..' . '/caneara/quest/src/Matchers/ExactMatcher.php',
+        'Quest\\Matchers\\InStringMatcher' => __DIR__ . '/..' . '/caneara/quest/src/Matchers/InStringMatcher.php',
+        'Quest\\Matchers\\StartOfStringMatcher' => __DIR__ . '/..' . '/caneara/quest/src/Matchers/StartOfStringMatcher.php',
+        'Quest\\Matchers\\StartOfWordsMatcher' => __DIR__ . '/..' . '/caneara/quest/src/Matchers/StartOfWordsMatcher.php',
+        'Quest\\Matchers\\StudlyCaseMatcher' => __DIR__ . '/..' . '/caneara/quest/src/Matchers/StudlyCaseMatcher.php',
+        'Quest\\Matchers\\TimesInStringMatcher' => __DIR__ . '/..' . '/caneara/quest/src/Matchers/TimesInStringMatcher.php',
+        'Quest\\ServiceProvider' => __DIR__ . '/..' . '/caneara/quest/src/ServiceProvider.php',
         'Ramsey\\Collection\\AbstractArray' => __DIR__ . '/..' . '/ramsey/collection/src/AbstractArray.php',
         'Ramsey\\Collection\\AbstractCollection' => __DIR__ . '/..' . '/ramsey/collection/src/AbstractCollection.php',
         'Ramsey\\Collection\\AbstractSet' => __DIR__ . '/..' . '/ramsey/collection/src/AbstractSet.php',
