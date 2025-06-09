@@ -17,8 +17,11 @@ class CreateJobDescriptionsTable extends Migration
             $table->id();
             $table->foreignId('job_code_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('ikw_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->string('code');
-            $table->text('description');
+            $table->foreignId('user_structure_mapping_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->string('code')->nullable();
+            $table->text('description')->nullable();
+            $table->integer('ikw_id_non_null')->virtualAs('COALESCE(ikw_id, 0)');
+            $table->unique(['ikw_id_non_null', 'code']);
             $table->timestamps();
             $table->softDeletes();
         });

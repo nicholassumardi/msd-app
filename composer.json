@@ -12,8 +12,11 @@
         "fideloper/proxy": "^4.2",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
+        "http-interop/http-factory-guzzle": "*",
         "laravel/framework": "^8.0",
+        "laravel/scout": "*",
         "laravel/tinker": "^2.0",
+        "meilisearch/meilisearch-php": "*",
         "openspout/openspout": "^4.28"
     },
     "require-dev": {
