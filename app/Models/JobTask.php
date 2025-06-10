@@ -22,4 +22,9 @@ class JobTask extends Model
     {
         return $this->belongsTo(JobCode::class);
     }
+
+    public function ikwJobTask()
+    {
+        return $this->hasMany(IkwJobTask::class, 'job_task_id', 'id');
+    }
 }

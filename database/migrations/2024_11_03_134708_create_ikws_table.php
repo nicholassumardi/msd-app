@@ -15,7 +15,6 @@ class CreateIkwsTable extends Migration
     {
         Schema::create('ikws', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('job_task_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('department_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('code')->nullable();
             $table->string('name')->nullable();

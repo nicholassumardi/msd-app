@@ -203,7 +203,7 @@ class IkwServices extends BaseServices
             $ikw = $this->ikw->firstWhere('id', $id_IKW);
             $ikw = [
                 'id'                             => $ikw->id,
-                'revision_no'                    => $ikw->ikwRevision()->orderBy('revision_no', 'DESC')->first()->revision_no ?? "",
+                'revision_no'                    => $ikw->ikwRevision()->orderBy('revision_no', 'DESC')->first()->revision_no ?? 0,
                 'job_task_id'                    => $ikw->job_task_id ?? "",
                 'department_id'                  => $ikw->department_id ?? "",
                 'department_name'                => $ikw->department->name ?? "",
@@ -218,7 +218,9 @@ class IkwServices extends BaseServices
                 'status_document'                => $ikw->status_document ?? "",
                 'last_update_date'               => $ikw->last_update_date ? $ikw->last_update_date  : NULL,
                 'description'                    => $ikw->description ?? "",
-                'ikw_revisions'                  => $ikw->ikwRevision ? $ikw->ikwRevision()->with('ikwMeeting', 'ikwPosition')->get() : null,
+                'ikw_revisions'                  => $ikw->ikwRevision ? $ikw->ikwRevision()->with('ikwMeeting', 'ikwPosition')->get() : NULL,
+                'job_task'                       => $ikw->ikwJobTask ? $ikw->ikwJobTask()->with('jobTask')->get() : NULL,
+                'job_desc'                       => $ikw->ikwJobDescription ? $ikw->ikwJobDescription()->with('jobDescription')->get() : NULL,
             ];
         } else {
             $ikw = $this->ikw->get()->map(function ($data) {

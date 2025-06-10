@@ -25,4 +25,9 @@ class JobDescription extends Model
     {
         return $this->belongsTo(JobCode::class);
     }
+
+    public function ikwJobDesc()
+    {
+        return $this->hasMany(IkwJobDesc::class, 'job_description_id', 'id');
+    }
 }

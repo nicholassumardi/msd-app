@@ -18,6 +18,7 @@ class CreateIkwJobTaskTable extends Migration
             $table->foreignId('ikw_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('job_task_id')->nullable()->constrained()->cascadeOnDelete();
             $table->timestamps();
+                 $table->softDeletes();
         });
     }
 

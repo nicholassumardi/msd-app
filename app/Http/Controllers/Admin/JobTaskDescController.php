@@ -21,7 +21,7 @@ class JobTaskDescController extends Controller
     {
 
         $cacheKey = uniqid();
-        $query = $this->service->importStructureExcel($request, $cacheKey);
+        $query = $this->service->importJobTaskDescExcel($request, $cacheKey);
         $filepath = Cache::get($cacheKey);
 
         if (file_exists($filepath)) {

@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\IKW;
+use App\Models\IkwJobDesc;
+use App\Models\IkwJobTask;
 use App\Models\JobCode;
 use App\Models\JobDescription;
 use App\Models\JobTask;
@@ -69,6 +71,10 @@ class ImportJobTaskDescJob implements ShouldQueue
                             $dataIKWJobDesc =  $data["ikwJobDesc"];
                         }
 
+                        // dd(array_values($dataJobTask));
+                        // dd(array_values($dataJobDesc));
+                        // dd(array_values($dataJobDesc));
+
                         $this->insertChunkJobTask($dataJobTask, $dataIKWJobTask);
                         $this->insertChunkJobDesc($dataJobDesc, $dataIKWJobDesc);
 
@@ -121,6 +127,8 @@ class ImportJobTaskDescJob implements ShouldQueue
 
         // Common identifier lookups
         $userStructureMapping = $this->findUserStructureMapping($userStructure);
+
+        // dd($userStructureMapping);
         $ikwId = $this->findIKW($row[6] ?? null)->id ?? null;
         $taskDescription = $row[5] ?? null;
         $descDescription = $row[4] ?? null;
@@ -137,7 +145,6 @@ class ImportJobTaskDescJob implements ShouldQueue
             'code'                       => $jobDescCode,
             'description'                => $descDescription,
         ];
-
 
         if ($ikwId) {
             $dataIKWJobTask[] = [
@@ -163,7 +170,8 @@ class ImportJobTaskDescJob implements ShouldQueue
 
     public function insertChunkJobTask($dataJobTask, $dataIKWJobTask)
     {
-        JobTask::insert($dataJobTask);
+        $data = array_values($dataJobTask);
+        JobTask::insert($data);
 
 
         $this->insertChunkIKWJobTask($dataIKWJobTask);
@@ -171,7 +179,8 @@ class ImportJobTaskDescJob implements ShouldQueue
 
     public function insertChunkJobDesc($dataJobDesc, $dataIKWJobDesc)
     {
-        JobDescription::insert($dataJobDesc);
+        $data = array_values($dataJobDesc);
+        JobDescription::insert($data);
 
         $this->insertChunkIKWJobDesc($dataIKWJobDesc);
     }
@@ -188,6 +197,10 @@ class ImportJobTaskDescJob implements ShouldQueue
                 'ikw_id'      => $data['ikw_id'],
             ];
         }
+
+        // dd($insertedData);
+
+        IkwJobTask::insert($insertedData);
     }
 
     public function insertChunkIKWJobDesc($dataIKWJobDesc)
@@ -202,6 +215,10 @@ class ImportJobTaskDescJob implements ShouldQueue
                 'ikw_id'             => $data['ikw_id'],
             ];
         }
+
+        // dd($insertedData);
+
+        IkwJobDesc::insert($insertedData);
     }
 
     private function findJobCode($arg1)

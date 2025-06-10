@@ -595,6 +595,8 @@ class ComposerStaticInita5632aa6c64ac7af6e7acb125645d1d1
         'App\\Models\\HistoryLog' => __DIR__ . '/../..' . '/app/Models/HistoryLog.php',
         'App\\Models\\IKW' => __DIR__ . '/../..' . '/app/Models/IKW.php',
         'App\\Models\\IKWRevision' => __DIR__ . '/../..' . '/app/Models/IKWRevision.php',
+        'App\\Models\\IkwJobDesc' => __DIR__ . '/../..' . '/app/Models/IkwJobDesc.php',
+        'App\\Models\\IkwJobTask' => __DIR__ . '/../..' . '/app/Models/IkwJobTask.php',
         'App\\Models\\IkwMeeting' => __DIR__ . '/../..' . '/app/Models/IkwMeeting.php',
         'App\\Models\\IkwPosition' => __DIR__ . '/../..' . '/app/Models/IkwPosition.php',
         'App\\Models\\JobCode' => __DIR__ . '/../..' . '/app/Models/JobCode.php',

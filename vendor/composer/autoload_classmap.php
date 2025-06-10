@@ -70,6 +70,8 @@ return array(
     'App\\Models\\HistoryLog' => $baseDir . '/app/Models/HistoryLog.php',
     'App\\Models\\IKW' => $baseDir . '/app/Models/IKW.php',
     'App\\Models\\IKWRevision' => $baseDir . '/app/Models/IKWRevision.php',
+    'App\\Models\\IkwJobDesc' => $baseDir . '/app/Models/IkwJobDesc.php',
+    'App\\Models\\IkwJobTask' => $baseDir . '/app/Models/IkwJobTask.php',
     'App\\Models\\IkwMeeting' => $baseDir . '/app/Models/IkwMeeting.php',
     'App\\Models\\IkwPosition' => $baseDir . '/app/Models/IkwPosition.php',
     'App\\Models\\JobCode' => $baseDir . '/app/Models/JobCode.php',

@@ -17,7 +17,7 @@ class JobTaskDescriptionServices extends BaseServices
         $this->jobDescription =  JobDescription::with('jobCode');
     }
 
-    public function importStructureExcel(Request $request, $cacheKey)
+    public function importJobTaskDescExcel(Request $request, $cacheKey)
     {
         $file = $request->file;
         $filepath = $file->storeAs('temp', $request->file->getClientOriginalName(), 'public');

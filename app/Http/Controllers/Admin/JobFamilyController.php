@@ -13,8 +13,7 @@ use App\Models\JobCode;
 use App\Services\CategoryServices;
 use App\Services\IkwServices;
 use App\Services\JobCodeServices;
-use App\Services\JobDescriptionServices;
-use App\Services\JobTaskServices;
+use App\Services\JobTaskDescriptionServices;
 use Illuminate\Http\Request;
 
 class JobFamilyController extends Controller
@@ -24,8 +23,7 @@ class JobFamilyController extends Controller
     protected $category;
     protected $serviceCategory;
     protected $serviceJobCode;
-    protected $serviceJobDescription;
-    protected $serviceJobTask;
+    protected $serviceJobTaskDescription;
     protected $serviceIkws;
 
     public function __construct()
@@ -35,8 +33,7 @@ class JobFamilyController extends Controller
         $this->category = Category::with('jobCode');
         $this->serviceCategory = new CategoryServices();
         $this->serviceJobCode = new JobCodeServices();
-        $this->serviceJobDescription = new JobDescriptionServices();
-        $this->serviceJobTask = new JobTaskServices();
+        $this->serviceJobTaskDescription = new JobTaskDescriptionServices();
         $this->serviceIkws = new IkwServices();
     }
 
@@ -107,7 +104,7 @@ class JobFamilyController extends Controller
     public function storeJobDescription(JobDescriptionRequest $request)
     {
         $validatedRequest = $request->validated();
-        $data = $this->serviceJobDescription->storeJobDescription(new Request($validatedRequest));
+        $data = $this->serviceJobTaskDescription->storeJobDescription(new Request($validatedRequest));
 
         if ($data) {
             $response = [
@@ -127,7 +124,7 @@ class JobFamilyController extends Controller
     public function storeJobTask(Request $request)
     {
         $validatedRequest = $request->validated();
-        $data = $this->serviceJobTask->storeJobTask(new Request($validatedRequest));
+        $data = $this->serviceJobTaskDescription->storeJobTask(new Request($validatedRequest));
 
         if ($data) {
             $response = [
@@ -229,7 +226,7 @@ class JobFamilyController extends Controller
 
     public function showJobDescription($id)
     {
-        $data = $this->serviceJobDescription->getDataJobDescription($id);
+        $data = $this->serviceJobTaskDescription->getDataJobDescription($id);
 
         if ($data) {
             $response = [
@@ -250,7 +247,7 @@ class JobFamilyController extends Controller
 
     public function showJobTask($id)
     {
-        $data = $this->serviceJobTask->getDataJobTask($id);
+        $data = $this->serviceJobTaskDescription->getDataJobTask($id);
 
         if ($data) {
             $response = [
@@ -355,7 +352,7 @@ class JobFamilyController extends Controller
 
     public function showJobDescriptionAll()
     {
-        $data = $this->serviceJobDescription->getDataJobDescription();
+        $data = $this->serviceJobTaskDescription->getDataJobDescription();
 
         if ($data) {
             $response = [
@@ -376,7 +373,7 @@ class JobFamilyController extends Controller
 
     public function showJobTaskAll()
     {
-        $data = $this->serviceJobTask->getDataJobTask();
+        $data = $this->serviceJobTaskDescription->getDataJobTask();
 
         if ($data) {
             $response = [
@@ -415,7 +412,6 @@ class JobFamilyController extends Controller
 
         return response()->json($response);
     }
-
 
     public function updateCategory(CategoryRequest $request, $id_category)
     {
@@ -460,7 +456,7 @@ class JobFamilyController extends Controller
     public function updateJobDescription(JobDescriptionRequest $request, $id_job_description)
     {
         $validatedRequest = $request->validated();
-        $data = $this->serviceJobDescription->updateJobDescription(new Request($validatedRequest), $id_job_description);
+        $data = $this->serviceJobTaskDescription->updateJobDescription(new Request($validatedRequest), $id_job_description);
 
         if ($data) {
             $response = [
@@ -480,7 +476,7 @@ class JobFamilyController extends Controller
     public function updateJobTask(JobTaskRequest $request, $id_job_task)
     {
         $validatedRequest = $request->validated();
-        $data = $this->serviceJobTask->updateJobTask(new Request($validatedRequest), $id_job_task);
+        $data = $this->serviceJobTaskDescription->updateJobTask(new Request($validatedRequest), $id_job_task);
 
         if ($data) {
             $response = [
@@ -517,7 +513,6 @@ class JobFamilyController extends Controller
 
         return response()->json($response);
     }
-
 
     public function destroyCategory(Request $request, $id_job_code)
     {
@@ -559,7 +554,7 @@ class JobFamilyController extends Controller
 
     public function destroyJobDescription(Request $request, $id_job_description)
     {
-        $data = $this->serviceJobDescription->destroyJobDescription($request, $id_job_description);
+        $data = $this->serviceJobTaskDescription->destroyJobDescription($request, $id_job_description);
 
         if ($data) {
             $response = [
@@ -578,7 +573,7 @@ class JobFamilyController extends Controller
 
     public function destroyJobTask(Request $request, $id_job_task)
     {
-        $data = $this->serviceJobTask->destroyJobTask($request, $id_job_task);
+        $data = $this->serviceJobTaskDescription->destroyJobTask($request, $id_job_task);
 
         if ($data) {
             $response = [
@@ -594,7 +589,6 @@ class JobFamilyController extends Controller
 
         return response()->json($response);
     }
-
 
     public function destroyIkws(Request $request, $id_ikw)
     {

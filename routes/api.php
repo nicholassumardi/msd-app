@@ -110,6 +110,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
             Route::prefix('ikws')->group(function () {
                 Route::get('/', [IkwController::class, 'index']);
                 Route::post('import', [IkwController::class, 'importIKWExcel']);
+                Route::post('import_job_task_desc', [IkwController::class, 'importJobTaskDescExcel']);
                 Route::post('store', [IkwController::class, 'store']);
                 Route::put('update/{id}', [IkwController::class, 'update']);
                 Route::get('show/{id}', [IkwController::class, 'show']);

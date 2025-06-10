@@ -42,4 +42,14 @@ class IKW extends Model
     {
         return $this->hasMany(IKWRevision::class, 'ikw_id', 'id');
     }
+
+    public function ikwJobTask()
+    {
+        return $this->hasMany(IkwJobTask::class, 'ikw_id', 'id');
+    }
+
+    public function ikwJobDescription()
+    {
+        return $this->hasMany(IkwJobDesc::class, 'ikw_id', 'id');
+    }
 }
