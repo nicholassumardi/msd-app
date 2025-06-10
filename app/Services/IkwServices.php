@@ -368,8 +368,6 @@ class IkwServices extends BaseServices
                             }
                         }
                     });
-                })->orWhereHas('jobTask', function ($query) use ($globalFilter) {
-                    $query->Where('description', 'LIKE',  "%{$globalFilter}%");
                 })->orWhereHas('department', function ($query) use ($globalFilter) {
                     $query->where('name', 'LIKE',  "%{$globalFilter}%");
                     $query->orWhere('code', 'LIKE',  "%{$globalFilter}%");
