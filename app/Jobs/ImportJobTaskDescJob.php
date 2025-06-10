@@ -192,15 +192,15 @@ class ImportJobTaskDescJob implements ShouldQueue
         foreach ($dataIKWJobTask as $data) {
 
             $job_task = $this->findJobTask($data['user_structure_mapping_id'], $data['description']);
-            $insertedData[] = [
+            $unique = sprintf("%s-%s", $job_task->id, $data['ikw_id']);
+            $insertedData[$unique] = [
                 'job_task_id' => $job_task->id ?? null,
                 'ikw_id'      => $data['ikw_id'],
             ];
         }
+        $cleanedData = array_values($insertedData);
 
-        // dd($insertedData);
-
-        IkwJobTask::insert($insertedData);
+        IkwJobTask::insert($cleanedData);
     }
 
     public function insertChunkIKWJobDesc($dataIKWJobDesc)
@@ -210,15 +210,16 @@ class ImportJobTaskDescJob implements ShouldQueue
         foreach ($dataIKWJobDesc as $data) {
 
             $job_description = $this->findJobDescription($data['user_structure_mapping_id'], $data['code']);
-            $insertedData[] = [
+            $unique = sprintf("%s-%s", $job_description->id, $data['ikw_id']);
+            $insertedData[$unique] = [
                 'job_description_id' => $job_description->id ?? null,
                 'ikw_id'             => $data['ikw_id'],
             ];
         }
 
-        // dd($insertedData);
+        $cleanedData = array_values($insertedData);
 
-        IkwJobDesc::insert($insertedData);
+        IkwJobDesc::insert($cleanedData);
     }
 
     private function findJobCode($arg1)

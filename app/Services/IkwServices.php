@@ -255,8 +255,8 @@ class IkwServices extends BaseServices
         if (!empty($id_ikw_revision)) {
             $revision_ikw =  $this->ikwRevision->firstWhere('id', $id_ikw_revision);
             $revision_ikw = [
-                'id'                            => $revision_ikw->id,
-                'ikw_id'                        => $revision_ikw->ikw_id,
+                'id'                            => $revision_ikw->id ?? null,
+                'ikw_id'                        => $revision_ikw->ikw_id ?? null,
                 'ikw_name'                      => $revision_ikw->ikw->name . "/" . $revision_ikw->ikw->code,
                 'revision_no'                   => $revision_ikw->revision_no ?? "",
                 'reason'                        => $revision_ikw->reason ?? "",
@@ -289,7 +289,7 @@ class IkwServices extends BaseServices
                 ->orderByDesc('revision_no')
                 ->get()->map(function ($data) {
                     return [
-                        'id'                            => $data->id,
+                        'id'                            => $data->id ?? null,
                         'ikw_id'                        => $data->ikw_id,
                         'ikw_name'                      => $data->ikw->name . "/" . $data->ikw->code,
                         'revision_no'                   => $data->revision_no ?? "",
