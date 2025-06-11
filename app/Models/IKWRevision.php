@@ -37,7 +37,6 @@ class IKWRevision extends Model
         'status_check',
     ];
 
-
     public function ikw()
     {
         return $this->belongsTo(IKW::class, 'ikw_id');
@@ -56,5 +55,56 @@ class IKWRevision extends Model
     public function training()
     {
         return $this->hasMany(Training::class, 'ikw_revision_id', 'id');
+    }
+
+    public function getProcessStatusLabelAttribute()
+    {
+        return match ($this->process_status) {
+            1 => 'DONE',
+            2 => 'FOD - PENGAJUAN',
+            3 => 'FU-LO',
+            4 => 'ON - PROGRESS',
+            default => null,
+        };
+    }
+
+    public function getIkwFixStatusLabelAttribute()
+    {
+        return match ($this->ikw_fix_status) {
+            1 => 'MAJOR',
+            2 => 'MINOR',
+            3 => 'HAPUS',
+            4 => 'ON - PROGRESS',
+            5 => 'MINOR ON - PROGRESS',
+            default => null,
+        };
+    }
+
+    public function getConfirmationLabelAttribute()
+    {
+        return match ($this->confirmation) {
+            1 => 'HAPUS',
+            0 => 'REV',
+            default => null,
+        };
+    }
+
+    public function getRevisionStatusLabelAttribute()
+    {
+        return match ($this->revision_status) {
+            1 => 'MAJOR',
+            2 => 'MINOR',
+            3 => 'HAPUS',
+            default => null,
+        };
+    }
+
+    public function getStatusCheckLabelAttribute()
+    {
+        return match ($this->revision_status) {
+            1 => 'CHECK',
+            0 => 'UNCHECK',
+            default => 'UNCHECK',
+        };
     }
 }

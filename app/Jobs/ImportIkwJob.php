@@ -208,7 +208,7 @@ class ImportIkwJob implements ShouldQueue
             'revision_no'                   => (int) $row[4],
             'reason'                        => $row[5],
             'process_status'                => ($row[6] === "DONE") ? 1 : (($row[6] === "FOD - PENGAJUAN") ? 2 : (($row[6] === "FU-LO") ? 3 : 4)),
-            'ikw_fix_status'                => ($row[7] === "MAJOR") ? 1 : (($row[7] === "MINOR") ? 2 : (($row[7] === "HAPUS") ? 3 : 4)),
+            'ikw_fix_status'                => ($row[7] === "MAJOR") ? 1 : (($row[7] === "MINOR") ? 2 : (($row[7] === "HAPUS") ? 3 : (($row[7] === "On Progress") ? 4 : 5))),
             'confirmation'                  => $row[8] == 'HAPUS' ? 1 : 0,
             'change_description'            => $row[9],
             'submission_no'                 => $row[10],
@@ -224,7 +224,7 @@ class ImportIkwJob implements ShouldQueue
             'document_disposal_date'        => $this->parseDate($row[20]) ?? NULL,
             'document_location_description' => $row[21],
             'revision_description'          => $row[22],
-            'status_check'                  => $row[25] == 'CHECK' ? 1 : 0,
+            'status_check'                  => $row[25] == 'TRUE' ? 1 : 0,
         ];
 
 

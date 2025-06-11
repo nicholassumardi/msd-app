@@ -64,16 +64,12 @@ class ImportJobTaskDescJob implements ShouldQueue
                         foreach ($rows as $row) {
                             $data = $this->saveDataJobTaskDesc($dataJobTask, $dataJobDesc, $dataIKWJobTask, $dataIKWJobDesc,  $row, $jobCode, $jobDescCode, $userStructure);
 
-
                             $dataJobTask =  $data["jobTask"];
                             $dataJobDesc =  $data["jobDesc"];
                             $dataIKWJobTask =  $data["ikwJobTask"];
                             $dataIKWJobDesc =  $data["ikwJobDesc"];
                         }
 
-                        // dd(array_values($dataJobTask));
-                        // dd(array_values($dataJobDesc));
-                        // dd(array_values($dataJobDesc));
 
                         $this->insertChunkJobTask($dataJobTask, $dataIKWJobTask);
                         $this->insertChunkJobDesc($dataJobDesc, $dataIKWJobDesc);
@@ -119,7 +115,7 @@ class ImportJobTaskDescJob implements ShouldQueue
         $jobCode       = $row[2] !== '' ? $row[2] : $jobCode;
 
         // Determine job description code
-        $jobDescCode = $row[3] !== '' ? $row[3] : $jobDescCode;
+        $jobDescCode   = $row[3] !== '' ? $row[3] : $jobDescCode;
 
         // Determine user structure and build unique key
         $userStructure = $row[1] !== '' ? $row[1] : $userStructure;
@@ -128,7 +124,6 @@ class ImportJobTaskDescJob implements ShouldQueue
         // Common identifier lookups
         $userStructureMapping = $this->findUserStructureMapping($userStructure);
 
-        // dd($userStructureMapping);
         $ikwId = $this->findIKW($row[6] ?? null)->id ?? null;
         $taskDescription = $row[5] ?? null;
         $descDescription = $row[4] ?? null;
@@ -192,12 +187,13 @@ class ImportJobTaskDescJob implements ShouldQueue
         foreach ($dataIKWJobTask as $data) {
 
             $job_task = $this->findJobTask($data['user_structure_mapping_id'], $data['description']);
-            $unique = sprintf("%s-%s", $job_task->id, $data['ikw_id']);
+            $unique = sprintf("%s-%s", $job_task->id ?? "None", $data['ikw_id']);
             $insertedData[$unique] = [
                 'job_task_id' => $job_task->id ?? null,
                 'ikw_id'      => $data['ikw_id'],
             ];
         }
+
         $cleanedData = array_values($insertedData);
 
         IkwJobTask::insert($cleanedData);
@@ -210,7 +206,7 @@ class ImportJobTaskDescJob implements ShouldQueue
         foreach ($dataIKWJobDesc as $data) {
 
             $job_description = $this->findJobDescription($data['user_structure_mapping_id'], $data['code']);
-            $unique = sprintf("%s-%s", $job_description->id, $data['ikw_id']);
+            $unique = sprintf("%s-%s", $job_description->id ?? "None", $data['ikw_id']);
             $insertedData[$unique] = [
                 'job_description_id' => $job_description->id ?? null,
                 'ikw_id'             => $data['ikw_id'],
@@ -249,7 +245,7 @@ class ImportJobTaskDescJob implements ShouldQueue
 
     private function findJobTask($arg1, $arg2)
     {
-        return JobTask::where('user_structure_mapping_id', $arg1)->where('description', $arg2)
+        return JobTask::where('user_structure_mapping_id', $arg1)->whereFuzzy('description', $arg2)
             ->first();
     }
 }

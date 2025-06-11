@@ -200,28 +200,65 @@ class IkwServices extends BaseServices
     {
 
         if (!empty($id_IKW)) {
-            $ikw = $this->ikw->firstWhere('id', $id_IKW);
-            $ikw = [
-                'id'                             => $ikw->id,
-                'revision_no'                    => $ikw->ikwRevision()->orderBy('revision_no', 'DESC')->first()->revision_no ?? 0,
-                'job_task_id'                    => $ikw->job_task_id ?? "",
-                'department_id'                  => $ikw->department_id ?? "",
-                'department_name'                => $ikw->department->name ?? "",
-                'code'                           => $ikw->code ?? "",
-                'name'                           => $ikw->name ?? "",
-                'total_page'                     => $ikw->total_page ?? "",
-                'registration_date'              => $ikw->registration_date ? $ikw->registration_date : NULL,
-                'print_by_back_office_date'      => $ikw->print_by_back_office_date ? $ikw->print_by_back_office_date : NULL,
-                'submit_to_department_date'      => $ikw->submit_to_department_date ? $ikw->submit_to_department_date : NULL,
-                'ikw_return_date'                => $ikw->ikw_return_date ? $ikw->ikw_return_date : NULL,
-                'ikw_creation_duration'          => $ikw->ikw_creation_duration ?? "",
-                'status_document'                => $ikw->status_document ?? "",
-                'last_update_date'               => $ikw->last_update_date ? $ikw->last_update_date  : NULL,
-                'description'                    => $ikw->description ?? "",
-                'ikw_revisions'                  => $ikw->ikwRevision ? $ikw->ikwRevision()->with('ikwMeeting', 'ikwPosition')->get() : NULL,
-                'job_task'                       => $ikw->ikwJobTask ? $ikw->ikwJobTask()->with('jobTask')->get() : NULL,
-                'job_desc'                       => $ikw->ikwJobDescription ? $ikw->ikwJobDescription()->with('jobDescription')->get() : NULL,
-            ];
+            if (!empty($id_IKW)) {
+                $ikw = $this->ikw->firstWhere('id', $id_IKW);
+
+                $revisions = $ikw->ikwRevision
+                    ? $ikw->ikwRevision()->with('ikwMeeting', 'ikwPosition')->get()
+                    : collect();
+
+                $revisionData = $revisions->map(function ($revision) {
+                    return [
+                        'id'                            => $revision->id,
+                        'ikw_id'                        => $revision->ikw_id,
+                        'revision_no'                   => $revision->revision_no,
+                        'ikw_code'                      => $revision->ikw_code,
+                        'reason'                        => $revision->reason,
+                        'process_status'                => $revision->getProcessStatusLabelAttribute(),
+                        'ikw_fix_status'                => $revision->getIkwFixStatusLabelAttribute(),
+                        'confirmation'                  => $revision->getConfirmationLabelAttribute(),
+                        'change_description'            => $revision->change_description,
+                        'submission_no'                 => $revision->submission_no,
+                        'submission_received_date'      => $revision->submission_received_date,
+                        'submission_mr_date'            => $revision->submission_mr_date,
+                        'backoffice_return_date'        => $revision->backoffice_return_date,
+                        'revision_status'               => $revision->getRevisionStatusLabelAttribute(),
+                        'print_date'                    => $revision->print_date,
+                        'handover_date'                 => $revision->handover_date,
+                        'signature_mr_date'             => $revision->signature_mr_date,
+                        'distribution_date'             => $revision->distribution_date,
+                        'document_return_date'          => $revision->document_return_date,
+                        'document_disposal_date'        => $revision->document_disposal_date,
+                        'document_location_description' => $revision->document_location_description,
+                        'revision_description'          => $revision->revision_description,
+                        'status_check'                  => $revision->getStatusCheckLabelAttribute(),
+                        'ikw_meeting'                   => $revision->ikwMeeting,
+                        'ikw_position'                  => $revision->ikwPosition,
+                    ];
+                });
+
+                $ikw = [
+                    'id'                             => $ikw->id,
+                    'revision_no'                    => $ikw->ikwRevision()->orderBy('revision_no', 'DESC')->first()->revision_no ?? 0,
+                    'job_task_id'                    => $ikw->job_task_id ?? "",
+                    'department_id'                  => $ikw->department_id ?? "",
+                    'department_name'                => $ikw->department->name ?? "",
+                    'code'                           => $ikw->code ?? "",
+                    'name'                           => $ikw->name ?? "",
+                    'total_page'                     => $ikw->total_page ?? "",
+                    'registration_date'              => $ikw->registration_date ?: null,
+                    'print_by_back_office_date'      => $ikw->print_by_back_office_date ?: null,
+                    'submit_to_department_date'      => $ikw->submit_to_department_date ?: null,
+                    'ikw_return_date'                => $ikw->ikw_return_date ?: null,
+                    'ikw_creation_duration'          => $ikw->ikw_creation_duration ?? "",
+                    'status_document'                => $ikw->status_document ?? "",
+                    'last_update_date'               => $ikw->last_update_date ?: null,
+                    'description'                    => $ikw->description ?? "",
+                    'ikw_revisions'                  => $revisionData,
+                    'job_task'                       => $ikw->ikwJobTask ? $ikw->ikwJobTask()->with('jobTask')->get() : null,
+                    'job_desc'                       => $ikw->ikwJobDescription ? $ikw->ikwJobDescription()->with('jobDescription')->get() : null,
+                ];
+            }
         } else {
             $ikw = $this->ikw->get()->map(function ($data) {
                 return [
