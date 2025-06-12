@@ -7,7 +7,6 @@ use App\Models\IKW;
 use App\Models\IkwMeeting;
 use App\Models\IkwPosition;
 use App\Models\IKWRevision;
-use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
 use Illuminate\Bus\Queueable;
@@ -43,6 +42,7 @@ class ImportIkwJob implements ShouldQueue
             $reader->open(storage_path('app/public/' . $this->filepath));
             $dataIkw = [];
             $dataIkwMeeting = [];
+            $dataRevisionIkw0 = [];
             $dataRevisionIkw = [];
             $dataPosition = [];
             $sheetCollections = [];
@@ -65,7 +65,7 @@ class ImportIkwJob implements ShouldQueue
 
 
             if (isset($sheetCollections["Data IKW"])) {
-                $sheetCollections["Data IKW"]->chunk(200)->each(function ($rows) use (&$dataIkw, &$dataIkwMeeting, &$dataPosition, &$headers) {
+                $sheetCollections["Data IKW"]->chunk(200)->each(function ($rows) use (&$dataIkw, &$dataRevisionIkw0, &$dataIkwMeeting, &$dataPosition, &$headers) {
                     $rowData = $rows->toArray();
 
                     if (isset($rowData['headers'])) {
@@ -77,14 +77,16 @@ class ImportIkwJob implements ShouldQueue
                             continue;
                         }
 
-                        $getIkwRows = $this->saveDataIkw($dataIkw, $dataIkwMeeting, $dataPosition, $row, $headers);
+                        $getIkwRows = $this->saveDataIkw($dataIkw, $dataRevisionIkw0, $dataIkwMeeting, $dataPosition, $row, $headers);
 
                         $dataIkw = $getIkwRows['dataIkw'];
                         $dataIkwMeeting = $getIkwRows['dataIkwMeeting'];
                         $dataPosition = $getIkwRows['dataIkwPosition'];
+                        $dataRevisionIkw0 = $getIkwRows['dataRevisionIkw0'];
                     }
 
                     $this->insertChunkIkw($dataIkw, $dataIkwMeeting, $dataPosition);
+                    $this->insertChunkIkwRev0($dataRevisionIkw0);
 
                     $dataIkw = [];
                     $dataIkwMeeting = [];
@@ -135,7 +137,7 @@ class ImportIkwJob implements ShouldQueue
         }
     }
 
-    public function saveDataIkw($dataIkw, $dataIkwMeeting, $dataPosition, $row, $headers)
+    public function saveDataIkw($dataIkw, $dataRevisionIkw0, $dataIkwMeeting, $dataPosition, $row, $headers)
     {
         $departmentId = $this->department->where('code', $row[0])->first()->id ?? null;
 
@@ -158,9 +160,39 @@ class ImportIkwJob implements ShouldQueue
 
         ];
 
+        // IF IKW REV NO EQUAL TO 0
+        if ((int) $row[3] == 0) {
+            $dataRevisionIkw0[] = [
+                'department_code'               => $row[0],
+                'ikw_code'                      => $cleanCode,
+                'revision_no'                   => (int) $row[3],
+                'reason'                        => "",
+                'process_status'                => NULL,
+                'ikw_fix_status'                => NULL,
+                'confirmation'                  => NULL,
+                'change_description'            => "",
+                'submission_no'                 => "",
+                'submission_received_date'      => NULL,
+                'submission_mr_date'            => NULL,
+                'backoffice_return_date'        => NULL,
+                'revision_status'               => 0,
+                'print_date'                    => NULL,
+                'handover_date'                 => NULL,
+                'signature_mr_date'             => NULL,
+                'distribution_date'             => NULL,
+                'document_return_date'          => NULL,
+                'document_disposal_date'        => NULL,
+                'document_location_description' => "",
+                'revision_description'          => "",
+                'status_check'                  => 0,
+            ];
+        }
+
         foreach ($row as $index => $cell) {
+            // to check if cell is date time
             $isDateTime = $cell instanceof \DateTimeImmutable;
 
+            // check if header contain Tanggal Meeting
             if (preg_match('/^Tanggal Meeting \d+$/i', $headers[$index])) {
                 $meetingDuration = isset($row[$index + 1]) ? $row[$index + 1] : NULL;
                 $meetingOKNOK = isset($row[$index + 2]) ? $row[$index + 2] : NULL;
@@ -175,6 +207,7 @@ class ImportIkwJob implements ShouldQueue
                 ];
             }
 
+            // check if header contain Position Call
             if (preg_match('/Position Call Number\s*\d*/i', $headers[$index])) {
                 $positionCall = $cell;
                 $fieldOperator = isset($row[$index + 1]) ? $row[$index + 1] : NULL;
@@ -191,9 +224,10 @@ class ImportIkwJob implements ShouldQueue
 
 
         return [
-            'dataIkw'         => $dataIkw,
-            'dataIkwMeeting'  => $dataIkwMeeting,
-            'dataIkwPosition' => $dataPosition,
+            'dataIkw'           => $dataIkw,
+            'dataRevisionIkw0'  => $dataRevisionIkw0,
+            'dataIkwMeeting'    => $dataIkwMeeting,
+            'dataIkwPosition'   => $dataPosition,
         ];
     }
 
@@ -235,42 +269,65 @@ class ImportIkwJob implements ShouldQueue
     {
         IKW::upsert(array_values($dataIkw), ['code', 'name', 'department_id_non_null'], ['total_page', 'registration_date', 'print_by_back_office_date', 'submit_to_department_date', 'ikw_return_date', 'ikw_creation_duration', 'status_document', 'last_update_date']);
 
-        // $checkMeetingExist = IkwMeeting::whereIn('department_id', array_column($dataIkwMeeting, 'department_id'))
-        //     ->whereIn('revision_no', array_column($dataIkwMeeting, 'revision_no'))
-        //     ->whereIn('ikw_code', array_column($dataIkwMeeting, 'ikw_code'))
-        //     ->pluck('revision_no', 'department_id', 'ikw_code')
-        //     ->toArray();
-
-        // $checkPositionExist = IkwPosition::whereIn('department_id', array_column($dataPosition, 'department_id'))
-        //     ->whereIn('revision_no', array_column($dataPosition, 'revision_no'))
-        //     ->whereIn('ikw_code', array_column($dataPosition, 'ikw_code'))
-        //     ->get(['revision_no', 'department_id', 'ikw_code'])
-        //     ->toArray();
-
-
-        // $transformIkwMeeting = array_filter($dataIkwMeeting, function ($item) use ($checkMeetingExist) {
-        //     return !in_array([
-        //         'department_id' => $item['department_id'],
-        //         'revision_no'   => $item['revision_no'],
-        //         'ikw_code'      => $item['ikw_code']
-        //     ], $checkMeetingExist);
-        // });
-
-        // $transformPosition = array_filter($dataPosition, function ($item) use ($checkPositionExist) {
-        //     return !in_array([
-        //         'department_id' => $item['department_id'],
-        //         'revision_no'   => $item['revision_no'],
-        //         'ikw_code'      => $item['ikw_code']
-        //     ], $checkPositionExist);
-        // });
-
-        // if (!empty($transformIkwMeeting)) {
         IkwMeeting::upsert($dataIkwMeeting, ['department_id_non_null', 'ikw_code', 'ikw_meeting_no', 'revision_no'], ['ikw_revision_id', 'meeting_date', 'meeting_duration', 'revision_status']);
-        // }
 
-        // if (!empty($transformPosition)) {
         IkwPosition::upsert($dataPosition, ['department_id_non_null', 'ikw_code', 'ikw_position_no', 'revision_no'], ['ikw_revision_id', 'position_call_number', 'field_operator']);
-        // }
+    }
+
+    public function insertChunkIkwRev0($dataRevisionIkw0)
+    {
+        $insertedData = [];
+
+        foreach ($dataRevisionIkw0 as $data) {
+            $ikw = $this->findDataIkw($data['ikw_code'], $data['department_code']);
+            $insertedData[] = [
+                'ikw_id'                        => $ikw->id ?? null,
+                'ikw_code'                      => $data['ikw_code'],
+                'revision_no'                   => $data['revision_no'],
+                'reason'                        => $data['reason'],
+                'process_status'                => $data['process_status'],
+                'ikw_fix_status'                => $data['ikw_fix_status'],
+                'confirmation'                  => $data['confirmation'],
+                'change_description'            => $data['change_description'],
+                'submission_no'                 => $data['submission_no'],
+                'submission_received_date'      => $data['submission_received_date'],
+                'submission_mr_date'            => $data['submission_mr_date'],
+                'backoffice_return_date'        => $data['backoffice_return_date'],
+                'revision_status'               => $data['revision_status'],
+                'print_date'                    => $data['print_date'],
+                'handover_date'                 => $data['handover_date'],
+                'signature_mr_date'             => $data['signature_mr_date'],
+                'distribution_date'             => $data['distribution_date'],
+                'document_return_date'          => $data['document_return_date'],
+                'document_disposal_date'        => $data['document_disposal_date'],
+                'document_location_description' => $data['document_location_description'],
+                'revision_description'          => $data['revision_description'],
+                'status_check'                  => $data['status_check'],
+            ];
+        }
+
+        IKWRevision::upsert($insertedData, ['ikw_id_non_null', 'ikw_code', 'revision_no'], [
+            'ikw_id',
+            'reason',
+            'process_status',
+            'ikw_fix_status',
+            'confirmation',
+            'change_description',
+            'submission_no',
+            'submission_received_date',
+            'submission_mr_date',
+            'backoffice_return_date',
+            'revision_status',
+            'print_date',
+            'handover_date',
+            'signature_mr_date',
+            'distribution_date',
+            'document_return_date',
+            'document_disposal_date',
+            'document_location_description',
+            'revision_description',
+            'status_check',
+        ]);
     }
 
     public function insertChunkRevisionIkw($dataRevisionIkw)
