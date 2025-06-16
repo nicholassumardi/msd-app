@@ -87,7 +87,6 @@ class ImportRkiJob implements ShouldQueue
     }
     public function insertChunk($dataArrayRKI)
     {
-        // RKI::insert($dataArrayRKI);
         RKI::upsert($dataArrayRKI, ['position_job_code', 'ikw_id_non_null'], ['ikw_id', 'training_time']);
     }
 }
