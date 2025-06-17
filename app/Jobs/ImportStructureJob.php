@@ -297,6 +297,7 @@ class ImportStructureJob implements ShouldQueue
 
         $now = Carbon::now();
 
+        // TO RECORD HISTORIES OF STRUCTURE REVISION
         $histories = $usmRecords->map(function ($usm) use ($now) {
             return [
                 'user_structure_mapping_id' => $usm->id,

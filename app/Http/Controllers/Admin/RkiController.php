@@ -133,6 +133,26 @@ class RkiController extends Controller
         return response()->json($response);
     }
 
+    public function showByIKW(Request $request)
+    {
+        $data = $this->service->getDataRKIByIKW($request);
+
+        if ($data) {
+            $response = [
+                'status'     => 200,
+                'data'       => $data,
+                'message'    => 'Successfully fetched data training'
+            ];
+        } else {
+            $response = [
+                'status' => 500,
+                'message' => 'Failed to fetch data training'
+            ];
+        }
+
+        return response()->json($response);
+    }
+
     public function showRkiPagination(Request $request)
     {
         $data = $this->service->getDataRKIPagination($request);

@@ -39,12 +39,12 @@ class ImportRkiJob implements ShouldQueue
                 if ($i == 1) {
                     foreach ($sheet->getRowIterator() as $key => $row) {
                         if ($key != 1) {
-                            $ikw = $this->findIkw($row->getCells()[2]->getValue(), $row->getCells()[3]->getValue(), $row->getCells()[7]->getComputedValue());
+                            $ikw = $this->findIkw($row->getCells()[3]->getValue(), $row->getCells()[4]->getValue(), $row->getCells()[8]->getComputedValue());
 
                             $data = [
                                 'position_job_code'  => $row->getCells()[1]->getValue() ?? NULL,
                                 'ikw_id'             => $ikw->id ?? NULL,
-                                'training_time'      => (int) $row->getCells()[5]->getValue() ?? NULL,
+                                'training_time'      => (int) $row->getCells()[6]->getValue() ?? NULL,
                             ];
 
                             $dataArrayRKI[] = $data;
@@ -57,7 +57,6 @@ class ImportRkiJob implements ShouldQueue
                     }
                 }
             }
-            // dd($dataArrayRKI);
 
             if (count($dataArrayRKI) != 0) {
                 $this->insertChunk($dataArrayRKI);
@@ -80,11 +79,12 @@ class ImportRkiJob implements ShouldQueue
     public function findIkw($arg1, $arg2, $arg3)
     {
         return IKW::where('code', $arg1)
-            ->where('name', 'LIKE', "%$arg2%")
+            ->whereFuzzy('name', $arg2)
             ->whereHas('department', function ($query) use ($arg3) {
-                $query->where('code', $arg3);
+                $query->whereFuzzy('code', $arg3);
             })->first();
     }
+
     public function insertChunk($dataArrayRKI)
     {
         RKI::upsert($dataArrayRKI, ['position_job_code', 'ikw_id_non_null'], ['ikw_id', 'training_time']);

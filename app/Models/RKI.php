@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class RKI extends Model
 {
@@ -26,9 +27,8 @@ class RKI extends Model
 
     public function userJobCode()
     {
-        return $this->belongsToMany(UserJobCode::class)
-            ->join('job_codes', 'job_codes.id', '=', 'user_job_code.job_code_id')
-            ->whereRaw("CONCAT(job_codes.full_code, '-', user_job_code.position_code_structure) = rkis.position_job_code")
-            ->select('user_job_code.*');
+        $positionCode = Str::after($this->position_job_code, '-');
+        return $this->hasMany(UserJobCode::class,'position_code_structure', $positionCode);
+          
     }
 }

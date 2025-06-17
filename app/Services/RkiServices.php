@@ -13,7 +13,7 @@ class RkiServices extends BaseServices
 
     public function __construct()
     {
-        $this->rki = RKI::with('ikw');
+        $this->rki = RKI::with('ikw', 'userJobCode');
     }
 
     public function importRKIExcel(Request $request)
@@ -116,6 +116,25 @@ class RkiServices extends BaseServices
 
         return $rki;
     }
+    public function getDataRKIByIKW(Request $request)
+    {
+        if ($request->ikw_id) {
+            $rki = $this->rki->where('ikw_id', $request->ikw_id)->get()->map(function ($data) {
+                return [
+                    'id'                 => $data->id,
+                    'unique_code'        => $data->ikw->code ?? "No Code" . "/" . $data->position_job_code ?? "",
+                    'position_job_code'  => $data->position_job_code ?? "",
+                    'no_ikw'             => $data->ikw->code ?? "",
+                    'ikw_name'           => $data->ikw->name ?? "",
+                    'ikw_page'           => $data->ikw->total_page ?? "",
+                    'department'         => $data->ikw->department->code ?? "",
+                    'training_time'      => $data->training_time ?? "",
+                ];
+            });
+        }
+
+        return $rki;
+    }
 
     public function getDataRKI($id_rki = NULL)
     {
@@ -142,8 +161,8 @@ class RkiServices extends BaseServices
 
     public function getDataRKIPagination(Request $request)
     {
-        $start = (int)$request->start ?? 0;
-        $size = (int)$request->size ?? 6;
+        $start = (int)$request->start ? (int)$request->start : 0;
+        $size = (int)$request->size ? (int)$request->size : 6;
         $filters = json_decode($request->filters, true) ?? [];
         $sorting = json_decode($request->sorting, true) ?? [];
         $globalFilter = $request->globalFilter ?? '';
