@@ -14,7 +14,8 @@ class RKI extends Model
     protected $primaryKey = 'id';
     protected $dates      = ['deleted_at'];
     protected $fillable = [
-        'position_job_code',
+        // 'position_job_code',
+        'user_structure_mapping_id',
         'ikw_id',
         'training_time',
     ];
@@ -25,10 +26,14 @@ class RKI extends Model
         return $this->belongsTo(IKW::class);
     }
 
-    public function userJobCode()
+    public function userStructureMapping()
     {
-        $positionCode = Str::after($this->position_job_code, '-');
-        return $this->hasMany(UserJobCode::class,'position_code_structure', $positionCode);
-          
+        return $this->belongsTo(UserStructureMapping::class, 'user_structure_mapping_id', 'id');
     }
+
+    // public function userJobCode()
+    // {
+    //     $positionCode = Str::after($this->position_job_code, '-');
+    //     return $this->hasMany(UserJobCode::class, 'position_code_structure', $positionCode);
+    // }
 }

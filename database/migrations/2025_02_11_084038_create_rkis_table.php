@@ -15,11 +15,12 @@ class CreateRkisTable extends Migration
     {
         Schema::create('rkis', function (Blueprint $table) {
             $table->id();
-            $table->string('position_job_code')->nullable();
+            $table->foreignId('user_structure_mapping_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('ikw_id')->nullable()->constrained()->cascadeOnDelete();
             $table->integer('training_time')->nullable();
+            $table->integer('usm_id_non_null')->virtualAs('COALESCE(user_structure_mapping_id, 0)');
             $table->integer('ikw_id_non_null')->virtualAs('COALESCE(ikw_id, 0)');
-            $table->unique(['position_job_code', 'ikw_id_non_null']);
+            $table->unique(['usm_id_non_null', 'ikw_id_non_null']);
             $table->timestamps();
             $table->softDeletes();
         });

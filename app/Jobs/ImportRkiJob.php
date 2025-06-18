@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\IKW;
 use App\Models\RKI;
+use App\Models\UserStructureMapping;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -39,12 +40,14 @@ class ImportRkiJob implements ShouldQueue
                 if ($i == 1) {
                     foreach ($sheet->getRowIterator() as $key => $row) {
                         if ($key != 1) {
+                            $usm = $this->findUserStructureMapping($row->getCells()[1]->getValue());
                             $ikw = $this->findIkw($row->getCells()[3]->getValue(), $row->getCells()[4]->getValue(), $row->getCells()[8]->getComputedValue());
 
                             $data = [
-                                'position_job_code'  => $row->getCells()[1]->getValue() ?? NULL,
-                                'ikw_id'             => $ikw->id ?? NULL,
-                                'training_time'      => (int) $row->getCells()[6]->getValue() ?? NULL,
+                                // 'position_job_code'          => $row->getCells()[1]->getValue() ?? NULL,
+                                'user_structure_mapping_id'  => $usm->id ?? NULL,
+                                'ikw_id'                     => $ikw->id ?? NULL,
+                                'training_time'              => (int) $row->getCells()[6]->getValue() ?? NULL,
                             ];
 
                             $dataArrayRKI[] = $data;
@@ -76,6 +79,17 @@ class ImportRkiJob implements ShouldQueue
         }
     }
 
+    public function findUserStructureMapping($arg)
+    {
+        [$jobCode, $positionCode] = explode('-', $arg, 2);
+
+        return UserStructureMapping::whereHas('jobCode', function ($query) use ($jobCode) {
+            $query->where('full_code', $jobCode);
+        })
+            ->whereFuzzy('position_code_structure', $positionCode)
+            ->first();
+    }
+
     public function findIkw($arg1, $arg2, $arg3)
     {
         return IKW::where('code', $arg1)
@@ -87,6 +101,6 @@ class ImportRkiJob implements ShouldQueue
 
     public function insertChunk($dataArrayRKI)
     {
-        RKI::upsert($dataArrayRKI, ['position_job_code', 'ikw_id_non_null'], ['ikw_id', 'training_time']);
+        RKI::upsert($dataArrayRKI, ['usm_id_non_null', 'ikw_id_non_null'], ['user_structure_mapping_id', 'ikw_id', 'training_time']);
     }
 }
