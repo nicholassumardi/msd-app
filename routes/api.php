@@ -190,7 +190,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::post('store', [RkiController::class, 'store']);
         Route::get('show/{id}', [RkiController::class, 'show']);
         Route::get('show', [RkiController::class, 'showAll']);
-        Route::get('show_by_position_job_code', [RkiController::class, 'showByPositionJobCode']);
+        Route::get('show_by_user_structure_mapping', [RkiController::class, 'showByUserStructureMapping']);
         Route::get('show_by_ikw', [RkiController::class, 'showByIKW']);
         Route::get('show_rki_pagination', [RkiController::class, 'showRkiPagination']);
         Route::put('update/{id}', [RkiController::class, 'update']);

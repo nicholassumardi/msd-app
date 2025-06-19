@@ -274,9 +274,9 @@ class EvaluationServices extends BaseServices
             return [];
         }
 
-        $positionCode =  $employee->userJobCode()->where('status', 1)->first()?->jobCode->full_code . '-' . $employee->userJobCode()->where('status', 1)->first()?->position_code_structure;
+        $userStructureMappingID =  $employee->userJobCode()->where('status', 1)->first()?->user_structure_mapping_id;
 
-        $ikwIds =  $this->rki->where('position_job_code', $positionCode)
+        $ikwIds =  $this->rki->where('user_structure_mapping_id', $userStructureMappingID)
             ->pluck('ikw_id');
         if ($ikwIds->isEmpty()) {
             return [];
@@ -502,7 +502,6 @@ class EvaluationServices extends BaseServices
                     ->where('ikw_id', $request->ikw_id)
                     ->get()
                     ->map(function ($rki) use ($userJobCode) {
-
                         return [
                             'position_job_code'   => $rki->position_job_code,
                             'ikw_id'              => $rki->ikw_id,
@@ -541,7 +540,8 @@ class EvaluationServices extends BaseServices
                 }
                 $query->whereHas('training', function ($query) {
                     $query->where(function ($query) {
-                        $query->where('assessment_result', 'BK')->whereHas('ikwRevision')
+                        $query->where('assessment_result', 'BK')
+                            ->whereHas('ikwRevision')
                             ->orWhere(function ($query) {
                                 $query->whereHas('ikwRevision', function ($query) {
                                     $query->whereRaw(

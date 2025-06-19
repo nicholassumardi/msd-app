@@ -295,7 +295,7 @@ class UserStructureMappingServices extends BaseServices
             }])->firstWhere('id', $id_user_mapping);
             $userMapping['employee_number'] = "";
             $userMapping['superior'] = $userMapping->parent->name ?? "None";
-            $userMapping['company_name'] = $userMapping->department->company->name;
+            $userMapping['company_name'] = $userMapping->department->company->name ?? "None";
             // $userMapping['user_mapping_histories'] = $userMapping->userStructureMappingHistories->latest()->first() ?? NULL;
         } else {
             $userMapping = $this->userMapping->get();

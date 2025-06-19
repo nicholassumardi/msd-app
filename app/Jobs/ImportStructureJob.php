@@ -246,7 +246,7 @@ class ImportStructureJob implements ShouldQueue
         UserStructureMapping::upsert(
             $insertedData,
             ['job_code_id_non_null', 'name'],
-            ['quota']
+            ['department_id', 'quota', 'parent_id', 'position_code_structure', 'structure_type']
         );
 
         $updates = [];

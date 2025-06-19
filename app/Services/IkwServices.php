@@ -19,7 +19,7 @@ class IkwServices extends BaseServices
 
     public function __construct()
     {
-        $this->ikw = IKW::with('jobTask', 'ikwRevision');
+        $this->ikw = IKW::with('ikwRevision');
         $this->ikwRevision = IKWRevision::with('ikw', 'ikwMeeting', 'ikwPosition');
         $this->ikwMeeting = IkwMeeting::with('ikwRevision');
         $this->ikwPosition = IkwPosition::with('ikwRevision');
@@ -264,7 +264,6 @@ class IkwServices extends BaseServices
                 return [
                     'id'                             => $data->id,
                     'revision_no'                    => $data->ikwRevision()->orderBy('revision_no', 'DESC')->first()->revision_no ?? "",
-                    'job_task_id'                    => $data->job_task_id ?? "",
                     'department_id'                  => $data->department_id ?? "",
                     'department_name'                => $data->department->name ?? "",
                     'code'                           => $data->code ?? "",
@@ -433,7 +432,6 @@ class IkwServices extends BaseServices
             return [
                 'id'                             => $data->id,
                 'revision_no'                    => $data->ikwRevision()->orderBy('revision_no', 'DESC')->first()->revision_no ?? "",
-                'job_task_id'                    => $data->job_task_id ?? "",
                 'department_id'                  => $data->department_id ?? "",
                 'department_name'                => $data->department->name ?? "",
                 'code'                           => $data->code ?? "",

@@ -44,7 +44,6 @@ class ImportRkiJob implements ShouldQueue
                             $ikw = $this->findIkw($row->getCells()[3]->getValue(), $row->getCells()[4]->getValue(), $row->getCells()[8]->getComputedValue());
 
                             $data = [
-                                // 'position_job_code'          => $row->getCells()[1]->getValue() ?? NULL,
                                 'user_structure_mapping_id'  => $usm->id ?? NULL,
                                 'ikw_id'                     => $ikw->id ?? NULL,
                                 'training_time'              => (int) $row->getCells()[6]->getValue() ?? NULL,

@@ -33,11 +33,6 @@ class IKW extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function jobTask()
-    {
-        return $this->belongsTo(JobTask::class);
-    }
-
     public function ikwRevision()
     {
         return $this->hasMany(IKWRevision::class, 'ikw_id', 'id');

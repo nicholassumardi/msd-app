@@ -51,12 +51,4 @@ class UserJobCode extends Model
     {
         return $this->hasMany(UserJobCode::class, 'parent_id');
     }
-
-    public function rki()
-    {
-        $jobFullCode = $this->jobCode->full_code ?? "";
-        $computedKey = $jobFullCode . '-' . $this->position_code_structure;
-
-        return RKI::where('position_job_code', $computedKey)->whereNotNull('ikw_id');
-    }
 }

@@ -113,9 +113,9 @@ class RkiController extends Controller
         return response()->json($response);
     }
 
-    public function showByPositionJobCode(Request $request)
+    public function showByUserStructureMapping(Request $request)
     {
-        $data = $this->service->getDataRKIByPositionJobCode($request);
+        $data = $this->service->getDataRKIByUserStructureMapping($request);
 
         if ($data) {
             $response = [

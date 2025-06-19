@@ -46,7 +46,6 @@ class RkiServices extends BaseServices
             foreach ($request->ikws as $ikw_id) {
                 RKI::create([
                     'user_structure_mapping_id'   => $request->user_structure_mapping_id,
-                    'position_job_code'           => $request->position_job_code,
                     'ikw_id'                      => $ikw_id,
                     'training_time'               => (int) $request->training_time,
                 ]);
@@ -102,21 +101,25 @@ class RkiServices extends BaseServices
         }
     }
 
-    public function getDataRKIByPositionJobCode(Request $request)
+    public function getDataRKIByUserStructureMapping(Request $request)
     {
-        if ($request->position_job_code) {
-            $rki = $this->rki->where('position_job_code', $request->position_job_code)->get()->map(function ($data) {
+        $rki = collect();
+        if ($request->user_structure_mapping_id) {
+            $rki = $this->rki->where('user_structure_mapping_id', $request->user_structure_mapping_id)->get()?->map(function ($data) {
                 return [
-                    'id'                      => $data->id,
+                    'id'                      => $data->id ?? null,
                     'unique_code'             => $data->userStructureMapping
                         ?  $data->userStructureMapping->position_code_structure . "/" .
-                        ($data->ikw->code ?  $data->ikw->code : "No Code") : null,
+                        ($data->ikw ?  $data->ikw->code : "No Code") : null,
                     'user_structure_mapping'  => $data->userStructureMapping ?? "",
+                    'ikw_id'                  => $data->ikw->id ?? "",
                     'no_ikw'                  => $data->ikw->code ?? "",
                     'ikw_name'                => $data->ikw->name ?? "",
                     'ikw_page'                => $data->ikw->total_page ?? "",
                     'department'              => $data->ikw->department->code ?? "",
                     'training_time'           => $data->training_time ?? "",
+                    'job_task'                => $data->ikw?->ikwJobTask ? $data->ikw->ikwJobTask()->with('jobTask')->get() : null,
+                    'job_desc'                => $data->ikw?->ikwJobDescription ? $data->ikw->ikwJobDescription()->with('jobDescription')->get() : null,
                 ];
             });
         }
@@ -133,11 +136,14 @@ class RkiServices extends BaseServices
                         ?  $data->userStructureMapping->position_code_structure . "/" .
                         ($data->ikw->code ?  $data->ikw->code : "No Code") : null,
                     'user_structure_mapping'  => $data->userStructureMapping ?? "",
+                    'ikw_id'                  => $data->ikw->id ?? "",
                     'no_ikw'                  => $data->ikw->code ?? "",
                     'ikw_name'                => $data->ikw->name ?? "",
                     'ikw_page'                => $data->ikw->total_page ?? "",
                     'department'              => $data->ikw->department->code ?? "",
                     'training_time'           => $data->training_time ?? "",
+                    'job_task'                => $data->ikw->ikwJobTask ? $data->ikw->ikwJobTask()->with('jobTask')->get() : null,
+                    'job_desc'                => $data->ikw->ikwJobDescription ? $data->ikw->ikwJobDescription()->with('jobDescription')->get() : null,
                 ];
             });
         }
