@@ -102,7 +102,7 @@ class User extends Authenticatable
         return $query;
     }
 
-    public function getDetailIKW()
+    public function getDetailIKWTrained()
     {
         $jobCodeRecord = $this->userJobCode()->where('status', 1)->first();
         if (!$jobCodeRecord) {
@@ -136,6 +136,30 @@ class User extends Authenticatable
         }
 
         $resultArray = array_values($table);
+
+        return $resultArray;
+    }
+
+    public function getDetailRKI()
+    {
+        $jobCodeRecord = $this->userJobCode()->where('status', 1)->first();
+        if (!$jobCodeRecord) {
+            return [];
+        }
+
+        $rkiResults = RKI::where('user_structure_mapping_id', $jobCodeRecord->user_structure_mapping_id)
+            ->get();
+
+        $resultArray = [];
+        foreach ($rkiResults as $rki) {
+            $resultArray[] = [
+                'ikw_id'                  => $rki->ikw->id ?? "",
+                'no_ikw'                  => $rki->ikw->code ?? "",
+                'ikw_name'                => $rki->ikw->name ?? "",
+                'ikw_page'                => $rki->ikw->total_page ?? "",
+            ];
+        }
+
 
         return $resultArray;
     }
