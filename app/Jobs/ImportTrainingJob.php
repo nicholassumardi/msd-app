@@ -97,18 +97,18 @@ class ImportTrainingJob implements ShouldQueue
 
     public function saveDataTraining($dataTraning, $row, $usersByIdentity, $employeeNumbers, $departments, $ikwCache)
     {
-        $traineeId = $usersByIdentity[$row[3]] ?? ($employeeNumbers[$row[2]] ?? null);
-        $trainerId = $usersByIdentity[$row[11]] ?? ($employeeNumbers[$row[10]] ?? null);
-        $assessorId = $usersByIdentity[$row[18]] ?? ($employeeNumbers[$row[17]] ?? null);
+        $traineeId = $usersByIdentity[$row[2]] ?? ($employeeNumbers[$row[1]] ?? null);
+        $trainerId = $usersByIdentity[$row[9]] ?? ($employeeNumbers[$row[8]] ?? null);
+        $assessorId = $usersByIdentity[$row[17]] ?? ($employeeNumbers[$row[16]] ?? null);
         $ikwId = null;
 
         if ($traineeId) {
             $departmentId = $departments[$traineeId] ?? null;
-            $ikwKey = $row[7] . '-' . $departmentId;
+            $ikwKey = $row[6] . '-' . $departmentId;
             if (isset($ikwCache[$ikwKey])) {
                 $ikwId = $ikwCache[$ikwKey];
             } else {
-                $ikwRevision = $this->findIkw($row[7], $departmentId, $row[8]);
+                $ikwRevision = $this->findIkw($row[6], $departmentId, $row[7]);
                 $ikwId = $ikwRevision ? $ikwRevision->id : null;
                 $ikwCache[$ikwKey] = $ikwId;
             }
@@ -121,18 +121,18 @@ class ImportTrainingJob implements ShouldQueue
             'trainer_id'                     => $trainerId,
             'assessor_id'                    => $assessorId,
             'ikw_revision_id'                => $ikwId,
-            'training_plan_date'             => $this->parseDate($row[13]),
-            'training_realisation_date'      => $this->parseDate($row[14]),
-            'training_duration'              => (int) $row[15],
-            'ticket_return_date'             => $this->parseDate($row[16]),
+            'training_plan_date'             => $this->parseDate($row[12]),
+            'training_realisation_date'      => $this->parseDate($row[13]),
+            'training_duration'              => (int) $row[14],
+            'ticket_return_date'             => $this->parseDate($row[15]),
             'assessment_plan_date'           => $this->parseDate($row[20]),
-            'assessment_realisation_date'    => $this->parseDate($row[22]),
-            'assessment_duration'            => (int) $row[23],
-            'status_fa_print'                => (int) $row[21],
-            'assessment_result'              => $row[24],
-            'status'                         => $row[25] == 'DONE' ? 1 : 0,
-            'description'                    => $row[26],
-            'status_active'                  => $row[27] == 'AKTIF' ? 1 : 0,
+            'assessment_realisation_date'    => $this->parseDate($row[21]),
+            'assessment_duration'            => (int) $row[22],
+            // 'status_fa_print'                => (int) $row[21],
+            'assessment_result'              => $row[23],
+            // 'status'                         => $row[25] == 'DONE' ? 1 : 0,
+            'description'                    => $row[24],
+            // 'status_active'                  => $row[27] == 'AKTIF' ? 1 : 0,
         ];
 
         return $dataTraning;
@@ -166,7 +166,6 @@ class ImportTrainingJob implements ShouldQueue
                 $query->where('id', $arg2);
             });
         })
-            // ->orderBy('revision_no', 'DESC')
             ->where('revision_no', (int) $arg3)
             ->first();
     }

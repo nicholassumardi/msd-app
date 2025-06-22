@@ -141,6 +141,10 @@ class ImportIkwJob implements ShouldQueue
     {
         $departmentId = $this->department->where('code', $row[0])->first()->id ?? null;
 
+        if (is_null($departmentId)) {
+            return;
+        }
+
         $cleanCode = preg_replace('/^\(H\d*\)\s*/', '', $row[1]);
 
         $key = $departmentId . '_' . $cleanCode;
@@ -235,6 +239,10 @@ class ImportIkwJob implements ShouldQueue
     {
 
         $ikw_id = $this->findDataIkw($row[3], $row[2])->id ?? NULL;
+
+        if (is_null($ikw_id)) {
+            return $dataIkwRevision;
+        }
 
         $dataIkwRevision[] = [
             'ikw_id'                        => $ikw_id ?? NULL,
