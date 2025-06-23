@@ -28,7 +28,7 @@ class CreateIkwsTable extends Migration
             $table->date('last_update_date')->nullable();
             $table->string('description')->nullable();
             $table->integer('department_id_non_null')->virtualAs('COALESCE(department_id, 0)');
-            $table->unique(['department_id_non_null', 'name', 'code']);
+            $table->unique(['department_id_non_null', 'code']);
             $table->timestamps();
             $table->softDeletes();
         });

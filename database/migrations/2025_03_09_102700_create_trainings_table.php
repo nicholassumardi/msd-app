@@ -30,11 +30,11 @@ class CreateTrainingsTable extends Migration
             $table->date('assessment_plan_date')->nullable();
             $table->date('assessment_realisation_date')->nullable();
             $table->integer('assessment_duration')->nullable();
-            $table->tinyInteger('status_fa_print')->nullable();
+            // $table->tinyInteger('status_fa_print')->nullable();
             $table->string('assessment_result')->nullable()->comment('K | BK | RK');
-            $table->tinyInteger('status')->nullable()->comment('1:Done | 0:Not Done');
+            // $table->tinyInteger('status')->nullable()->comment('1:Done | 0:Not Done');
             $table->text('description')->nullable();
-            $table->tinyInteger('status_active')->nullable()->comment('1:Active | 0:Not Active');
+            // $table->tinyInteger('status_active')->nullable()->comment('1:Active | 0:Not Active');
             $table->unique(['no_training', 'trainee_id']);
             $table->timestamps();
             $table->softDeletes();

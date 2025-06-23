@@ -15,6 +15,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\LazyCollection;
@@ -26,11 +27,13 @@ class ImportIkwJob implements ShouldQueue
 
     protected $filepath;
     protected $department;
+    protected $cacheKey;
 
-    public function __construct($filepath)
+    public function __construct($filepath, $cacheKey)
     {
         $this->filepath = $filepath;
         $this->department = Department::all();
+        $this->cacheKey = $cacheKey;
     }
 
     public function handle()
@@ -122,18 +125,42 @@ class ImportIkwJob implements ShouldQueue
                 }
             }
 
-            $reader->close();
+            if (!isset($sheetCollections["Data IKW"]) && !isset($sheetCollections["Data Revisi"])) {
+                Cache::put(
+                    $this->cacheKey,
+                    'Sheet not found please make sure you have the correct format!',
+                    now()->addMinutes(10)
+                );
+                Storage::delete($this->filepath);
+                DB::rollBack();
+
+                return false;
+            }
 
             Storage::delete($this->filepath);
 
-
             DB::commit();
+
+            Cache::put(
+                $this->cacheKey,
+                'Successfully import IKW file',
+                now()->addMinutes(10)
+            );
 
             return true;
         } catch (\Exception $e) {
-            echo $e->getMessage();
+            Cache::put(
+                $this->cacheKey,
+                'Failed to process: ' . $e->getMessage(),
+                now()->addMinutes(10)
+            );
+            Storage::delete($this->filepath);
+
             DB::rollBack();
+
             return false;
+        } finally {
+            $reader->close();
         }
     }
 
@@ -275,7 +302,7 @@ class ImportIkwJob implements ShouldQueue
 
     public function insertChunkIkw($dataIkw, $dataIkwMeeting, $dataPosition)
     {
-        IKW::upsert(array_values($dataIkw), ['code', 'name', 'department_id_non_null'], ['total_page', 'registration_date', 'print_by_back_office_date', 'submit_to_department_date', 'ikw_return_date', 'ikw_creation_duration', 'status_document', 'last_update_date']);
+        IKW::upsert(array_values($dataIkw), ['code', 'department_id_non_null'], ['name', 'total_page', 'registration_date', 'print_by_back_office_date', 'submit_to_department_date', 'ikw_return_date', 'ikw_creation_duration', 'status_document', 'last_update_date']);
 
         IkwMeeting::upsert($dataIkwMeeting, ['department_id_non_null', 'ikw_code', 'ikw_meeting_no', 'revision_no'], ['ikw_revision_id', 'meeting_date', 'meeting_duration', 'revision_status']);
 

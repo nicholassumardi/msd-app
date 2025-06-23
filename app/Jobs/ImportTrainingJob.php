@@ -151,11 +151,11 @@ class ImportTrainingJob implements ShouldQueue
             'assessment_plan_date',
             'assessment_realisation_date',
             'assessment_duration',
-            'status_fa_print',
+            // 'status_fa_print',
             'assessment_result',
-            'status',
+            // 'status',
             'description',
-            'status_active',
+            // 'status_active',
         ]);
     }
 

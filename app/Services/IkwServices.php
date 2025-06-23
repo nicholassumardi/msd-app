@@ -25,11 +25,11 @@ class IkwServices extends BaseServices
         $this->ikwPosition = IkwPosition::with('ikwRevision');
     }
 
-    public function importIKWExcel(Request $request)
+    public function importIKWExcel(Request $request,  $cacheKey)
     {
         $file = $request->file;
         $filepath = $file->storeAs('temp', $request->file->getClientOriginalName(), 'public');
-        $query =  ImportIkwJob::dispatch($filepath);
+        $query =  ImportIkwJob::dispatch($filepath,  $cacheKey);
 
         if ($query) {
             return true;

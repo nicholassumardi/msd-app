@@ -52,19 +52,22 @@ class IkwController extends Controller
 
     public function importIKWExcel(Request $request)
     {
-        $query = $this->service->importIKWExcel($request);
+        $cacheKey = uniqid();
+        $query = $this->service->importIKWExcel($request, $cacheKey);
 
-        if ($query) {
-            $response = [
-                'status' => 201,
-                'message' => "Successfully import data IKW"
-            ];
-        } else {
-            $response = [
-                'status' => 500,
-                'message' => "Failed import data IKW"
-            ];
-        }
+        // if ($query) {
+        //     $response = [
+        //         'status' => 201,
+        //         'message' => "Successfully import data"
+        //     ];
+        // } else {
+        $message = Cache::get($cacheKey);
+
+        $response = [
+            'status'  => 500,
+            'message' => $message
+        ];
+        // }
 
         return response()->json($response);
     }
