@@ -114,6 +114,9 @@ class ImportTrainingJob implements ShouldQueue
             }
         }
 
+        if (is_null($ikwId)) {
+            return $dataTraning;
+        }
 
         $dataTraning[] = [
             'no_training'                    => $row[0],

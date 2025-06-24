@@ -88,6 +88,7 @@ class ImportIkwJob implements ShouldQueue
                         $dataRevisionIkw0 = $getIkwRows['dataRevisionIkw0'];
                     }
 
+
                     $this->insertChunkIkw($dataIkw, $dataIkwMeeting, $dataPosition);
                     $this->insertChunkIkwRev0($dataRevisionIkw0);
 
@@ -128,8 +129,11 @@ class ImportIkwJob implements ShouldQueue
             if (!isset($sheetCollections["Data IKW"]) && !isset($sheetCollections["Data Revisi"])) {
                 Cache::put(
                     $this->cacheKey,
-                    'Sheet not found please make sure you have the correct format!',
-                    now()->addMinutes(10)
+                    [
+                        'status' => 500,
+                        'message' => 'Sheet not found please make sure you have the correct format!',
+                    ],
+                    now()->addMinutes(3)
                 );
                 Storage::delete($this->filepath);
                 DB::rollBack();
@@ -143,16 +147,22 @@ class ImportIkwJob implements ShouldQueue
 
             Cache::put(
                 $this->cacheKey,
-                'Successfully import IKW file',
-                now()->addMinutes(10)
+                [
+                    'status' => 201,
+                    'message' => 'Successfully imported data',
+                ],
+                now()->addMinutes(3)
             );
 
             return true;
         } catch (\Exception $e) {
             Cache::put(
                 $this->cacheKey,
-                'Failed to process: ' . $e->getMessage(),
-                now()->addMinutes(10)
+                [
+                    'status' => 500,
+                    'message' => 'Failed to process: ' . $e->getMessage(),
+                ],
+                now()->addMinutes(3)
             );
             Storage::delete($this->filepath);
 
@@ -168,8 +178,14 @@ class ImportIkwJob implements ShouldQueue
     {
         $departmentId = $this->department->where('code', $row[0])->first()->id ?? null;
 
+
         if (is_null($departmentId)) {
-            return;
+            return [
+                'dataIkw'           => $dataIkw,
+                'dataRevisionIkw0'  => $dataRevisionIkw0,
+                'dataIkwMeeting'    => $dataIkwMeeting,
+                'dataIkwPosition'   => $dataPosition,
+            ];
         }
 
         $cleanCode = preg_replace('/^\(H\d*\)\s*/', '', $row[1]);

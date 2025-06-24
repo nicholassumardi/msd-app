@@ -120,6 +120,26 @@ class TrainingController extends Controller
         return response()->json($response);
     }
 
+    public function showByUUID($uuid)
+    {
+        $data = $this->service->getDataTrainingByUUID($uuid);
+
+        if ($data) {
+            $response = [
+                'status'     => 200,
+                'data'       => $data,
+                'message'    => 'Successfully fetched data training'
+            ];
+        } else {
+            $response = [
+                'status'  => 500,
+                'message' => 'Failed to fetch data training'
+            ];
+        }
+
+        return response()->json($response);
+    }
+
     public function showTrainingPagination(Request $request)
     {
         $data = $this->service->getDataTrainingPagination($request);

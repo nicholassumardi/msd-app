@@ -17,7 +17,7 @@ class JobTaskDescController extends Controller
     {
         $this->service = new JobTaskDescriptionServices();
     }
-    public function importStructureExcel(Request $request)
+    public function importJobTaskDescExcel(Request $request)
     {
 
         $cacheKey = uniqid();

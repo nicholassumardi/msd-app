@@ -202,6 +202,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::post('import', [TrainingController::class, 'importTrainingExcel']);
         Route::post('store', [TrainingController::class, 'store']);
         Route::get('show/{id}', [TrainingController::class, 'show']);
+        Route::get('show_by_uuid/{uuid}', [TrainingController::class, 'showByUUID']);
         Route::get('show', [TrainingController::class, 'showAll']);
         Route::get('show_training_pagination', [TrainingController::class, 'showTrainingPagination']);
         Route::put('update/{id}', [TrainingController::class, 'update']);

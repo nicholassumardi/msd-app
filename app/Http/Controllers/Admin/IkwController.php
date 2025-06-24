@@ -54,20 +54,11 @@ class IkwController extends Controller
     {
         $cacheKey = uniqid();
         $query = $this->service->importIKWExcel($request, $cacheKey);
+        $response = [];
 
-        // if ($query) {
-        //     $response = [
-        //         'status' => 201,
-        //         'message' => "Successfully import data"
-        //     ];
-        // } else {
-        $message = Cache::get($cacheKey);
-
-        $response = [
-            'status'  => 500,
-            'message' => $message
-        ];
-        // }
+        if ($query) {
+            $response = Cache::get($cacheKey);
+        }
 
         return response()->json($response);
     }

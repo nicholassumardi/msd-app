@@ -128,6 +128,16 @@ class ImportJobTaskDescJob implements ShouldQueue
         $taskDescription = $row[5] ?? null;
         $descDescription = $row[4] ?? null;
 
+
+        if (is_null($ikwId) || is_null($userStructureMapping)) {
+            return [
+                'jobTask'    => $dataJobTask,
+                'jobDesc'    => $dataJobDesc,
+                'ikwJobTask' => $dataIKWJobTask,
+                'ikwJobDesc' => $dataIKWJobDesc,
+            ];
+        }
+
         if ($taskDescription) {
             $dataJobTask[$taskDescription] = [
                 'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
