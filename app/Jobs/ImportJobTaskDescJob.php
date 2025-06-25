@@ -255,7 +255,8 @@ class ImportJobTaskDescJob implements ShouldQueue
 
     private function findJobTask($arg1, $arg2)
     {
-        return JobTask::where('user_structure_mapping_id', $arg1)->whereFuzzy('description', $arg2)
+        return JobTask::where('user_structure_mapping_id', $arg1)
+            ->whereFuzzy('description', $arg2)
             ->first();
     }
 }
