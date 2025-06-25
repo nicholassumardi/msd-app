@@ -147,6 +147,10 @@ class User extends Authenticatable
             return [];
         }
 
+        $trainingResults = Training::where('trainee_id', $this->id)
+            ->select('ikw_revision_id', 'assessment_result')
+            ->get();
+
         $rkiResults = RKI::where('user_structure_mapping_id', $jobCodeRecord->user_structure_mapping_id)
             ->get();
 
@@ -154,7 +158,7 @@ class User extends Authenticatable
         foreach ($rkiResults as $rki) {
             $resultArray[] = [
                 'ikw_id'                  => $rki->ikw->id ?? "",
-                'no_ikw'                  => $rki->ikw->code ?? "",
+                'ikw_code'                => $rki->ikw->code ?? "",
                 'ikw_name'                => $rki->ikw->name ?? "",
                 'ikw_page'                => $rki->ikw->total_page ?? "",
             ];
