@@ -148,22 +148,29 @@ class User extends Authenticatable
         }
 
         $trainingResults = Training::where('trainee_id', $this->id)
-            ->select('ikw_revision_id', 'assessment_result')
-            ->get();
+            ->pluck('assessment_result', 'ikw_revision_id')
+            ->all();
 
         $rkiResults = RKI::where('user_structure_mapping_id', $jobCodeRecord->user_structure_mapping_id)
             ->get();
 
         $resultArray = [];
         foreach ($rkiResults as $rki) {
+            if (!$rki->ikw) continue;
+
+            $result = $trainingResults[$rki->ikw->ikwRevision()
+                ->where('revision_no', function ($query) {
+                    $query->selectRaw('MAX(revision_no)');
+                })->first()->id] ?? "-";
+
             $resultArray[] = [
                 'ikw_id'                  => $rki->ikw->id ?? "",
                 'ikw_code'                => $rki->ikw->code ?? "",
                 'ikw_name'                => $rki->ikw->name ?? "",
                 'ikw_page'                => $rki->ikw->total_page ?? "",
+                'result'                  => $result,
             ];
         }
-
 
         return $resultArray;
     }
