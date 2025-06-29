@@ -172,6 +172,10 @@ class User extends Authenticatable
             ];
         }
 
-        return $resultArray;
+        return [
+            'data'                    => $resultArray,
+            'totalIKWCompetent'       => collect($resultArray)->where('result', 'K')->count(),
+            'totalIKW'                => count($resultArray),
+        ];
     }
 }
