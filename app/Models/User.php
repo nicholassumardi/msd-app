@@ -99,7 +99,19 @@ class User extends Authenticatable
 
         $query = UserJobCode::where('user_structure_mapping_id', $this->userJobCode()->where('status', 1)->first()->user_structure_mapping_id)->where('status', 1)->count();
 
-        return $query;
+        return $query ?? 0;
+    }
+
+    public function getTotalSubordinate()
+    {
+
+        if (!$this->userJobCode()->where('status', 1)->first()) {
+            return null;
+        }
+
+        $query = $this->userJobCode()->where('status', 1)->first()->children()->count();
+
+        return $query ?? 0;
     }
 
     public function getDetailIKWTrained()

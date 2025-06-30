@@ -190,16 +190,20 @@ class EvaluationServices extends BaseServices
     public function getTrainingPlanningRKI($id)
     {
         $employee = $this->user->firstWhere('id', $id);
-        $structureCode =  $employee->userJobCode()->where('status', 1)->first()?->jobCode->full_code . '-' . $employee->userJobCode()->where('status', 1)->first()?->position_code_structure;
+        $structureCode =  $employee->userJobCode()->where('status', 1)->first()?->user_structure_mapping_id;
 
 
-        $dataRki = $this->rki->where('position_job_code', $structureCode)->pluck('ikw_id');
+        $revisionIDs = $this->rki
+            ->where('user_structure_mapping_id', $structureCode)
+            ->whereHas('ikw.ikwRevision')
+            ->with(['ikw.ikwRevision' => fn($q) => $q->orderByDesc('revision_no')])
+            ->get()
+            ->flatMap(fn($rki) => optional($rki->ikw->ikwRevision->sortByDesc('revision_no')->first())->id ? [$rki->ikw->ikwRevision->sortByDesc('revision_no')->first()->id] : []);
 
-        if ($dataRki) {
-            $dataIkwRevision = $this->ikwRevision->whereIn('ikw_id', $dataRki)->pluck('id');
+        if ($revisionIDs) {
             $result = DB::table('trainings')
                 ->where('trainee_id', $id)
-                ->whereIn('ikw_revision_id', $dataIkwRevision)
+                ->whereIn('ikw_revision_id', $revisionIDs)
                 ->select(
                     // Total planned trainings
                     DB::raw('COALESCE(COUNT(training_plan_date), 0) as planning'),
@@ -411,7 +415,7 @@ class EvaluationServices extends BaseServices
     {
         $trainer = $this->user->firstWhere('uuid', $request->trainer_id);
         $positionCode =  $trainer->userJobCode()->where('status', 1)->first()?->jobCode->full_code . '-' . $trainer->userJobCode()->where('status', 1)->first()?->position_code_structure;
-        $rki = $this->rki->where('position_job_code',  $positionCode)->pluck('ikw_id');
+        $rki = $this->rki->where('user_structure_mapping_id',  $positionCode)->pluck('ikw_id');
 
         $ikwRevision = $this->ikwRevision->whereIn('ikw_id', $rki)
             ->orderBy('ikw_id')
@@ -503,7 +507,7 @@ class EvaluationServices extends BaseServices
                     ->get()
                     ->map(function ($rki) use ($userJobCode) {
                         return [
-                            'position_job_code'   => $rki->position_job_code,
+                            'user_structure_mapping_id'   => $rki->user_structure_mapping_id,
                             'ikw_id'              => $rki->ikw_id,
                             'employee_name'       => $userJobCode->user->name ?? '',
                             'employee_type'       => $userJobCode->user->employee_type ?? '',
@@ -568,7 +572,7 @@ class EvaluationServices extends BaseServices
                     });
 
                     return [
-                        'position_job_code'   => $rki->position_job_code,
+                        'user_structure_mapping_id'   => $rki->user_structure_mapping_id,
                         'ikw_id'              => $rki->ikw_id,
                         'employee_name'       => $userJobCode->user->name ?? '',
                         'employee_type'       => $userJobCode->user->employee_type ?? '',
