@@ -14,16 +14,15 @@ class JobDescription extends Model
     protected $primaryKey = 'id';
     protected $dates      = ['deleted_at'];
     protected $fillable   = [
-        'job_code_id',
+        'user_structure_mapping_id',
         'ikw_id',
         'code',
         'description',
     ];
 
-
-    public function jobCode()
+    public function userStructureMapping()
     {
-        return $this->belongsTo(JobCode::class);
+        return $this->belongsTo(UserStructureMapping::class);
     }
 
     public function ikwJobDesc()

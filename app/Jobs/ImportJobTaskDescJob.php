@@ -71,25 +71,25 @@ class ImportJobTaskDescJob implements ShouldQueue
                         }
 
 
-                        $this->insertChunkJobTask($dataJobTask, $dataIKWJobTask);
                         $this->insertChunkJobDesc($dataJobDesc, $dataIKWJobDesc);
+                        $this->insertChunkJobTask($dataJobTask, $dataIKWJobTask);
 
                         $dataJobTask = [];
                         $dataJobDesc = [];
                         $dataIKWJobTask = [];
                         $dataIKWJobDesc = [];
                     });
+                    if (!empty($dataJobDesc)) {
+                        $this->insertChunkJobDesc($dataJobDesc, $dataIKWJobDesc);
+                        $dataJobDesc = [];
+                        $dataIKWJobDesc = [];
+                    }
+
 
                     if (!empty($dataJobTask)) {
                         $this->insertChunkJobTask($dataJobTask, $dataIKWJobTask);
                         $dataJobTask = [];
                         $dataIKWJobTask = [];
-                    }
-
-                    if (!empty($dataJobDesc)) {
-                        $this->insertChunkJobDesc($dataJobDesc, $dataIKWJobDesc);
-                        $dataJobDesc = [];
-                        $dataIKWJobDesc = [];
                     }
                 }
             }
@@ -112,9 +112,9 @@ class ImportJobTaskDescJob implements ShouldQueue
     {
         $unique = null;
 
-        $jobCode       = $row[2] !== '' ? $row[2] : $jobCode;
 
-        // Determine job description code
+        // if excel cell is blank then use previous data
+        $jobCode       = $row[2] !== '' ? $row[2] : $jobCode;
         $jobDescCode   = $row[3] !== '' ? $row[3] : $jobDescCode;
 
         // Determine user structure and build unique key
@@ -138,48 +138,42 @@ class ImportJobTaskDescJob implements ShouldQueue
             ];
         }
 
-        if ($taskDescription) {
-            $dataJobTask[$taskDescription] = [
-                'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
-                'description'                => $taskDescription,
-            ];
-        }
-
         $dataJobDesc[$unique] = [
             'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
             'code'                       => $jobDescCode,
             'description'                => $descDescription,
         ];
 
-        if ($ikwId) {
-            $dataIKWJobTask[] = [
-                'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
-                'ikw_id'                     => $ikwId,
-                'description'                => $taskDescription,
-            ];
 
+        if ($taskDescription) {
+            $dataJobTask[$taskDescription] = [
+                'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
+                'description'                => $taskDescription,
+                'code'                       => $jobDescCode,
+            ];
+        }
+
+        // GET IKW & Job Task & Job Desc Relationship
+        if ($ikwId) {
             $dataIKWJobDesc[] = [
                 'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
                 'ikw_id'                     => $ikwId,
                 'code'                       => $jobDescCode,
             ];
+
+            $dataIKWJobTask[] = [
+                'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
+                'ikw_id'                     => $ikwId,
+                'description'                => $taskDescription,
+            ];
         }
 
         return [
-            'jobTask'    => $dataJobTask,
             'jobDesc'    => $dataJobDesc,
-            'ikwJobTask' => $dataIKWJobTask,
+            'jobTask'    => $dataJobTask,
             'ikwJobDesc' => $dataIKWJobDesc,
+            'ikwJobTask' => $dataIKWJobTask,
         ];
-    }
-
-    public function insertChunkJobTask($dataJobTask, $dataIKWJobTask)
-    {
-        $data = array_values($dataJobTask);
-        JobTask::insert($data);
-
-
-        $this->insertChunkIKWJobTask($dataIKWJobTask);
     }
 
     public function insertChunkJobDesc($dataJobDesc, $dataIKWJobDesc)
@@ -190,23 +184,27 @@ class ImportJobTaskDescJob implements ShouldQueue
         $this->insertChunkIKWJobDesc($dataIKWJobDesc);
     }
 
-    public function insertChunkIKWJobTask($dataIKWJobTask)
+
+    public function insertChunkJobTask($dataJobTask, $dataIKWJobTask)
     {
+
+        $dataCleaned = array_values($dataJobTask);
         $insertedData = [];
 
-        foreach ($dataIKWJobTask as $data) {
+        foreach ($dataCleaned as $data) {
 
-            $job_task = $this->findJobTask($data['user_structure_mapping_id'], $data['description']);
-            $unique = sprintf("%s-%s", $job_task->id ?? "None", $data['ikw_id']);
-            $insertedData[$unique] = [
-                'job_task_id' => $job_task->id ?? null,
-                'ikw_id'      => $data['ikw_id'],
+            $job_description = $this->findJobDescription($data['user_structure_mapping_id'], $data['code']);
+            $insertedData[] = [
+                'job_desc_id'                => $job_description->id,
+                'user_structure_mapping_id'  => $data['user_structure_mapping_id'],
+                'description'                => $data['description'],
             ];
         }
 
-        $cleanedData = array_values($insertedData);
 
-        IkwJobTask::insert($cleanedData);
+        JobTask::insert($insertedData);
+
+        $this->insertChunkIKWJobTask($dataIKWJobTask);
     }
 
     public function insertChunkIKWJobDesc($dataIKWJobDesc)
@@ -228,11 +226,25 @@ class ImportJobTaskDescJob implements ShouldQueue
         IkwJobDesc::insert($cleanedData);
     }
 
-    private function findJobCode($arg1)
+    public function insertChunkIKWJobTask($dataIKWJobTask)
     {
-        return JobCode::where('full_code', $arg1)
-            ->first();
+        $insertedData = [];
+
+        foreach ($dataIKWJobTask as $data) {
+
+            $job_task = $this->findJobTask($data['user_structure_mapping_id'], $data['description']);
+            $unique = sprintf("%s-%s", $job_task->id ?? "None", $data['ikw_id']);
+            $insertedData[$unique] = [
+                'job_task_id' => $job_task->id ?? null,
+                'ikw_id'      => $data['ikw_id'],
+            ];
+        }
+
+        $cleanedData = array_values($insertedData);
+
+        IkwJobTask::insert($cleanedData);
     }
+
 
     private function findIKW($arg1)
     {
