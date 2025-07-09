@@ -3,11 +3,10 @@
 namespace App\Jobs;
 
 use App\Models\IKW;
-use App\Models\IkwJobDesc;
-use App\Models\IkwJobTask;
-use App\Models\JobCode;
+use App\Models\JobDescDetail;
 use App\Models\JobDescription;
 use App\Models\JobTask;
+use App\Models\JobTaskDetail;
 use App\Models\UserStructureMapping;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -40,8 +39,8 @@ class ImportJobTaskDescJob implements ShouldQueue
             $reader->open(storage_path('app/public/' . $this->filepath));
             $dataJobTask = [];
             $dataJobDesc = [];
-            $dataIKWJobTask = [];
-            $dataIKWJobDesc = [];
+            $dataJobTaskDetail = [];
+            $dataJobDescDetail = [];
             $jobCode = null;
             $jobDescCode = null;
             $userStructure = null;
@@ -60,36 +59,36 @@ class ImportJobTaskDescJob implements ShouldQueue
             $totalSheets = count($sheetCollections);
             for ($sheetIndex = 0; $sheetIndex < $totalSheets; $sheetIndex++) {
                 if (isset($sheetCollections[$sheetIndex])) {
-                    $sheetCollections[$sheetIndex]->chunk(200)->each(function ($rows) use (&$dataJobTask, &$dataJobDesc, &$dataIKWJobTask, &$dataIKWJobDesc, &$jobCode, &$jobDescCode, &$userStructure) {
+                    $sheetCollections[$sheetIndex]->chunk(200)->each(function ($rows) use (&$dataJobTask, &$dataJobDesc, &$dataJobTaskDetail, &$dataJobDescDetail, &$jobCode, &$jobDescCode, &$userStructure) {
                         foreach ($rows as $row) {
-                            $data = $this->saveDataJobTaskDesc($dataJobTask, $dataJobDesc, $dataIKWJobTask, $dataIKWJobDesc,  $row, $jobCode, $jobDescCode, $userStructure);
+                            $data = $this->saveDataJobTaskDesc($dataJobTask, $dataJobDesc, $dataJobTaskDetail, $dataJobDescDetail,  $row, $jobCode, $jobDescCode, $userStructure);
 
                             $dataJobTask =  $data["jobTask"];
                             $dataJobDesc =  $data["jobDesc"];
-                            $dataIKWJobTask =  $data["ikwJobTask"];
-                            $dataIKWJobDesc =  $data["ikwJobDesc"];
+                            $dataJobTaskDetail =  $data["jobTaskDetail"];
+                            $dataJobDescDetail =  $data["jobDescDetail"];
                         }
 
 
-                        $this->insertChunkJobDesc($dataJobDesc, $dataIKWJobDesc);
-                        $this->insertChunkJobTask($dataJobTask, $dataIKWJobTask);
+                        $this->insertChunkJobDesc($dataJobDesc, $dataJobDescDetail);
+                        $this->insertChunkJobTask($dataJobTask, $dataJobTaskDetail);
 
                         $dataJobTask = [];
                         $dataJobDesc = [];
-                        $dataIKWJobTask = [];
-                        $dataIKWJobDesc = [];
+                        $dataJobTaskDetail = [];
+                        $dataJobDescDetail = [];
                     });
                     if (!empty($dataJobDesc)) {
-                        $this->insertChunkJobDesc($dataJobDesc, $dataIKWJobDesc);
+                        $this->insertChunkJobDesc($dataJobDesc, $dataJobDescDetail);
                         $dataJobDesc = [];
-                        $dataIKWJobDesc = [];
+                        $dataJobDescDetail = [];
                     }
 
 
                     if (!empty($dataJobTask)) {
-                        $this->insertChunkJobTask($dataJobTask, $dataIKWJobTask);
+                        $this->insertChunkJobTask($dataJobTask, $dataJobTaskDetail);
                         $dataJobTask = [];
-                        $dataIKWJobTask = [];
+                        $dataJobTaskDetail = [];
                     }
                 }
             }
@@ -108,7 +107,7 @@ class ImportJobTaskDescJob implements ShouldQueue
         }
     }
 
-    public function saveDataJobTaskDesc($dataJobTask, $dataJobDesc, $dataIKWJobTask, $dataIKWJobDesc,  $row, &$jobCode, &$jobDescCode, &$userStructure)
+    public function saveDataJobTaskDesc($dataJobTask, $dataJobDesc, $dataJobTaskDetail, $dataJobDescDetail,  $row, &$jobCode, &$jobDescCode, &$userStructure)
     {
         $unique = null;
 
@@ -131,15 +130,14 @@ class ImportJobTaskDescJob implements ShouldQueue
 
         if (is_null($ikwId)) {
             return [
-                'jobTask'    => $dataJobTask,
-                'jobDesc'    => $dataJobDesc,
-                'ikwJobTask' => $dataIKWJobTask,
-                'ikwJobDesc' => $dataIKWJobDesc,
+                'jobTask'       => $dataJobTask,
+                'jobDesc'       => $dataJobDesc,
+                'jobTaskDetail' => $dataJobTaskDetail,
+                'jobDescDetail' => $dataJobDescDetail,
             ];
         }
 
         $dataJobDesc[$unique] = [
-            'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
             'code'                       => $jobDescCode,
             'description'                => $descDescription,
         ];
@@ -155,13 +153,13 @@ class ImportJobTaskDescJob implements ShouldQueue
 
         // GET IKW & Job Task & Job Desc Relationship
         if ($ikwId) {
-            $dataIKWJobDesc[] = [
+            $dataJobDescDetail[] = [
                 'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
                 'ikw_id'                     => $ikwId,
                 'code'                       => $jobDescCode,
             ];
 
-            $dataIKWJobTask[] = [
+            $dataJobTaskDetail[] = [
                 'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
                 'ikw_id'                     => $ikwId,
                 'description'                => $taskDescription,
@@ -169,23 +167,24 @@ class ImportJobTaskDescJob implements ShouldQueue
         }
 
         return [
-            'jobDesc'    => $dataJobDesc,
-            'jobTask'    => $dataJobTask,
-            'ikwJobDesc' => $dataIKWJobDesc,
-            'ikwJobTask' => $dataIKWJobTask,
+            'jobDesc'       => $dataJobDesc,
+            'jobTask'       => $dataJobTask,
+            'jobDescDetail' => $dataJobDescDetail,
+            'jobTaskDetail' => $dataJobTaskDetail,
         ];
     }
 
-    public function insertChunkJobDesc($dataJobDesc, $dataIKWJobDesc)
+    public function insertChunkJobDesc($dataJobDesc, $dataJobDescDetail)
     {
         $data = array_values($dataJobDesc);
-        JobDescription::insert($data);
 
-        $this->insertChunkIKWJobDesc($dataIKWJobDesc);
+        JobDescription::upsert($data, ['code']);
+
+        $this->insertChunkJobDescDetail($dataJobDescDetail);
     }
 
 
-    public function insertChunkJobTask($dataJobTask, $dataIKWJobTask)
+    public function insertChunkJobTask($dataJobTask, $dataJobTaskDetail)
     {
 
         $dataCleaned = array_values($dataJobTask);
@@ -193,46 +192,46 @@ class ImportJobTaskDescJob implements ShouldQueue
 
         foreach ($dataCleaned as $data) {
 
-            $job_description = $this->findJobDescription($data['user_structure_mapping_id'], $data['code']);
+            $job_description = $this->findJobDescription($data['code']);
             $insertedData[] = [
-                'job_desc_id'                => $job_description->id,
-                'user_structure_mapping_id'  => $data['user_structure_mapping_id'],
-                'description'                => $data['description'],
+                'job_description_id'  => $job_description->id,
+                'description'         => $data['description'],
             ];
         }
 
 
-        JobTask::insert($insertedData);
+        JobTask::upsert($insertedData, ['job_desc_id_non_null', 'description']);
 
-        $this->insertChunkIKWJobTask($dataIKWJobTask);
+        $this->insertChunkJobTaskDetail($dataJobTaskDetail);
     }
 
-    public function insertChunkIKWJobDesc($dataIKWJobDesc)
+    public function insertChunkJobDescDetail($dataJobDescDetail)
     {
         $insertedData = [];
 
-        foreach ($dataIKWJobDesc as $data) {
+        foreach ($dataJobDescDetail as $data) {
 
-            $job_description = $this->findJobDescription($data['user_structure_mapping_id'], $data['code']);
+            $job_description = $this->findJobDescription($data['code']);
             $unique = sprintf("%s-%s", $job_description->id ?? "None", $data['ikw_id']);
             $insertedData[$unique] = [
-                'job_description_id' => $job_description->id ?? null,
-                'ikw_id'             => $data['ikw_id'],
+                'user_structure_mapping_id' => $data['user_structure_mapping_id'],
+                'job_description_id'        => $job_description->id ?? null,
+                'ikw_id'                    => $data['ikw_id'],
             ];
         }
 
         $cleanedData = array_values($insertedData);
 
-        IkwJobDesc::insert($cleanedData);
+        JobDescDetail::insert($cleanedData);
     }
 
-    public function insertChunkIKWJobTask($dataIKWJobTask)
+    public function insertChunkJobTaskDetail($dataJobTaskDetail)
     {
         $insertedData = [];
 
-        foreach ($dataIKWJobTask as $data) {
+        foreach ($dataJobTaskDetail as $data) {
 
-            $job_task = $this->findJobTask($data['user_structure_mapping_id'], $data['description']);
+            $job_task = $this->findJobTask($data['description']);
             $unique = sprintf("%s-%s", $job_task->id ?? "None", $data['ikw_id']);
             $insertedData[$unique] = [
                 'job_task_id' => $job_task->id ?? null,
@@ -242,7 +241,7 @@ class ImportJobTaskDescJob implements ShouldQueue
 
         $cleanedData = array_values($insertedData);
 
-        IkwJobTask::insert($cleanedData);
+        JobTaskDetail::insert($cleanedData);
     }
 
 
@@ -258,17 +257,15 @@ class ImportJobTaskDescJob implements ShouldQueue
             ->first();
     }
 
-    private function findJobDescription($arg1, $arg2)
+    private function findJobDescription($arg1)
     {
-        return JobDescription::where('user_structure_mapping_id', $arg1)
-            ->where('code', $arg2)
+        return JobDescription::where('code', $arg1)
             ->first();
     }
 
-    private function findJobTask($arg1, $arg2)
+    private function findJobTask($arg1)
     {
-        return JobTask::where('user_structure_mapping_id', $arg1)
-            ->whereFuzzy('description', $arg2)
+        return JobTask::whereFuzzy('description', $arg1)
             ->first();
     }
 }

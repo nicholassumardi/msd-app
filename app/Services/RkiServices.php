@@ -118,8 +118,8 @@ class RkiServices extends BaseServices
                     'ikw_page'                => $data->ikw->total_page ?? "",
                     'department'              => $data->ikw->department->code ?? "",
                     'training_time'           => $data->training_time ?? "",
-                    'job_task'                => $data->ikw?->ikwJobTask ? $data->ikw->ikwJobTask()->with('jobTask')->get() : null,
-                    'job_desc'                => $data->ikw?->ikwJobDescription ? $data->ikw->ikwJobDescription()->with('jobDescription')->get() : null,
+                    'job_task'                => $data->ikw?->jobTaskDetail ? $data->ikw->jobTaskDetail()->with('jobTask')->get() : null,
+                    'job_desc'                => $data->ikw?->jobDescDetail ? $data->ikw->jobDescDetail()->with('jobDescription')->get() : null,
                 ];
             });
         }
@@ -142,8 +142,8 @@ class RkiServices extends BaseServices
                     'ikw_page'                => $data->ikw->total_page ?? "",
                     'department'              => $data->ikw->department->code ?? "",
                     'training_time'           => $data->training_time ?? "",
-                    'job_task'                => $data->ikw->ikwJobTask ? $data->ikw->ikwJobTask()->with('jobTask')->get() : null,
-                    'job_desc'                => $data->ikw->ikwJobDescription ? $data->ikw->ikwJobDescription()->with('jobDescription')->get() : null,
+                    'job_task'                => $data->ikw->jobTaskDetail ? $data->ikw->jobTaskDetail()->with('jobTask')->get() : null,
+                    'job_desc'                => $data->ikw->jobDescDetail ? $data->ikw->jobDescDetail()->with('jobDescription')->get() : null,
                 ];
             });
         }

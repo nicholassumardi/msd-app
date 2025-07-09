@@ -13,7 +13,6 @@ class IKW extends Model
     protected $primaryKey = 'id';
     protected $dates      = ['deleted_at'];
     protected $fillable = [
-        'job_task_id',
         'department_id',
         'code',
         'name',
@@ -38,13 +37,13 @@ class IKW extends Model
         return $this->hasMany(IKWRevision::class, 'ikw_id', 'id');
     }
 
-    public function ikwJobTask()
+    public function jobTaskDetail()
     {
-        return $this->hasMany(IkwJobTask::class, 'ikw_id', 'id');
+        return $this->hasMany(JobTaskDetail::class, 'ikw_id', 'id');
     }
 
-    public function ikwJobDescription()
+    public function jobDescDetail()
     {
-        return $this->hasMany(IkwJobDesc::class, 'ikw_id', 'id');
+        return $this->hasMany(JobDescDetail::class, 'ikw_id', 'id');
     }
 }

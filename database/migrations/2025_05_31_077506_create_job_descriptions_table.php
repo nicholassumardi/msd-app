@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateIkwJobDescTable extends Migration
+class CreateJobDescriptionsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,11 @@ class CreateIkwJobDescTable extends Migration
      */
     public function up()
     {
-        Schema::create('ikw_job_desc', function (Blueprint $table) {
+        Schema::create('job_descriptions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('ikw_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignId('job_description_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->string('code')->nullable();
+            $table->text('description')->nullable();
+            $table->unique(['code']);
             $table->timestamps();
             $table->softDeletes();
         });
@@ -29,6 +30,6 @@ class CreateIkwJobDescTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('ikw_job_desc');
+        Schema::dropIfExists('job_descriptions');
     }
 }

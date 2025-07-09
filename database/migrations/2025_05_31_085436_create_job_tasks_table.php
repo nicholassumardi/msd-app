@@ -15,9 +15,10 @@ class CreateJobTasksTable extends Migration
     {
         Schema::create('job_tasks', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_structure_mapping_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('job_description_id')->nullable()->constrained()->cascadeOnDelete();
             $table->text('description')->nullable();
+            $table->integer('job_desc_id_non_null')->virtualAs('COALESCE(job_description_id, 0)');
+            $table->unique(['job_desc_id_non_null', 'description']);
             $table->timestamps();
             $table->softDeletes();
         });

@@ -11,10 +11,12 @@ use Illuminate\Support\Facades\DB;
 class JobTaskDescriptionServices extends BaseServices
 {
     protected $jobDescription;
+    protected $jobTask;
 
     public function __construct()
     {
-        $this->jobDescription =  JobDescription::with('jobCode');
+        $this->jobDescription =  JobDescription::with('jobDescDetails');
+        $this->jobTask =  JobTask::with('jobTaskDetails');
     }
 
     public function importJobTaskDescExcel(Request $request, $cacheKey)
@@ -37,12 +39,18 @@ class JobTaskDescriptionServices extends BaseServices
             $this->setLog('info', 'Request store data Job Description ' . json_encode($request->all()));
             $this->setLog('info', 'Start');
             DB::beginTransaction();
+            $data = [];
 
-            JobDescription::create([
-                'job_code_id'    => $request->job_code_id,
-                'code'           => $request->code,
-                'description'    => $request->description
-            ]);
+            foreach ($request->structures as $structure) {
+                foreach ($structure->jobDesc as $val) {
+                    $data[] = [
+                        'code'         => $val->code,
+                        'description'  => $val->description
+                    ];
+                }
+            }
+
+            JobDescription::insert($data);
 
             $this->setLog('info', 'New data Job Description' . json_encode($request->all()));
             DB::commit();
@@ -106,8 +114,6 @@ class JobTaskDescriptionServices extends BaseServices
                     'id'              => $data->id,
                     'code'            => $data->code,
                     'description'     => $data->description,
-                    'job_code_id'     => $data->job_code_id,
-                    'job_code_code'   => $data->jobCode ? $data->jobCode->full_code : "",
                 ];
             });
         }
@@ -153,10 +159,20 @@ class JobTaskDescriptionServices extends BaseServices
             $this->setLog('info', 'Start');
             DB::beginTransaction();
 
-            JobTask::create([
-                'job_code_id'    => $request->job_code_id,
-                'description'    => $request->description
-            ]);
+            $data = [];
+
+            foreach ($request->structures as $structure) {
+                foreach ($structure->jobDesc as $desc) {
+                    foreach ($desc->jobTask as $task) {
+                        $data[] = [
+                            'job_description_id' => $desc->id,
+                            'description'        => $task->description
+                        ];
+                    }
+                }
+            }
+
+            JobTask::insert($data);
 
             $this->setLog('info', 'New data Job Task' . json_encode($request->all()));
             DB::commit();
@@ -184,8 +200,8 @@ class JobTaskDescriptionServices extends BaseServices
 
             if ($JobTask) {
                 $JobTask->update([
-                    'job_code_id' => $request->job_code_id,
-                    'code'        => $request->code
+                    'job_description_id' => $request->job_description_id,
+                    'description'        => $request->description
                 ]);
             } else {
                 DB::rollBack();
@@ -211,14 +227,12 @@ class JobTaskDescriptionServices extends BaseServices
     {
 
         if (!empty($id_job_task)) {
-            $JobTask = JobTask::with('jobCode')->where('id', $id_job_task)->first();
+            $JobTask = $this->jobTask->where('id', $id_job_task)->first();
         } else {
-            $JobTask = JobTask::with('jobCode')->get();
+            $JobTask = $this->jobTask->get();
             $JobTask = $JobTask->map(function ($data) {
                 return [
                     'id'              => $data->id,
-                    'job_code_id'     => $data->job_code_id,
-                    'job_code_code'   => $data->jobCode ? $data->jobCode->full_code : "",
                     'description'     => $data->description,
                 ];
             });

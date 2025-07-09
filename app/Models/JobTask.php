@@ -15,7 +15,6 @@ class JobTask extends Model
     protected $dates      = ['deleted_at'];
     protected $fillable   = [
         'job_description_id',
-        'user_structure_mapping_id',
         'description',
     ];
 
@@ -24,8 +23,8 @@ class JobTask extends Model
         return $this->belongsTo(UserStructureMapping::class);
     }
 
-    public function ikwJobTask()
+    public function jobTaskDetail()
     {
-        return $this->hasMany(IkwJobTask::class, 'job_task_id', 'id');
+        return $this->hasMany(JobTaskDetail::class, 'job_task_id', 'id');
     }
 }

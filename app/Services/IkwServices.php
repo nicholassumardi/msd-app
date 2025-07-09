@@ -46,7 +46,6 @@ class IkwServices extends BaseServices
             DB::beginTransaction();
 
             $ikw = IKW::create([
-                'job_task_id'                 => $request->job_task_id,
                 'department_id'               => $request->department_id,
                 'code'                        => $request->code,
                 'name'                        => $request->name,
@@ -88,7 +87,6 @@ class IkwServices extends BaseServices
             $ikw = IKW::findOrFail($id);
 
             $ikw->update([
-                'job_task_id'                 => $request->job_task_id,
                 'department_id'               => $request->department_id,
                 'code'                        => $request->code,
                 'name'                        => $request->name,
@@ -240,7 +238,6 @@ class IkwServices extends BaseServices
                 $ikw = [
                     'id'                             => $ikw->id,
                     'revision_no'                    => $ikw->ikwRevision()->orderBy('revision_no', 'DESC')->first()->revision_no ?? 0,
-                    'job_task_id'                    => $ikw->job_task_id ?? "",
                     'department_id'                  => $ikw->department_id ?? "",
                     'department_name'                => $ikw->department->name ?? "",
                     'code'                           => $ikw->code ?? "",
@@ -255,8 +252,8 @@ class IkwServices extends BaseServices
                     'last_update_date'               => $ikw->last_update_date ?: null,
                     'description'                    => $ikw->description ?? "",
                     'ikw_revisions'                  => $revisionData,
-                    'job_task'                       => $ikw->ikwJobTask ? $ikw->ikwJobTask()->with('jobTask')->get() : null,
-                    'job_desc'                       => $ikw->ikwJobDescription ? $ikw->ikwJobDescription()->with('jobDescription')->get() : null,
+                    'job_task'                       => $ikw->jobTaskDetail ? $ikw->jobTaskDetail()->with('jobTask')->get() : null,
+                    'job_desc'                       => $ikw->jobDescDetail ? $ikw->jobDescDetail()->with('jobDescription')->get() : null,
                 ];
             }
         } else {
