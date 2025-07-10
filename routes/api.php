@@ -97,6 +97,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
                 Route::put('update/{id}', [JobFamilyController::class, 'updateJobDescription']);
                 Route::get('show/{id}', [JobFamilyController::class, 'showJobDescription']);
                 Route::get('show', [JobFamilyController::class, 'showJobDescriptionAll']);
+                Route::get('show_job_desc_pagination', [JobFamilyController::class, 'showJobDescriptionPagination']);
                 Route::delete('delete/{id}', [JobFamilyController::class, 'destroyJobDescription']);
             });
             Route::prefix('job_task')->group(function () {

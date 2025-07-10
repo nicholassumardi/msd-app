@@ -245,6 +245,7 @@ class JobFamilyController extends Controller
         return response()->json($response);
     }
 
+
     public function showJobTask($id)
     {
         $data = $this->serviceJobTaskDescription->getDataJobTask($id);
@@ -353,6 +354,27 @@ class JobFamilyController extends Controller
     public function showJobDescriptionAll()
     {
         $data = $this->serviceJobTaskDescription->getDataJobDescription();
+
+        if ($data) {
+            $response = [
+                'status'     => 200,
+                'data'       => $data,
+                'totalCount' => $data->count(),
+                'message'    => "Successfully fetched"
+            ];
+        } else {
+            $response = [
+                'status'  => 500,
+                'message' => "Failed to retrieve data"
+            ];
+        }
+
+        return response()->json($response);
+    }
+
+    public function showJobDescriptionPagination(Request $request)
+    {
+        $data = $this->serviceJobTaskDescription->getDataJobDescriptionPagination($request);
 
         if ($data) {
             $response = [

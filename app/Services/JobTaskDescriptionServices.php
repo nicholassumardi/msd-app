@@ -121,6 +121,49 @@ class JobTaskDescriptionServices extends BaseServices
         return $JobDescription;
     }
 
+    public function getDataJobDescriptionPagination($request)
+    {
+        $start = (int) $request->start ? (int)$request->start : 0;
+        $size = (int)$request->size ?  (int)$request->size : 5;
+        $filters = json_decode($request->filters, true) ?? [];
+        $sorting = json_decode($request->sorting, true) ?? [];
+        $globalFilter = $request->globalFilter ?? '';
+
+        $JobDescription = $this->jobDescription->where(
+            function ($query) use ($globalFilter, $filters) {
+                if ($globalFilter) {
+                    $query->where('code', "LIKE", "%$globalFilter%")
+                        ->orWhere('description', "LIKE", "%$globalFilter%");
+                }
+
+                foreach ($filters as $filter) {
+                    $query->where($filter['id'], $filter['value']);
+                }
+            }
+        );
+
+        foreach ($sorting as $sort) {
+            if (isset($sort['id'])) {
+                $JobDescription->orderBy($sort['id'], $sort['desc'] ? 'DESC' : 'ASC');
+            }
+        }
+
+        $JobDescription = $JobDescription
+            ->skip($start)
+            ->take($size)
+            ->get();
+
+        $JobDescription = $JobDescription->map(function ($data) {
+            return [
+                'id'              => $data->id,
+                'code'            => $data->code,
+                'description'     => $data->description,
+            ];
+        });
+
+        return $JobDescription;
+    }
+
     public function destroyJobDescription(Request $request, $id_job_description)
     {
         try {
