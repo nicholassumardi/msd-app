@@ -22,4 +22,9 @@ class JobDescription extends Model
     {
         return $this->hasMany(JobDescDetail::class, 'job_description_id', 'id');
     }
+
+    public function jobTask()
+    {
+        return $this->hasMany(JobTask::class);
+    }
 }

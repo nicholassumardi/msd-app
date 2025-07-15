@@ -158,6 +158,7 @@ class JobTaskDescriptionServices extends BaseServices
                 'id'              => $data->id,
                 'code'            => $data->code,
                 'description'     => $data->description,
+                'jobTask'         => $data->jobTask,
             ];
         });
 
