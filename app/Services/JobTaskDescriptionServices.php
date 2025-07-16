@@ -124,7 +124,7 @@ class JobTaskDescriptionServices extends BaseServices
     public function getDataJobDescriptionPagination($request)
     {
         $start = (int) $request->start ? (int)$request->start : 0;
-        $size = (int)$request->size ?  (int)$request->size : 5;
+        $size = (int)$request->size ?  (int)$request->size : 10;
         $filters = json_decode($request->filters, true) ?? [];
         $sorting = json_decode($request->sorting, true) ?? [];
         $globalFilter = $request->globalFilter ?? '';
