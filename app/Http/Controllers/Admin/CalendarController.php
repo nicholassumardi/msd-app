@@ -7,5 +7,10 @@ use Illuminate\Http\Request;
 
 class CalendarController extends Controller
 {
-    //
+    private $service;
+
+    public function __construct()
+    {
+       
+    }
 }

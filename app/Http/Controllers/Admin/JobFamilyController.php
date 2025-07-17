@@ -10,6 +10,7 @@ use App\Http\Requests\JobDescriptionRequest;
 use App\Http\Requests\JobTaskRequest;
 use App\Models\Category;
 use App\Models\JobCode;
+use App\Models\JobDescription;
 use App\Services\CategoryServices;
 use App\Services\IkwServices;
 use App\Services\JobCodeServices;
@@ -21,6 +22,7 @@ class JobFamilyController extends Controller
 
     protected $jobCode;
     protected $category;
+    protected $jobDesc;
     protected $serviceCategory;
     protected $serviceJobCode;
     protected $serviceJobTaskDescription;
@@ -31,6 +33,7 @@ class JobFamilyController extends Controller
     {
         $this->jobCode = JobCode::with('category');
         $this->category = Category::with('jobCode');
+        $this->jobDesc = JobDescription::with('jobDescDetails', 'jobTask');
         $this->serviceCategory = new CategoryServices();
         $this->serviceJobCode = new JobCodeServices();
         $this->serviceJobTaskDescription = new JobTaskDescriptionServices();
@@ -380,7 +383,7 @@ class JobFamilyController extends Controller
             $response = [
                 'status'     => 200,
                 'data'       => $data,
-                'totalCount' => $data->count(),
+                'totalCount' => $this->jobDesc->count(),
                 'message'    => "Successfully fetched"
             ];
         } else {
