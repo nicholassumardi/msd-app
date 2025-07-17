@@ -45,12 +45,12 @@ class CertificateController extends Controller
         if ($data) {
             $response = [
                 'status' => 201,
-                'message' => 'Successfully updated data company'
+                'message' => 'Successfully updated data certificate'
             ];
         } else {
             $response = [
                 'status' => 500,
-                'message' => 'Failed to update data company'
+                'message' => 'Failed to update data certificate'
             ];
         }
 
@@ -68,12 +68,12 @@ class CertificateController extends Controller
                 'status'      => 200,
                 'data'        => $data,
                 'totalCount'  => $data->count(),
-                'message'     => 'Successfully updated data company'
+                'message'     => 'Successfully updated data certificate'
             ];
         } else {
             $response = [
                 'status' => 500,
-                'message' => 'Failed to update data company'
+                'message' => 'Failed to update data certificate'
             ];
         }
 
@@ -88,12 +88,12 @@ class CertificateController extends Controller
             $response = [
                 'status'  => 200,
                 'data'    => $data,
-                'message' => 'Successfully updated data company'
+                'message' => 'Successfully updated data certificate'
             ];
         } else {
             $response = [
                 'status' => 500,
-                'message' => 'Failed to update data company'
+                'message' => 'Failed to update data certificate'
             ];
         }
 
@@ -108,12 +108,12 @@ class CertificateController extends Controller
         if ($data) {
             $response = [
                 'status' => 200,
-                'message' => 'Successfully updated data company'
+                'message' => 'Successfully updated data certificate'
             ];
         } else {
             $response = [
                 'status' => 500,
-                'message' => 'Failed to update data company'
+                'message' => 'Failed to update data certificate'
             ];
         }
 
@@ -128,12 +128,12 @@ class CertificateController extends Controller
         if ($data) {
             $response = [
                 'status' => 200,
-                'message' => 'Successfully deleted data company'
+                'message' => 'Successfully deleted data certificate'
             ];
         } else {
             $response = [
                 'status' => 500,
-                'message' => 'Failed to delete data company'
+                'message' => 'Failed to delete data certificate'
             ];
         }
 

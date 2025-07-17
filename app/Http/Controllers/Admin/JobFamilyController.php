@@ -64,6 +64,26 @@ class JobFamilyController extends Controller
         return response()->json($response);
     }
 
+    public function assignJobDescTask(Request $request)
+    {
+        $query = $this->serviceJobTaskDescription->assignJobDescTask($request);
+
+        if ($query) {
+            $response = [
+                'status' => 201,
+                'message' => "Successfully store data"
+            ];
+        } else {
+            $response = [
+                'status' => 500,
+                'message' => "Failed store data"
+            ];
+        }
+
+
+        return response()->json($response);
+    }
+
     public function storeCategory(CategoryRequest $request)
     {
         $validatedRequest = $request->validated();

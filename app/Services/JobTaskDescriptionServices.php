@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Jobs\ImportJobTaskDescJob;
+use App\Models\JobDescDetail;
 use App\Models\JobDescription;
 use App\Models\JobTask;
+use App\Models\JobTaskDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -12,6 +14,7 @@ class JobTaskDescriptionServices extends BaseServices
 {
     protected $jobDescription;
     protected $jobTask;
+
 
     public function __construct()
     {
@@ -299,6 +302,54 @@ class JobTaskDescriptionServices extends BaseServices
                 DB::rollBack();
                 return false;
             }
+
+
+            $this->setLog('info', 'deleted  JobTask data' . json_encode($request->all()));
+            DB::commit();
+            $this->setLog('info', 'End');
+
+            return true;
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            $this->setLog('error', 'Error delete JobTask = ' . $exception->getMessage());
+            $this->setLog('error', 'Error delete JobTask = ' . $exception->getLine());
+            $this->setLog('error', 'Error delete JobTask = ' . $exception->getFile());
+            $this->setLog('error', 'Error delete JobTask = ' . $exception->getTraceAsString());
+            return null;
+        }
+    }
+
+    public function assignJobDescTask(Request $request)
+    {
+        try {
+            $this->setLog('info', 'Request delete data Job Task ' . json_encode($request->all()));
+            $this->setLog('info', 'Start');
+            DB::beginTransaction();
+            $dataJobDesc = [];
+            $dataJobTask = [];
+
+            foreach ($request->structures as $structure) {
+                foreach ($structure->ikw as $ikw) {
+                    foreach ($structure->jobDesc as $desc) {
+                        $dataJobDesc[] = [
+                            'user_structure_mapping_id'  => $structure->user_structure_mapping_id,
+                            'ikw_id'                     => $ikw->id,
+                            'job_description_id'         => $desc->id,
+                        ];
+
+                        foreach ($desc->jobTask as $task) {
+                            $dataJobTask[] = [
+                                'user_structure_mapping_id'  => $structure->user_structure_mapping_id,
+                                'ikw_id'                     => $ikw->id,
+                                'job_task_id'                => $task->id,
+                            ];
+                        }
+                    }
+                }
+            }
+
+            JobDescDetail::insert($dataJobDesc);
+            JobTaskDetail::insert($dataJobTask);
 
 
             $this->setLog('info', 'deleted  JobTask data' . json_encode($request->all()));

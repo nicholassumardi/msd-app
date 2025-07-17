@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CalendarController;
 use App\Http\Controllers\Admin\CertificateController;
 use App\Http\Controllers\Admin\ClassificationController;
 use App\Http\Controllers\Admin\CompanyController;
@@ -97,6 +98,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
                 Route::put('update/{id}', [JobFamilyController::class, 'updateJobDescription']);
                 Route::get('show/{id}', [JobFamilyController::class, 'showJobDescription']);
                 Route::get('show', [JobFamilyController::class, 'showJobDescriptionAll']);
+                Route::get('assign_job', [JobFamilyController::class, 'assignJobDescTask']);
                 Route::get('show_job_desc_pagination', [JobFamilyController::class, 'showJobDescriptionPagination']);
                 Route::delete('delete/{id}', [JobFamilyController::class, 'destroyJobDescription']);
             });
@@ -223,5 +225,14 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::get('show_ikw_to_train', [EvaluationController::class, 'showIKWToTrainForTrainee']);
         Route::get('show_eligible_ikw', [EvaluationController::class, 'showEligibleIKWByTrainer']);
         Route::get('show_trainee_by_ikw', [EvaluationController::class, 'showTraineeByTrainerIKW']);
+    });
+
+    Route::prefix('calendar')->group(function () {
+        Route::get('/', [CalendarController::class, 'index']);
+        Route::post('store', [CalendarController::class, 'store']);
+        Route::put('update/{id}', [CalendarController::class, 'update']);
+        Route::get('show/{id}', [CalendarController::class, 'show']);
+        Route::get('show', [CalendarController::class, 'showAll']);
+        Route::delete('delete/{id}', [CalendarController::class, 'destroy']);
     });
 });
