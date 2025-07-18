@@ -124,10 +124,12 @@ class JobFamilyController extends Controller
         return response()->json($response);
     }
 
-    public function storeJobDescription(JobDescriptionRequest $request)
+    public function storeJobDescription(Request $request)
     {
-        $validatedRequest = $request->validated();
-        $data = $this->serviceJobTaskDescription->storeJobDescription(new Request($validatedRequest));
+        // $validatedRequest = $request->validated();
+        // $newRequest = new Request($validatedRequest);
+        
+        $data = $this->serviceJobTaskDescription->storeJobDescription($request);
 
         if ($data) {
             $response = [

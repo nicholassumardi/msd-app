@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class JobDescriptionRequest extends FormRequest
+class CalendarRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,9 +24,10 @@ class JobDescriptionRequest extends FormRequest
     public function rules()
     {
         return [
-            'structures.*.jobDesc' => ['required', 'array'],
-            'structures.*.jobDesc.*.code' => ['required', 'string'],
-            'structures.*.jobDesc.*.description' => ['required', 'string'],
+            'title'      => 'required|string|max:255',
+            'link'       => 'required|string|max:255|null',
+            'start_date' => 'required|null',
+            'end_date'   => 'required|null',
         ];
     }
 }

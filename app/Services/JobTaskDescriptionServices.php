@@ -35,7 +35,6 @@ class JobTaskDescriptionServices extends BaseServices
         return false;
     }
 
-
     public function storeJobDescription(Request $request)
     {
         try {
@@ -44,15 +43,15 @@ class JobTaskDescriptionServices extends BaseServices
             DB::beginTransaction();
             $data = [];
 
-            foreach ($request->structures as $structure) {
+            $structures = json_decode(json_encode($request->structures)); // convert array to object
+            foreach ($structures as $structure) {
                 foreach ($structure->jobDesc as $val) {
                     $data[] = [
-                        'code'         => $val->code,
-                        'description'  => $val->description
+                        'code'        => $val->code,
+                        'description' => $val->description
                     ];
                 }
             }
-
             JobDescription::insert($data);
 
             $this->setLog('info', 'New data Job Description' . json_encode($request->all()));
@@ -207,8 +206,8 @@ class JobTaskDescriptionServices extends BaseServices
             DB::beginTransaction();
 
             $data = [];
-
-            foreach ($request->structures as $structure) {
+            $structures = json_decode(json_encode($request->structures)); // convert array to object
+            foreach ($structures as $structure) {
                 foreach ($structure->jobDesc as $desc) {
                     foreach ($desc->jobTask as $task) {
                         $data[] = [
@@ -328,7 +327,8 @@ class JobTaskDescriptionServices extends BaseServices
             $dataJobDesc = [];
             $dataJobTask = [];
 
-            foreach ($request->structures as $structure) {
+            $structures = json_decode(json_encode($request->structures));
+            foreach ($structures  as $structure) {
                 foreach ($structure->ikw as $ikw) {
                     foreach ($structure->jobDesc as $desc) {
                         $dataJobDesc[] = [
