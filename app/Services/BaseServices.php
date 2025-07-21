@@ -8,6 +8,8 @@ use App\Models\EmploymentDurationClassification;
 use App\Models\GeneralClassification;
 use App\Models\User;
 use Carbon\Carbon;
+use DateTimeImmutable;
+use DateTimeZone;
 use Illuminate\Support\Facades\Log;
 
 class BaseServices
@@ -126,5 +128,10 @@ class BaseServices
         }, $end);
 
         return $days;
+    }
+
+    public function parseDateTime($arg)
+    {
+        return (new DateTimeImmutable($arg))->setTimezone(new DateTimeZone("UTC"))->format('Y-m-d\TH:i:s');
     }
 }

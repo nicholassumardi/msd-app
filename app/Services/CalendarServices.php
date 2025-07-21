@@ -1,7 +1,8 @@
 <?php
 
+namespace App\Services;
+
 use App\Models\Calendar;
-use App\Services\BaseServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -26,8 +27,8 @@ class CalendarServices extends BaseServices
             Calendar::create([
                 'title'         => $request->title,
                 'link'          => $request->link,
-                'start_date'    => $request->start_date,
-                'end_date'      => $request->end_date,
+                'start_date'    => $this->parseDateTime($request->start_date),
+                'end_date'      => $this->parseDateTime($request->end_date),
             ]);
 
 
@@ -60,8 +61,8 @@ class CalendarServices extends BaseServices
                 $calendar->update([
                     'title'         => $request->title,
                     'link'          => $request->link,
-                    'start_date'    => $request->start_date,
-                    'end_date'      => $request->end_date,
+                    'start_date'    => $this->parseDateTime($request->start_date),
+                    'end_date'      => $this->parseDateTime($request->end_date),
                 ]);
             } else {
                 DB::rollback();

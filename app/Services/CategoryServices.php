@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Jobs\ImportCategoryJob;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

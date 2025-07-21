@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use CalendarServices;
+use App\Services\CalendarServices;
 use Illuminate\Http\Request;
 
 class CalendarController extends Controller
 {
-    private $service;
+    protected $service;
 
     public function __construct()
     {

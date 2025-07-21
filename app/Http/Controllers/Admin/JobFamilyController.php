@@ -148,8 +148,7 @@ class JobFamilyController extends Controller
 
     public function storeJobTask(Request $request)
     {
-        $validatedRequest = $request->validated();
-        $data = $this->serviceJobTaskDescription->storeJobTask(new Request($validatedRequest));
+        $data = $this->serviceJobTaskDescription->storeJobTask($request);
 
         if ($data) {
             $response = [
