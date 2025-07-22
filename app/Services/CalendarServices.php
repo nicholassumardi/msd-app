@@ -12,7 +12,7 @@ class CalendarServices extends BaseServices
 
     public function __construct()
     {
-        $this->calendar = Calendar::with('jobCode');
+        $this->calendar = Calendar::query();
     }
 
     public function storeCalendar(Request $request)
@@ -27,8 +27,9 @@ class CalendarServices extends BaseServices
             Calendar::create([
                 'title'         => $request->title,
                 'link'          => $request->link,
-                'start_date'    => $this->parseDateTime($request->start_date),
-                'end_date'      => $this->parseDateTime($request->end_date),
+                'start_date'    => $this->parseDateTime($request->start),
+                'end_date'      => $this->parseDateTime($request->end),
+                'all_day'       => (bool)$request->all_day ?? false,
             ]);
 
 
@@ -58,12 +59,26 @@ class CalendarServices extends BaseServices
             $calendar =  Calendar::find($id_calendar);
 
             if ($calendar) {
-                $calendar->update([
-                    'title'         => $request->title,
-                    'link'          => $request->link,
-                    'start_date'    => $this->parseDateTime($request->start_date),
-                    'end_date'      => $this->parseDateTime($request->end_date),
-                ]);
+                $data = [
+                    'title'   => $request->title,
+                    'link'    => $request->link,
+                ];
+
+                if (!is_null($request->start)) {
+                    $data['start_date'] = $this->parseDateTime($request->start);
+                }
+
+                if (!is_null($request->end)) {
+                    $data['end_date'] = $this->parseDateTime($request->end);
+                }
+
+                if (!is_null($request->all_day)) {
+                    $data['start_date'] = $this->parseDateTime($request->start);
+                }
+
+
+
+                $calendar->update($data);
             } else {
                 DB::rollback();
                 return false;

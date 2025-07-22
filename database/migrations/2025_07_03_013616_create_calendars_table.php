@@ -19,6 +19,7 @@ class CreateCalendarsTable extends Migration
             $table->string('link')->nullable();
             $table->date('start_date');
             $table->date('end_date');
+            $table->boolean('all_day')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });

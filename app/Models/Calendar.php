@@ -17,5 +17,6 @@ class Calendar extends Model
         'link',
         'start_date',
         'end_date',
+        'all_day',
     ];
 }
