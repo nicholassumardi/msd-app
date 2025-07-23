@@ -202,7 +202,9 @@ class IkwServices extends BaseServices
                 $ikw = $this->ikw->firstWhere('id', $id_IKW);
 
                 $revisions = $ikw->ikwRevision
-                    ? $ikw->ikwRevision()->with('ikwMeeting', 'ikwPosition')->get()
+                    ? $ikw->ikwRevision()->with('ikwMeeting', 'ikwPosition')
+                    ->orderBy('revision_no', 'DESC')
+                    ->get()
                     : collect();
 
                 $revisionData = $revisions->map(function ($revision) {
@@ -442,7 +444,7 @@ class IkwServices extends BaseServices
                 'status_document'                => $data->status_document ?? "",
                 'last_update_date'               => $data->last_update_date ? date('d/m/y', strtotime($data->last_update_date))  : "",
                 'description'                    => $data->description ?? "",
-                'ikw_revisions'                  => $data->dataRevision ? $data->ikwRevision()->with('ikwMeeting', 'ikwPosition')->get() : null,
+                'ikw_revisions'                  => $data->dataRevision ? $data->ikwRevision()->with('ikwMeeting', 'ikwPosition')->orderBy('revision_no', 'DESC')->get() : collect(),
             ];
         });
 
