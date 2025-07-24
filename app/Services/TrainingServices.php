@@ -18,7 +18,7 @@ class TrainingServices extends BaseServices
     public function __construct()
     {
         $this->training = Training::with('trainee', 'trainer', 'assessor', 'ikwRevision');
-        $this->ikw = IKW::with('jobTask', 'ikwRevision');
+        $this->ikw = IKW::with('ikwRevision.training');
         $this->ikwRevision = IKWRevision::with('ikw');
     }
 
@@ -245,33 +245,16 @@ class TrainingServices extends BaseServices
         $training = [];
 
         if (!empty($uuid)) {
-            $training = $this->training->whereHas(
-                'trainee',
-                fn($query) => $query->where('uuid', $uuid)
-            )->get()->map(function ($data) {
-                return [
-                    'no_training'                    => $data->no_training,
-                    'trainee_id'                     => $data->trainee->uuid ?? NULL,
-                    'trainer_id'                     => $data->trainer->uuid ?? NULL,
-                    'assessor_id'                    => $data->assessor->uuid ?? NULL,
-                    'ikw_revision_id'                => $data->ikw_revision_id ?? NULL,
-                    'ikw_name'                       => $data->ikwRevision->ikw->name ?? NULL,
-                    'ikw_revision_no'                => $data->ikwRevision->revision_no ?? NULL,
-                    'ikw_code'                       => $data->ikwRevision->ikw->code ?? NULL,
-                    'training_plan_date'             => $data->training_plan_date,
-                    'training_realisation_date'      => $data->training_realisation_date,
-                    'training_duration'              => $data->training_duration,
-                    'ticket_return_date'             => $data->ticket_return_date,
-                    'assessment_plan_date'           => $data->assessment_plan_date,
-                    'assessment_realisation_date'    => $data->assessment_realisation_date,
-                    'assessment_duration'            => $data->assessment_duration,
-                    'status_fa_print'                => $data->status_fa_print,
-                    'assessment_result'              => $data->assessment_result,
-                    'status'                         => $data->status,
-                    'description'                    => $data->description,
-                    'status_active'                  => $data->status_active,
-                ];
-            });
+            $training = $this->ikw->whereHas(
+                'ikwRevision',
+                fn($query) => $query->whereHas(
+                    'training',
+                    fn($query) => $query->whereHas(
+                        'trainee',
+                        fn($query) => $query->where('uuid', $uuid)
+                    )
+                )
+            )->get();
         }
 
         return $training;
