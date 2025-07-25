@@ -245,16 +245,20 @@ class TrainingServices extends BaseServices
         $training = [];
 
         if (!empty($uuid)) {
-            $training = $this->ikw->whereHas(
-                'ikwRevision',
-                fn($query) => $query->whereHas(
-                    'training',
-                    fn($query) => $query->whereHas(
-                        'trainee',
-                        fn($query) => $query->where('uuid', $uuid)
-                    )
+            $training = $this->ikw
+                ->whereHas(
+                    'ikwRevision.training.trainee',
+                    fn($query) =>
+                    $query->where('uuid', $uuid)
                 )
-            )->get();
+                ->with([
+                    'ikwRevision' => function ($query) use ($uuid) {
+                        $query->with(['training' => function ($query) use ($uuid) {
+                            $query->whereHas('trainee', fn($q) => $q->where('uuid', $uuid));
+                        }]);
+                    }
+                ])
+                ->get();
         }
 
         return $training;
