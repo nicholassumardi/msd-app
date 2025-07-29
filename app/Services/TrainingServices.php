@@ -242,33 +242,49 @@ class TrainingServices extends BaseServices
 
     public function getDataTrainingByUUID($uuid)
     {
+        $start = (int) request()->start ? (int) request()->start : 0;
+        $size = (int) request()->size ? (int) request()->size :  5;
+        $globalFilter = $request->globalFilter ?? '';
         $training = [];
-
+        $countData = null;
         if (!empty($uuid)) {
-            $training = $this->ikw
-                ->whereHas(
-                    'ikwRevision.training.trainee',
-                    fn($query) =>
-                    $query->where('uuid', $uuid)
-                )
+            $training = $this->ikw->where(function ($query) use ($globalFilter) {
+                if ($globalFilter) {
+                    $query->where('code', 'LIKE', "%{$globalFilter}%")
+                        ->orWhere('name', 'LIKE', "%{$globalFilter}%");
+                }
+            })->whereHas(
+                'ikwRevision.training.trainee',
+                fn($query) =>
+                $query->where('uuid', $uuid)
+            )
                 ->with([
                     'ikwRevision' => function ($query) use ($uuid) {
                         $query->with(['training' => function ($query) use ($uuid) {
                             $query->whereHas('trainee', fn($q) => $q->where('uuid', $uuid));
                         }]);
                     }
-                ])
+                ]);
+
+            $countData = ceil($training->count() / $size);
+
+            $training = $training
+                ->skip($start)
+                ->take($size)
                 ->get();
         }
 
-        return $training;
+        return [
+            'data'       => $training,
+            'totalCount' => $countData,
+        ];
     }
 
 
     public function getDataTrainingPagination(Request $request)
     {
-        $start = (int) $request->start;
-        $size = (int)$request->size ?? 6;
+        $start = (int) $request->start ? (int) $request->start : 0;
+        $size = (int)$request->size ? (int)$request->size :  6;
         $filters = json_decode($request->filters, true) ?? [];
         $sorting = json_decode($request->sorting, true) ?? [];
         $globalFilter = $request->globalFilter ?? '';

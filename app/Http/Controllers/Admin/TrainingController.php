@@ -127,7 +127,8 @@ class TrainingController extends Controller
         if ($data) {
             $response = [
                 'status'     => 200,
-                'data'       => $data,
+                'data'       => $data['data'],
+                'totalCount' => $data['totalCount'],
                 'message'    => 'Successfully fetched data training'
             ];
         } else {
