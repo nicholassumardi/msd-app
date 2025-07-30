@@ -120,9 +120,9 @@ class TrainingController extends Controller
         return response()->json($response);
     }
 
-    public function showByUUID($uuid)
+    public function showByUUID($uuid, Request $request)
     {
-        $data = $this->service->getDataTrainingByUUID($uuid);
+        $data = $this->service->getDataTrainingByUUID($uuid, $request);
 
         if ($data) {
             $response = [

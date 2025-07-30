@@ -87,7 +87,7 @@ class TrainingServices extends BaseServices
                 ];
             });
 
-        $query =  ExportTrainingJob::dispatch($cachekey, $training);
+        $query = ExportTrainingJob::dispatch($cachekey, $training);
 
         if ($query) {
             return true;
@@ -240,24 +240,27 @@ class TrainingServices extends BaseServices
         return $training;
     }
 
-    public function getDataTrainingByUUID($uuid)
+    public function getDataTrainingByUUID($uuid, $request)
     {
-        $start = (int) request()->start ? (int) request()->start : 0;
-        $size = (int) request()->size ? (int) request()->size :  5;
+        $start = (int) $request->start ? ((int) $request->start - 1) : 0;
+        $size = (int) $request->size ? (int) $request->size :  5;
         $globalFilter = $request->globalFilter ?? '';
         $training = [];
         $countData = null;
+
         if (!empty($uuid)) {
-            $training = $this->ikw->where(function ($query) use ($globalFilter) {
-                if ($globalFilter) {
-                    $query->where('code', 'LIKE', "%{$globalFilter}%")
-                        ->orWhere('name', 'LIKE', "%{$globalFilter}%");
-                }
-            })->whereHas(
-                'ikwRevision.training.trainee',
-                fn($query) =>
-                $query->where('uuid', $uuid)
-            )
+            $training = $this->ikw
+                ->where(function ($query) use ($globalFilter) {
+                    if ($globalFilter) {
+                        $query->where('code', 'LIKE',  "%{$globalFilter}%")
+                            ->orWhere('name', 'LIKE',  "%{$globalFilter}%");
+                    }
+                })
+                ->whereHas(
+                    'ikwRevision.training.trainee',
+                    fn($query) =>
+                    $query->where('uuid', $uuid)
+                )
                 ->with([
                     'ikwRevision' => function ($query) use ($uuid) {
                         $query->with(['training' => function ($query) use ($uuid) {

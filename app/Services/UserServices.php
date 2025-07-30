@@ -287,9 +287,9 @@ class UserServices extends BaseServices
                 'totalMemberStructure'             => $user->getTotalMemberStructure(),
                 'totalSubordinates'                => $user->getTotalSubordinate(),
                 'employeeIKWSTrained'              => $user->getDetailIKWTrained(),
-                'getDetailRKI'                     => $user->getDetailRKI()['data'] ?? null,
-                'getTotalIKWTrained'               => $user->getDetailRKI()['totalIKW'] ?? null,
-                'getTotalIKWCompetent'             => $user->getDetailRKI()['totalIKWCompetent'] ?? null,
+                'getDetailRKI'                     => $user->getDetailRKI($request)['data'] ?? null,
+                'getTotalIKWTrained'               => $user->getDetailRKI($request)['totalIKW'] ?? null,
+                'getTotalIKWCompetent'             => $user->getDetailRKI($request)['totalIKWCompetent'] ?? null,
                 'age'                              => Carbon::parse($user->date_of_birth)->age,
                 'year'                             => Carbon::parse($user->date_of_birth)->year,
                 'service_year'                     => $this->getServiceYearFull($user->userServiceYear->join_date),
@@ -307,7 +307,7 @@ class UserServices extends BaseServices
                 $user->where('company_id', $request->id_company);
             }
 
-            $user = $user->get()->map(function ($data) {
+            $user = $user->get()->map(function ($data) use ($request) {
                 return [
                     'uuid'                             => $data->uuid,
                     'id'                               => $data->id,
@@ -349,9 +349,9 @@ class UserServices extends BaseServices
                     'join_date'                        => $data->userServiceYear->join_date,
                     'employeeStructures'               => $data->userJobCode()->with('userStructureMapping')->get() ?? null,
                     'totalMemberStructure'             => $data->getTotalMemberStructure(),
-                    'totalSubordinates'              => $data->getTotalSubordinate(),
+                    'totalSubordinates'                => $data->getTotalSubordinate(),
                     'employeeIKWSTrained'              => $data->getDetailIKWTrained(),
-                    'getDetailRKI'                     => $data->getDetailRKI() ?? null,
+                    'getDetailRKI'                     => $data->getDetailRKI($request) ?? null,
                     'age'                              => Carbon::parse($data->date_of_birth)->age,
                     'year'                             => Carbon::parse($data->date_of_birth)->year,
                     'service_year'                     => $this->getServiceYearFull($data->userServiceYear->join_date),
@@ -425,7 +425,7 @@ class UserServices extends BaseServices
             ->get();
 
 
-        $user = $user->map(function ($data) {
+        $user = $user->map(function ($data) use ($request) {
             return [
                 'uuid'                             => $data->uuid,
                 'id'                               => $data->id,
@@ -469,7 +469,7 @@ class UserServices extends BaseServices
                 'totalMemberStructure'             => $data->getTotalMemberStructure() ?? null,
                 'totalSubordinates'                => $data->getTotalSubordinate(),
                 'employeeIKWSTrained'              => $data->getDetailIKWTrained() ?? null,
-                'getDetailRKI'                     => $data->getDetailRKI() ?? null,
+                'getDetailRKI'                     => $data->getDetailRKI($request) ?? null,
                 'age'                              => Carbon::parse($data->date_of_birth)->age ?? null,
                 'year'                             => Carbon::parse($data->date_of_birth)->year ?? null,
                 'service_year'                     => $this->getServiceYearFull($data->userServiceYear->join_date) ?? null,

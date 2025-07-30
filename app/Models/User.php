@@ -5,12 +5,13 @@ namespace App\Models;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+// use Illuminate\Support\Str;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, SoftDeletes, Notifiable;
 
 
     protected $table      = 'users';
@@ -152,8 +153,10 @@ class User extends Authenticatable
         return $resultArray;
     }
 
-    public function getDetailRKI()
+    public function getDetailRKI($request)
     {
+        $globalFilter =  $request->globalFilter ? strtolower($request->globalFilter) : "";
+        $page = (int)$request->page ?  (int)$request->page : 0;
         $jobCodeRecord = $this->userJobCode()->where('status', 1)->first();
         if (!$jobCodeRecord) {
             return [];
@@ -184,8 +187,15 @@ class User extends Authenticatable
             ];
         }
 
+        $filtered = array_filter($resultArray, function ($item) use ($globalFilter) {
+            return str_contains(strtolower($item['ikw_code']), $globalFilter) ||
+                str_contains(strtolower($item['ikw_name']), $globalFilter);
+        });
+
+        $filtered = array_values($filtered);
+
         return [
-            'data'                    => $resultArray,
+            'data'                    => array_slice($filtered, (($page - 1) * 10), 10),
             'totalIKWCompetent'       => collect($resultArray)->where('result', 'K')->count(),
             'totalIKW'                => count($resultArray),
         ];
