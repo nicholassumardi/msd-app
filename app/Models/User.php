@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 // use Illuminate\Support\Str;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
 
 class User extends Authenticatable
 {
@@ -156,10 +157,13 @@ class User extends Authenticatable
     public function getDetailRKI($request)
     {
         $globalFilter =  $request->globalFilter ? strtolower($request->globalFilter) : "";
-        $filterCompetent =  $request->filter['competent'] ? $request->filter['competent'] :  false;
-        $filterNonCompetent =  $request->filter['nonCompetent'] ? $request->filter['nonCompetent'] : false;
+        $filterCompetent = isset($request->filter['competent']) ? $request->filter['competent'] : false;
+        $filterNonCompetent = isset($request->filter['nonCompetent']) ? $request->filter['nonCompetent'] : false;
         $start = (int)$request->start ?  (int)$request->start : 0;
         $jobCodeRecord = $this->userJobCode()->where('status', 1)->first();
+
+
+        Log::info($request->all());
         if (!$jobCodeRecord) {
             return [];
         }
@@ -190,9 +194,9 @@ class User extends Authenticatable
         }
 
         $filtered = array_filter($resultArray, function ($item) use ($globalFilter, $filterCompetent, $filterNonCompetent) {
-            $matchGlobalFilter = true;
-            $matchCompetent = true;
-            $matchNonCompetent = true;
+            $matchGlobalFilter = null;
+            $matchCompetent = false;
+            $matchNonCompetent = false;
 
 
             if ($globalFilter) {
