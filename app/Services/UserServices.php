@@ -290,6 +290,7 @@ class UserServices extends BaseServices
                 'getDetailRKI'                     => $user->getDetailRKI($request)['data'] ?? null,
                 'getTotalIKWTrained'               => $user->getDetailRKI($request)['totalIKW'] ?? null,
                 'getTotalIKWCompetent'             => $user->getDetailRKI($request)['totalIKWCompetent'] ?? null,
+                'getTotalCountRKI'                 => $user->getDetailRKI($request)['totalCount'] ?? null,
                 'age'                              => Carbon::parse($user->date_of_birth)->age,
                 'year'                             => Carbon::parse($user->date_of_birth)->year,
                 'service_year'                     => $this->getServiceYearFull($user->userServiceYear->join_date),
