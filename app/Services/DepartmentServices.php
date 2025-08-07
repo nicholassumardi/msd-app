@@ -130,14 +130,14 @@ class DepartmentServices extends BaseServices
                 'parent_name'   => $data->parent->name  ?? "",
             ];
         });
-        
+
         return $department;
     }
 
     public function getDataDepartmentPagination(Request $request)
     {
-        $start = (int) $request->start;
-        $size = (int)$request->size;
+        $start = (int) $request->start  ? (int) $request->start : 0;
+        $size = (int)$request->size ?  (int)$request->size : 4;
         $filters = json_decode($request->filters, true) ?? [];
         $sorting = json_decode($request->sorting, true) ?? [];
         $globalFilter = $request->globalFilter ?? '';
