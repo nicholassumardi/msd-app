@@ -161,7 +161,8 @@ class DepartmentServices extends BaseServices
             }
         }
 
-        $queryData = $queryData->skip($start)
+        $queryData = $queryData
+            ->skip($start)
             ->take($size)
             ->get();
 
