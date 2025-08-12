@@ -339,7 +339,7 @@ class UserStructureMappingServices extends BaseServices
         ];
     }
 
-    // for hierarchy chart purpose
+    // for hierarchy chart purpose (dormamu chart)
     public function getDataUserMappingHierarchy(Request $request, $id)
     {
         function mapChildren($data, $includeRelationship = false, $request)
@@ -407,7 +407,8 @@ class UserStructureMappingServices extends BaseServices
         return $userMapping;
     }
 
-    public function getMappingHierarchyUser(Request $request, $id)
+    // hierarchy chart (unicef/ somkid)
+    public function getMappingHierarchyUser($id)
     {
         $userJobCode = $this->userJobCode
             ->where('user_id', $id)
@@ -422,7 +423,11 @@ class UserStructureMappingServices extends BaseServices
                     'id'            => $userJobCode->id,
                     'avatar'        => '/images/pepe-tired.jpg',
                     'department'    => $userJobCode->userStructureMapping->department->name . " (" . $userJobCode->userStructureMapping->department->code . ") " .  $userJobCode->userStructureMapping->group,
-                    'name'          => $userJobCode->user->name,
+                    'name'          => $userJobCode->user->name ?? "-",
+                    'phone'         => $userJobCode->user->phone ?? "-",
+                    'address'       => $userJobCode->user->address ?? "-",
+                    'date_of_birth' => $userJobCode->user->date_of_birth ?? "-",
+                    'age'           => Carbon::parse($userJobCode->user->date_of_birth)->age,
                     'title'         => $userJobCode->user->userEmployeeNumber()->where('status', 1)->first()->employee_number ?? "",
                     'totalReports'  => count($userJobCode->children()->get()),
                 ],
@@ -436,7 +441,7 @@ class UserStructureMappingServices extends BaseServices
         return $userJobCode;
     }
 
-    public function getMappingHierarchyParent(Request $request, $parent_id)
+    public function getMappingHierarchyParent($parent_id)
     {
         $result = [];
         $userJobCode = $this->userJobCode
@@ -452,7 +457,11 @@ class UserStructureMappingServices extends BaseServices
                     'id'            => $userJobCode->id,
                     'avatar'        => '/images/pepe-tired.jpg',
                     'department'    => $userJobCode->userStructureMapping->department->name . " (" . $userJobCode->userStructureMapping->department->code . ") " .  $userJobCode->userStructureMapping->group,
-                    'name'          => $userJobCode->user->name,
+                    'name'          => $userJobCode->user->name ?? "-",
+                    'phone'         => $userJobCode->user->phone ?? "-",
+                    'address'       => $userJobCode->user->address ?? "-",
+                    'date_of_birth' => $userJobCode->user->date_of_birth ?? "-",
+                    'age'           => Carbon::parse($userJobCode->user->date_of_birth)->age,
                     'title'         => $userJobCode->user->userEmployeeNumber()->where('status', 1)->first()->employee_number ?? "",
                     'totalReports'  => count($userJobCode->children()->get()),
                 ],
@@ -469,7 +478,11 @@ class UserStructureMappingServices extends BaseServices
                     'id'            => $data->id,
                     'avatar'        => '/images/pepe-tired.jpg',
                     'department'    =>  $data->userStructureMapping->department ? $data->userStructureMapping->department->name . " (" . $data->userStructureMapping->department->code . ") " .  $data->userStructureMapping->group : "-",
-                    'name'          => $data->user->name,
+                    'name'          => $data->user->name ?? "-",
+                    'phone'         => $data->user->phone ?? "-",
+                    'address'       => $data->user->address ?? "-",
+                    'date_of_birth' => $data->user->date_of_birth ?? "-",
+                    'age'           => Carbon::parse($data->user->date_of_birth)->age,
                     'title'         => $data->user->userEmployeeNumber()->where('status', 1)->first()->employee_number ?? "",
                     'totalReports'  => count($data->children()->get()),
                 ],
@@ -482,7 +495,7 @@ class UserStructureMappingServices extends BaseServices
         return $result;
     }
 
-    public function getMappingHierarchyChildren(Request $request, $id)
+    public function getMappingHierarchyChildren($id)
     {
         $userJobCode = $this->userJobCode
             ->where('id', $id)
@@ -498,7 +511,12 @@ class UserStructureMappingServices extends BaseServices
                     'id'            => $data->id,
                     'avatar'        => '/images/pepe-tired.jpg',
                     'department'    =>  $data->userStructureMapping->department ? $data->userStructureMapping->department->name . " (" . $data->userStructureMapping->department->code . ") " .  $data->userStructureMapping->group : "-",
-                    'name'          => $data->user->name,
+                    'name'          => $data->user->name ?? "-",
+                    'phone'         => $data->user->phone ?? "-",
+                    'address'       => $data->user->address ?? "-",
+                    'date_of_birth' => $data->user->date_of_birth ?? "-",
+                    'age'           => Carbon::parse($data->user->date_of_birth)->age,
+
                     'title'         => $data->user->userEmployeeNumber()->where('status', 1)->first()->employee_number ?? "",
                     'totalReports'  => count($data->children()->get()),
                 ],

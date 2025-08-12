@@ -163,7 +163,6 @@ class User extends Authenticatable
         $jobCodeRecord = $this->userJobCode()->where('status', 1)->first();
 
 
-        Log::info($request->all());
         if (!$jobCodeRecord) {
             return [];
         }

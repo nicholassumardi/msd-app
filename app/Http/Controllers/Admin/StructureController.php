@@ -306,9 +306,9 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function showMappingHierarchyUser(Request $request, $id)
+    public function showMappingHierarchyUser($id)
     {
-        $data = $this->userMappingService->getMappingHierarchyUser($request, $id);
+        $data = $this->userMappingService->getMappingHierarchyUser($id);
 
         if ($data) {
             $response = [
@@ -326,9 +326,9 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function showMappingHierarchyParent(Request $request, $parent_id)
+    public function showMappingHierarchyParent($parent_id)
     {
-        $data = $this->userMappingService->getMappingHierarchyParent($request, $parent_id);
+        $data = $this->userMappingService->getMappingHierarchyParent($parent_id);
 
         if ($data) {
             $response = [
@@ -346,9 +346,9 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function showMappingHierarchyChildren(Request $request, $id)
+    public function showMappingHierarchyChildren($id)
     {
-        $data = $this->userMappingService->getMappingHierarchyChildren($request, $id);
+        $data = $this->userMappingService->getMappingHierarchyChildren($id);
 
         if ($data) {
             $response = [
