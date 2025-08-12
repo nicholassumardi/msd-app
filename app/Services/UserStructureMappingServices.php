@@ -516,7 +516,6 @@ class UserStructureMappingServices extends BaseServices
                     'address'       => $data->user->address ?? "-",
                     'date_of_birth' => $data->user->date_of_birth ?? "-",
                     'age'           => Carbon::parse($data->user->date_of_birth)->age,
-
                     'title'         => $data->user->userEmployeeNumber()->where('status', 1)->first()->employee_number ?? "",
                     'totalReports'  => count($data->children()->get()),
                 ],

@@ -157,11 +157,10 @@ class User extends Authenticatable
     public function getDetailRKI($request)
     {
         $globalFilter =  $request->globalFilter ? strtolower($request->globalFilter) : "";
-        $filterCompetent = isset($request->filter['competent']) ? $request->filter['competent'] : false;
-        $filterNonCompetent = isset($request->filter['nonCompetent']) ? $request->filter['nonCompetent'] : false;
+        $filterCompetent = filter_var($request->filter['competent'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $filterNonCompetent = filter_var($request->filter['nonCompetent'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $start = (int)$request->start ?  (int)$request->start : 0;
         $jobCodeRecord = $this->userJobCode()->where('status', 1)->first();
-
 
         if (!$jobCodeRecord) {
             return [];
@@ -193,35 +192,34 @@ class User extends Authenticatable
         }
 
         $filtered = array_filter($resultArray, function ($item) use ($globalFilter, $filterCompetent, $filterNonCompetent) {
-            $matchGlobalFilter = null;
-            $matchCompetent = false;
-            $matchNonCompetent = false;
-
+            $match = true;
 
             if ($globalFilter) {
-                $globalFilterLower = strtolower($globalFilter);
-                $matchGlobalFilter =
-                    str_contains(strtolower($item['ikw_code']), $globalFilterLower) ||
-                    str_contains(strtolower($item['ikw_name']), $globalFilterLower);
+                $match = $match && (
+                    str_contains(strtolower($item['ikw_code']), $globalFilter) ||
+                    str_contains(strtolower($item['ikw_name']), $globalFilter)
+                );
             }
 
             if ($filterCompetent) {
-                $matchCompetent = $item['result'] === 'K';
+                $match = $match && $item['result'] === 'K';
             }
 
             if ($filterNonCompetent) {
-                $matchNonCompetent = $item['result'] !== 'K';
+                $match = $match && $item['result'] !== 'K';
             }
 
-            return $matchGlobalFilter && $matchCompetent && $matchNonCompetent;
+            return $match;
         });
 
         $filtered = array_values($filtered);
+
 
         return [
             'data'                    => array_slice($filtered, (($start - 1) * 10), 10),
             'totalIKWCompetent'       => collect($resultArray)->where('result', 'K')->count(),
             'totalIKW'                => count($resultArray),
+            'totalCount'              => ceil(count($filtered) / 10)
         ];
     }
 }
