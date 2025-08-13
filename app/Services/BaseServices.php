@@ -134,4 +134,29 @@ class BaseServices
     {
         return (new DateTimeImmutable($arg))->setTimezone(new DateTimeZone("UTC"))->format('Y-m-d\TH:i:s');
     }
+
+    public function parseDateMdY($arg)
+    {
+        $date = Carbon::parse($arg)->format('M d, Y');
+        
+        return $date;
+    }
+
+    public function getColor($arg)
+    {
+        if (!$arg) return "#8FC9A4";
+        $colors = [
+            "#8FD0C2", // 1
+            "#8FC3DE", // 2
+            "#AC99D6", // 3
+            "#E797B8", // 4
+            "#F8D472", // 5
+            "#F6AE7B", // 6
+            "#EF8B86", // 7
+            "#DB7A91", // 8
+        ];
+
+
+        return $colors[$arg] ?? "#8FC9A4";
+    }
 }
