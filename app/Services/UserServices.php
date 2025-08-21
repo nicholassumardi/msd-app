@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Jobs\ExportUserJob;
 use App\Jobs\ImportUpdatedUserJob;
 use App\Jobs\ImportUserJob;
+use App\Models\HistoryLog;
 use App\Models\User;
+use App\Models\UserHistory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,10 +18,12 @@ use OpenSpout\Reader\XLSX\Reader;
 class UserServices extends BaseServices
 {
     protected $user;
+    protected $userHistory;
 
     public function __construct()
     {
         $this->user = User::with('company', 'department', 'userEmployeeNumber', 'certificates', 'userServiceYear', 'training');
+        $this->userHistory = UserHistory::with('historyLog');
     }
 
     public function importUserExcel(Request $request, $cachekey)
@@ -173,56 +177,101 @@ class UserServices extends BaseServices
 
             $user = User::firstWhere('uuid', $uuid);
 
+
             if (!$user) {
                 DB::rollBack();
                 return false;
             }
 
-            // Define the list of fields that can be updated
-            $updatableFields = [
-                'name',
-                'company_id',
-                'department_id',
-                'date_of_birth',
-                'identity_card',
-                'gender',
-                'religion',
-                'email',
-                'photo',
-                'education',
-                'status',
-                'marital_status',
-                'address',
-                'phone',
-                'employee_type',
-                'section',
-                'position_code',
-                'status_twiji',
-                'schedule_type',
-            ];
+            $historyLog =  HistoryLog::create([
+                'modified_at' => date('Y-m-d'),
+                'table_name'  => 'user_histories',
+            ]);
 
-            // Filter the request data to include only the fields present in the request
-            $data = array_filter(
-                $request->only($updatableFields),
-                function ($value) {
-                    return !is_null($value);
+
+            if ($historyLog) {
+                UserHistory::create([
+                    'history_log_id'  => $historyLog->id,
+                    'name'            => $user->name,
+                    'company_id'      => $user->company_id,
+                    'department_id'   => $user->department_id,
+                    'date_of_birth'   => date('Y-m-d', strtotime($request->date_of_birth)),
+                    'identity_card'   => str_replace("-", "",  $user->identity_card),
+                    'gender'          => $user->gender,
+                    'religion'        => $user->religion,
+                    'email'           => $user->email,
+                    'photo'           => $user->photo ? $user->photo : '',
+                    'education'       => $user->education,
+                    'status'          => $user->status,
+                    'marital_status'  => $user->marital_status,
+                    'address'         => $user->address,
+                    'phone'           => $user->phone,
+                    'employee_type'   => $user->employee_type,
+                    'section'         => $user->section,
+                    'position_code'   => $user->position_code,
+                    'status_twiji'    => $user->status_twiji,
+                    'schedule_type'   => $user->schedule_type,
+                    'employee_number' => $user->userEmployeeNumber()
+                        ->where('status', 1)
+                        ->latest('id') // or 'created_at'
+                        ->first()
+                        ->employee_number ?? "",
+                    'join_date' => optional(
+                        $user->userServiceYear()->latest('id')->first()
+                    )->join_date,
+                    'leave_date' => optional(
+                        $user->userServiceYear()->latest('id')->first()
+                    )->leave_date,
+                ]);
+
+                // Define the list of fields that can be updated
+                $updatableFields = [
+                    'name',
+                    'company_id',
+                    'department_id',
+                    'date_of_birth',
+                    'identity_card',
+                    'gender',
+                    'religion',
+                    'email',
+                    'photo',
+                    'education',
+                    'status',
+                    'marital_status',
+                    'address',
+                    'phone',
+                    'employee_type',
+                    'section',
+                    'position_code',
+                    'status_twiji',
+                    'schedule_type',
+                ];
+
+                // Filter the request data to include only the fields present in the request
+                $data = array_filter(
+                    $request->only($updatableFields),
+                    function ($value) {
+                        return !is_null($value);
+                    }
+                );
+
+                // Apply necessary transformations
+                if (isset($data['date_of_birth'])) {
+                    $data['date_of_birth'] = date('Y-m-d', strtotime($data['date_of_birth']));
                 }
-            );
 
-            // Apply necessary transformations
-            if (isset($data['date_of_birth'])) {
-                $data['date_of_birth'] = date('Y-m-d', strtotime($data['date_of_birth']));
+                if (isset($data['identity_card'])) {
+                    $data['identity_card'] = str_replace("-", "", $data['identity_card']);
+                }
+
+                if (isset($data['photo'])) {
+                    $data['photo'] = $data['photo'] ?: '';
+                }
+
+                $user->update($data);
             }
 
-            if (isset($data['identity_card'])) {
-                $data['identity_card'] = str_replace("-", "", $data['identity_card']);
-            }
 
-            if (isset($data['photo'])) {
-                $data['photo'] = $data['photo'] ?: '';
-            }
-
-            $user->update($data);
 
             $this->setLog('info', 'Updated data User ' . json_encode($data));
             DB::commit();
@@ -375,6 +424,123 @@ class UserServices extends BaseServices
         $globalFilter = $request->globalFilter ?? '';
 
         $user = $this->user->where(function ($query) use ($request, $filters, $globalFilter) {
+            if ($request->id_department) {
+                $query->where('department_id', $request->id_department);
+            }
+            if ($request->id_company) {
+                $query->where('company_id', $request->id_company);
+            }
+
+            if ($globalFilter) {
+                $query->where(function ($query) use ($globalFilter) {
+                    $query->where('name', 'LIKE',  "%{$globalFilter}%")
+                        ->orWhere('date_of_birth', 'LIKE',  "%{$globalFilter}%")
+                        ->orWhere('identity_card', 'LIKE',  "%{$globalFilter}%")
+                        ->orWhere('gender', 'LIKE',  "%{$globalFilter}%")
+                        ->orWhere('religion', 'LIKE',  "%{$globalFilter}%")
+                        ->orWhere('email', 'LIKE',  "%{$globalFilter}%")
+                        ->orWhere('address', 'LIKE',  "%{$globalFilter}%")
+                        ->orWhere('phone', 'LIKE',  "%{$globalFilter}%")
+                        ->orWhere('education', 'LIKE',  "%{$globalFilter}%")
+                        ->orWhere('position_code', 'LIKE',  "%{$globalFilter}%")
+                        ->orWhere('status_twiji', 'LIKE',  "%{$globalFilter}%")
+                        ->orWhere('schedule_type', 'LIKE',  "%{$globalFilter}%");
+                })->orWhereHas('department', function ($query) use ($globalFilter) {
+                    $query->where('name', 'LIKE',  "%{$globalFilter}%");
+                })->orWhereHas('company', function ($query) use ($globalFilter) {
+                    $query->where('name', 'LIKE',  "%{$globalFilter}%");
+                })->orWhereHas('userEmployeeNumber', function ($query) use ($globalFilter) {
+                    $query->where('employee_number', 'LIKE',  "%{$globalFilter}%");
+                })->orWhereHas('userJobCode', function ($query) use ($globalFilter) {
+                    $query->whereHas('jobCode', function ($query) use ($globalFilter) {
+                        $query->where('full_code', 'LIKE',  "%{$globalFilter}%");
+                    });
+                });
+            }
+
+            foreach ($filters as $filter) {
+                $query->where($filter['id'], $filter['value']);
+            }
+        });
+
+        foreach ($sorting as $sort) {
+            if (isset($sort['id'])) {
+                $user->orderBy($sort['id'], $sort['desc'] ? 'DESC' : 'ASC');
+            }
+        }
+
+        $user = $user
+            ->skip($start)
+            ->take($size)
+            ->get();
+
+
+        $user = $user->map(function ($data) use ($request) {
+            return [
+                'uuid'                             => $data->uuid,
+                'id'                               => $data->id,
+                'name'                             => $data->name,
+                'company_id'                       => $data->company->id ?? null,
+                'company_name'                     => $data->company ? $data->company->name . " (" . $data->company->code . ")" : '',
+                'companies'                        => $data->company,
+                'department_id'                    => $data->department->id ??  null,
+                'department_name'                  => $data->department->name ?? '',
+                'department_code'                  => $data->department->code ?? '',
+                'employee_number'                  => $data->userEmployeeNumber()->where('status', 1)->first()->employee_number ?? "",
+                'employee_numbers'                 => $data->userEmployeeNumber ?? null,
+                'date_of_birth'                    => $data->date_of_birth,
+                'identity_card'                    => $data->identity_card,
+                'unicode'                          => $data->name . " - " . $data->identity_card,
+                'gender'                           => strtoupper($data->gender),
+                'religion'                         => strtoupper($data->religion),
+                'email'                            => $data->email,
+                'photo'                            => $data->photo,
+                'education'                        => $data->education,
+                'status'                           => $data->status == 1 ? "Aktif" : "Non Aktif",
+                'marital_status'                   => $data->marital_status,
+                'address'                          => $data->address,
+                'phone'                            => $data->phone,
+                'employee_type'                    => $data->employee_type,
+                'section'                          => $data->section,
+                'position_code'                    => $data->position_code,
+                'id_staff'                         => $data->userJobCode()->where('status', 1)->first()->id_staff ?? "",
+                'id_structure'                     => $data->userJobCode()->where('status', 1)->first()->id_structure ?? "",
+                'group'                            => $data->userJobCode()->where('status', 1)->first()->group ?? "",
+                'roleCode'                         => $data->userJobCode()->where('status', 1)->first()->jobCode->full_code ?? "",
+                'positionCode'                     => $data->userJobCode()->where('status', 1)->first()->position_code_structure ?? "",
+                'employee_superior'                => $data->getSuperiorName(),
+                'employeeStructure'                => $data->userJobCode()->where('status', 1)->first() ? ($data->userJobCode()->where('status', 1)->first()->userStructureMapping() ? $data->userJobCode()->where('status', 1)->first()->userStructureMapping()->first() : "") : "",
+                'roleCodes'                        => $data->userJobCode()->get(),
+                'status_twiji'                     => $data->status_twiji,
+                'schedule_type'                    => $data->schedule_type,
+                'user_certificates'                => $data->certificates,
+                'join_date'                        => $data->userServiceYear->join_date,
+                'employeeStructures'               => $data->userJobCode()->with('userStructureMapping')->get() ?? null,
+                'totalMemberStructure'             => $data->getTotalMemberStructure() ?? null,
+                'totalSubordinates'                => $data->getTotalSubordinate(),
+                'employeeIKWSTrained'              => $data->getDetailIKWTrained() ?? null,
+                'getDetailRKI'                     => $data->getDetailRKI($request) ?? null,
+                'age'                              => Carbon::parse($data->date_of_birth)->age ?? null,
+                'year'                             => Carbon::parse($data->date_of_birth)->year ?? null,
+                'service_year'                     => $this->getServiceYearFull($data->userServiceYear->join_date) ?? null,
+                'age_classification'               => $this->ageClassification($data->date_of_birth) ?? null,
+                'general_classification'           => $this->generalClassification($data->date_of_birth) ?? null,
+                'working_duration_classification'  => $this->workingDurationClassification($data->userServiceYear->join_date) ?? null,
+            ];
+        });
+
+        return $user;
+    }
+
+    public function getDataUserHistoryPagination(Request $request)
+    {
+        $start = (int) $request->start ? (int)$request->start : 0;
+        $size = (int)$request->size ?  (int)$request->size : 5;
+        $filters = json_decode($request->filters, true) ?? [];
+        $sorting = json_decode($request->sorting, true) ?? [];
+        $globalFilter = $request->globalFilter ?? '';
+
+        $user = $this->userHistory->where(function ($query) use ($request, $filters, $globalFilter) {
             if ($request->id_department) {
                 $query->where('department_id', $request->id_department);
             }

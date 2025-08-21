@@ -15,7 +15,7 @@ class CreateUserHistoriesTable extends Migration
     {
         Schema::create('user_histories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('history_log_id')->nullable()->constrained()->cascadeOnDelete()->comment('PT || KAS || HAS || KIAS');
+            $table->foreignId('history_log_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->foreignId('company_id')->nullable()->constrained()->cascadeOnDelete()->comment('PT || KAS || HAS || KIAS');
             $table->foreignId('department_id')->nullable()->constrained()->cascadeOnDelete()->comment('QC || REF || PRS || TEK');

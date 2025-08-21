@@ -8,7 +8,7 @@ use App\Http\Requests\UserRequest;
 use App\Jobs\ExportUserJob;
 use App\Jobs\ImportUpdatedUserJob;
 use App\Jobs\ImportUserJob;
-use App\Models\Company;
+use App\Models\employee;
 use App\Models\Department;
 use App\Models\User;
 use App\Services\UserCertificateServices;
@@ -188,12 +188,12 @@ class UserController extends Controller
             $response = [
                 'status' => 200,
                 'data'   => $data,
-                'message' => "Successfully fetched data company"
+                'message' => "Successfully fetched data employee"
             ];
         } else {
             $response = [
                 'status' => 500,
-                'message' => "failed to fetch data company"
+                'message' => "failed to fetch data employee"
             ];
         }
 
@@ -208,12 +208,12 @@ class UserController extends Controller
             $response = [
                 'status'  => 200,
                 'data'    => $data,
-                'message' => 'Successfully fetched data company'
+                'message' => 'Successfully fetched data employee'
             ];
         } else {
             $response = [
                 'status' => 500,
-                'message' => 'Failed to fetch data company'
+                'message' => 'Failed to fetch data employee'
             ];
         }
 
@@ -229,12 +229,33 @@ class UserController extends Controller
                 'status'       => 200,
                 'data'         => $data,
                 'totalCount'   => $this->user->count(),
-                'message'      => 'Successfully fetched data company'
+                'message'      => 'Successfully fetched data employee'
             ];
         } else {
             $response = [
                 'status' => 500,
-                'message' => 'Failed to fetch data company'
+                'message' => 'Failed to fetch data employee'
+            ];
+        }
+
+        return response()->json($response);
+    }
+
+    public function showUserHistoryPagination(Request $request)
+    {
+        $data = $this->service->getDataUserHistoryPagination($request);
+
+        if ($data) {
+            $response = [
+                'status'       => 200,
+                'data'         => $data,
+                'totalCount'   => $this->user->count(),
+                'message'      => 'Successfully fetched data employee'
+            ];
+        } else {
+            $response = [
+                'status' => 500,
+                'message' => 'Failed to fetch data employee'
             ];
         }
 
@@ -250,12 +271,12 @@ class UserController extends Controller
             $response = [
                 'status'  => 200,
                 'data'    => $data,
-                'message' => 'Successfully fetched data company'
+                'message' => 'Successfully fetched data employee'
             ];
         } else {
             $response = [
                 'status' => 500,
-                'message' => 'Failed to fetch data company'
+                'message' => 'Failed to fetch data employee'
             ];
         }
 

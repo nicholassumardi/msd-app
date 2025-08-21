@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\HistoryLog;
 use App\Models\User;
 use App\Models\UserEmployeeNumber;
+use App\Models\UserHistory;
 use App\Services\BaseServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -52,21 +54,65 @@ class UserEmployeeNumberServices extends BaseServices
 
             $user = User::firstWhere('uuid', $uuid);
 
-            if ($user) {
-                foreach ($request->userEmployeeNumbers as $key => $userEmployeeNumber) {
-                    $data =   [
-                        'user_id'          => $user->id,
-                        'employee_number'  => $userEmployeeNumber["employee_number"],
-                        'registry_date'    => $userEmployeeNumber["registry_date"],
-                        'status'           => $key == 0 ? 1 : 0
-                    ];
 
-                    if (empty($userEmployeeNumber["id"])) {
-                        UserEmployeeNumber::create($data);
-                    } else {
-                        UserEmployeeNumber::where('user_id', $user->id)
-                            ->where('id', $userEmployeeNumber['id'])
-                            ->update($data);
+
+
+            if ($user) {
+                $historyLog =  HistoryLog::create([
+                    'modified_at' => date('Y-m-d'),
+                    'table_name'  => 'user_histories',
+                ]);
+
+                if ($historyLog) {
+                    UserHistory::create([
+                        'history_log_id'  => $historyLog->id,
+                        'name'            => $user->name,
+                        'company_id'      => $user->company_id,
+                        'department_id'   => $user->department_id,
+                        'date_of_birth'   => date('Y-m-d', strtotime($request->date_of_birth)),
+                        'identity_card'   => str_replace("-", "",  $user->identity_card),
+                        'gender'          => $user->gender,
+                        'religion'        => $user->religion,
+                        'email'           => $user->email,
+                        'photo'           => $user->photo ? $user->photo : '',
+                        'education'       => $user->education,
+                        'status'          => $user->status,
+                        'marital_status'  => $user->marital_status,
+                        'address'         => $user->address,
+                        'phone'           => $user->phone,
+                        'employee_type'   => $user->employee_type,
+                        'section'         => $user->section,
+                        'position_code'   => $user->position_code,
+                        'status_twiji'    => $user->status_twiji,
+                        'schedule_type'   => $user->schedule_type,
+                        'employee_number' => $user->userEmployeeNumber()
+                            ->where('status', 1)
+                            ->latest('id') // or 'created_at'
+                            ->first()
+                            ->employee_number ?? "",
+                        'join_date' => optional(
+                            $user->userServiceYear()->latest('id')->first()
+                        )->join_date,
+                        'leave_date' => optional(
+                            $user->userServiceYear()->latest('id')->first()
+                        )->leave_date,
+                    ]);
+
+                    foreach ($request->userEmployeeNumbers as $key => $userEmployeeNumber) {
+                        $data =   [
+                            'user_id'          => $user->id,
+                            'employee_number'  => $userEmployeeNumber["employee_number"],
+                            'registry_date'    => $userEmployeeNumber["registry_date"],
+                            'status'           => $key == 0 ? 1 : 0
+                        ];
+
+                        if (empty($userEmployeeNumber["id"])) {
+                            UserEmployeeNumber::create($data);
+                        } else {
+                            UserEmployeeNumber::where('user_id', $user->id)
+                                ->where('id', $userEmployeeNumber['id'])
+                                ->update($data);
+                        }
                     }
                 }
             } else {

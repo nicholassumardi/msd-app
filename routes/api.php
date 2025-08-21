@@ -155,6 +155,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::get('show/{uuid}', [UserController::class, 'show']);
         Route::get('show', [UserController::class, 'showAll']);
         Route::get('show_user_pagination', [UserController::class, 'showUserPagination']);
+        Route::get('show_user_history_pagination', [UserController::class, 'showUserHistoryPagination']);
         Route::get('show_by_department/{department_id}', [UserController::class, 'showByDepartment']);
         Route::delete('delete/{uuid}', [UserController::class, 'destroy']);
     });
