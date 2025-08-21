@@ -19,8 +19,8 @@ class CreateIkwRevisionsTable extends Migration
             $table->string('ikw_code')->nullable();
             $table->string('revision_no')->nullable();
             $table->text('reason')->nullable();
-            $table->tinyInteger('process_status')->nullable()->comment('1: DONE | 2: FOD - PENGAJUAN | 3: FU-LO | 4: ON - PROGRESS');
-            $table->tinyInteger('ikw_fix_status')->nullable()->comment('1: MAJOR | 2: MINOR | 3: HAPUS | 4: ON - PROGRESS');
+            $table->tinyInteger('process_status')->nullable()->comment('0:Batal Revisi | 1: DONE | 2: FOD - PENGAJUAN | 3: FU-LO | 4: ON - PROGRESS');
+            $table->tinyInteger('ikw_fix_status')->nullable()->comment('0:Batal Revisi | 1: MAJOR | 2: MINOR | 3: HAPUS | 4: ON - PROGRESS');
             $table->tinyInteger('confirmation')->nullable()->comment('1: HAPUS | 0: REV');
             $table->text('change_description')->nullable();
             $table->string('submission_no')->nullable();

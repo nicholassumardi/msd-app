@@ -196,7 +196,6 @@ class IkwServices extends BaseServices
 
     public function getDataIKW($id_IKW = NULL)
     {
-
         if (!empty($id_IKW)) {
             if (!empty($id_IKW)) {
                 $ikw = $this->ikw->firstWhere('id', $id_IKW);
@@ -240,6 +239,7 @@ class IkwServices extends BaseServices
                 $ikw = [
                     'id'                             => $ikw->id,
                     'revision_no'                    => $ikw->ikwRevision()->orderBy('revision_no', 'DESC')->first()->revision_no ?? 0,
+                    'company_id'                     => $ikw->department->company_id ?? "",
                     'department_id'                  => $ikw->department_id ?? "",
                     'department_name'                => $ikw->department->name ?? "",
                     'code'                           => $ikw->code ?? "",
@@ -263,6 +263,7 @@ class IkwServices extends BaseServices
                 return [
                     'id'                             => $data->id,
                     'revision_no'                    => $data->ikwRevision()->orderBy('revision_no', 'DESC')->first()->revision_no ?? "",
+                    'company_id'                     => $data->department->company_id ?? "",
                     'department_id'                  => $data->department_id ?? "",
                     'department_name'                => $data->department->name ?? "",
                     'code'                           => $data->code ?? "",

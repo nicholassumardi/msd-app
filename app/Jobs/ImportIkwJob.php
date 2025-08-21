@@ -287,13 +287,29 @@ class ImportIkwJob implements ShouldQueue
             return $dataIkwRevision;
         }
 
+        $processStatusDictionary = [
+            'Batal Revisi' => 0,
+            'DONE' => 1,
+            'FOD - PENGAJUAN' => 2,
+            'FU-LO' => 3,
+            'On Progress' => 4,
+        ];
+
+        $ikwStatusDictionary = [
+            'Batal Revisi' => 0,
+            'MAJOR' => 1,
+            'MINOR' => 2,
+            'HAPUS' => 3,
+            'On Progress' => 4,
+        ];
+
         $dataIkwRevision[] = [
             'ikw_id'                        => $ikw_id ?? NULL,
             'ikw_code'                      => $row[3],
             'revision_no'                   => (int) $row[4],
             'reason'                        => $row[5],
-            'process_status'                => ($row[6] === "DONE") ? 1 : (($row[6] === "FOD - PENGAJUAN") ? 2 : (($row[6] === "FU-LO") ? 3 : 4)),
-            'ikw_fix_status'                => ($row[7] === "MAJOR") ? 1 : (($row[7] === "MINOR") ? 2 : (($row[7] === "HAPUS") ? 3 : (($row[7] === "On Progress") ? 4 : 5))),
+            'process_status'                => $processStatusDictionary[$row[6]] ?? NULL,
+            'ikw_fix_status'                => $ikwStatusDictionary[$row[7]] ?? NULL,
             'confirmation'                  => $row[8] == 'HAPUS' ? 1 : 0,
             'change_description'            => $row[9],
             'submission_no'                 => $row[10],

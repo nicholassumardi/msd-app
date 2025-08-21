@@ -56,6 +56,7 @@ class UserStructureMappingServices extends BaseServices
             $usm =  UserStructureMapping::create([
                 'department_id'   => $request->department_id,
                 'job_code_id'     => $request->job_code_id ?? null,
+                'parent_id'       => $request->parent_id ?? null,
                 'name'            => $request->name,
                 'quota'           => $request->quota,
                 'structure_type'  => $request->structure_type,
@@ -146,6 +147,71 @@ class UserStructureMappingServices extends BaseServices
         }
     }
 
+    public function updateUserMapping(Request $request, $id_user_mapping)
+    {
+        try {
+            $this->setLog('info', 'Request store data user mapping ' . json_encode($request->all()));
+            $this->setLog('info', 'Start');
+            DB::beginTransaction();
+
+            $userMapping = UserStructureMapping::find($id_user_mapping);
+
+            if ($userMapping) {
+
+                $oldQuota = $userMapping->quota;
+                $newQuota = $request->quota;
+                $logMessage = '';
+
+                if ($newQuota > $oldQuota) {
+                    $logMessage = "Quota has been added from $oldQuota to $newQuota";
+                } elseif ($newQuota < $oldQuota) {
+                    $logMessage = "Quota has been decreased from $oldQuota to $newQuota";
+                }
+
+                $userMapping->update([
+                    'department_id'   => $request->department_id,
+                    'job_code_id'     => $request->job_code_id ?? null,
+                    'parent_id'       => $request->parent_id ?? null,
+                    'name'            => $request->name,
+                    'quota'           => $request->quota,
+                    'structure_type'  => $request->structure_type,
+                ]);
+
+                if ($newQuota != $oldQuota) {
+                    UserStructureMappingHistories::create([
+                        'user_structure_mapping_id' => $userMapping->id,
+                        'revision_no'               =>  $this->userStructureMappingHistories->where('user_structure_mapping_id', $userMapping->id)->max('revision_no') + 1,
+                        'valid_date'                => $request->valid_date,
+                        'updated_date'              => $request->updated_date,
+                        'authorized_date'           => $request->authorized_date,
+                        'approval_date'             => $request->approval_date,
+                        'acknowledged_date'         => $request->acknowledged_date,
+                        'created_date'              => $request->created_date,
+                        'distribution_date'         => $request->distribution_date,
+                        'withdrawal_date'           => $request->withdrawal_date,
+                        'logs'                      => $logMessage,
+                    ]);
+                }
+            } else {
+                DB::rollBack();
+                return false;
+            }
+
+            $this->setLog('info', 'updated data user mapping ' . json_encode($request->all()));
+            DB::commit();
+            $this->setLog('info', 'End');
+
+            return true;
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            $this->setLog('error', 'Error store data user mapping = ' . $exception->getMessage());
+            $this->setLog('error', 'Error store data user mapping = ' . $exception->getLine());
+            $this->setLog('error', 'Error store data user mapping = ' . $exception->getFile());
+            $this->setLog('error', 'Error store data user mapping = ' . $exception->getTraceAsString());
+            return null;
+        }
+    }
+    
     public function updateUserMappingRequest(Request $request, $id)
     {
         try {
@@ -203,70 +269,6 @@ class UserStructureMappingServices extends BaseServices
                     'request_date'     => $request->request_date,
                     'status_slot'      => $request->status_slot,
                 ]);
-            } else {
-                DB::rollBack();
-                return false;
-            }
-
-            $this->setLog('info', 'updated data user mapping ' . json_encode($request->all()));
-            DB::commit();
-            $this->setLog('info', 'End');
-
-            return true;
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            $this->setLog('error', 'Error store data user mapping = ' . $exception->getMessage());
-            $this->setLog('error', 'Error store data user mapping = ' . $exception->getLine());
-            $this->setLog('error', 'Error store data user mapping = ' . $exception->getFile());
-            $this->setLog('error', 'Error store data user mapping = ' . $exception->getTraceAsString());
-            return null;
-        }
-    }
-
-    public function updateUserMapping(Request $request, $id_user_mapping)
-    {
-        try {
-            $this->setLog('info', 'Request store data user mapping ' . json_encode($request->all()));
-            $this->setLog('info', 'Start');
-            DB::beginTransaction();
-
-            $userMapping = UserStructureMapping::find($id_user_mapping);
-
-            if ($userMapping) {
-
-                $oldQuota = $userMapping->quota;
-                $newQuota = $request->quota;
-                $logMessage = '';
-
-                if ($newQuota > $oldQuota) {
-                    $logMessage = "Quota has been added from $oldQuota to $newQuota";
-                } elseif ($newQuota < $oldQuota) {
-                    $logMessage = "Quota has been decreased from $oldQuota to $newQuota";
-                }
-
-                $userMapping->update([
-                    'department_id'   => $request->department_id,
-                    'job_code_id'     => $request->job_code_id ?? null,
-                    'name'            => $request->name,
-                    'quota'           => $request->quota,
-                    'structure_type'  => $request->structure_type,
-                ]);
-
-                if ($newQuota != $oldQuota) {
-                    UserStructureMappingHistories::create([
-                        'user_structure_mapping_id' => $userMapping->id,
-                        'revision_no'               =>  $this->userStructureMappingHistories->where('user_structure_mapping_id', $userMapping->id)->max('revision_no') + 1,
-                        'valid_date'                => $request->valid_date,
-                        'updated_date'              => $request->updated_date,
-                        'authorized_date'           => $request->authorized_date,
-                        'approval_date'             => $request->approval_date,
-                        'acknowledged_date'         => $request->acknowledged_date,
-                        'created_date'              => $request->created_date,
-                        'distribution_date'         => $request->distribution_date,
-                        'withdrawal_date'           => $request->withdrawal_date,
-                        'logs'                      => $logMessage,
-                    ]);
-                }
             } else {
                 DB::rollBack();
                 return false;
