@@ -25,17 +25,17 @@ class UserRequest extends FormRequest
     public function rules()
     {
         return [
-            'name'                                  => 'required|string|max:255',
-            'identity_card'                         => 'required|string|max:255',
-            'date_of_birth'                         => 'required|date',
+            'name'                                  => 'nullable|string|max:255',
+            'identity_card'                         => 'nullable|string|max:255',
+            'date_of_birth'                         => 'nullable|date',
             'gender'                                => 'nullable|string',
             'religion'                              => 'nullable|string',
             'education'                             => 'nullable|string',
             'marital_status'                        => 'nullable|string',
             'phone'                                 => 'nullable|string',
             'address'                               => 'nullable|string',
-            'company_id'                            => 'required',
-            'department_id'                         => 'required',
+            'company_id'                            => 'nullable',
+            'department_id'                         => 'nullable',
             'employee_type'                         => 'nullable|string',
             'section'                               => 'nullable|string',
             'position_code'                         => 'nullable|string',

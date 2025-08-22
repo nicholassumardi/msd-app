@@ -24,10 +24,13 @@ class UserStructureMappingRequest extends FormRequest
     public function rules()
     {
         return [
-            'department_id'  => 'required',
-            'job_code_id'    => 'nullable',
-            'name'           => 'required',
-            'quota'          => 'required',
+            'department_id'             => 'required',
+            'job_code_id'               => 'nullable',
+            'parent_id'                 => 'nullable',
+            'position_code_structure'   => 'nullable',
+            'structure_type'            => 'nullable',
+            'name'                      => 'required',
+            'quota'                     => 'required',
         ];
     }
 }

@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UserStructureMappingRequest;
-use App\Jobs\ImportStructureJob;
-use App\Jobs\ImportUserJobCodeJob;
 use App\Models\User;
 use App\Services\StructureServices;
 use App\Services\UserStructureMappingServices;
@@ -271,10 +269,10 @@ class StructureController extends Controller
             ];
 
             $response = [
-                'status'     => 200,
-                'data'       => $data['data'],
-                'pagination' => $pagination,
-                'message'    => 'Successfully fetched data mapping'
+                'status'      => 200,
+                'data'        => $data['data'],
+                'pagination'  => $pagination,
+                'message'     => 'Successfully fetched data mapping'
             ];
         } else {
             $response = [

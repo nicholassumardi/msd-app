@@ -54,12 +54,13 @@ class UserStructureMappingServices extends BaseServices
             DB::beginTransaction();
 
             $usm =  UserStructureMapping::create([
-                'department_id'   => $request->department_id,
-                'job_code_id'     => $request->job_code_id ?? null,
-                'parent_id'       => $request->parent_id ?? null,
-                'name'            => $request->name,
-                'quota'           => $request->quota,
-                'structure_type'  => $request->structure_type,
+                'department_id'           => $request->department_id,
+                'position_code_structure' => $request->position_code_structure ?? null,
+                'job_code_id'             => $request->job_code_id ?? null,
+                'parent_id'               => $request->parent_id ?? null,
+                'name'                    => $request->name,
+                'quota'                   => $request->quota,
+                'structure_type'          => $request->structure_type,
             ]);
 
             $now = Carbon::now();
@@ -211,7 +212,7 @@ class UserStructureMappingServices extends BaseServices
             return null;
         }
     }
-    
+
     public function updateUserMappingRequest(Request $request, $id)
     {
         try {
@@ -298,7 +299,7 @@ class UserStructureMappingServices extends BaseServices
             $userMapping['employee_number'] = "";
             $userMapping['superior'] = $userMapping->parent->name ?? "None";
             $userMapping['company_name'] = $userMapping->department->company->name ?? "None";
-            // $userMapping['user_mapping_histories'] = $userMapping->userStructureMappingHistories->latest()->first() ?? NULL;
+            $userMapping['hasChildren'] = $userMapping->children()->exists();
         } else {
             $userMapping = $this->userMapping->get();
         }
@@ -336,8 +337,8 @@ class UserStructureMappingServices extends BaseServices
             ->get();
 
         return [
-            'data'       => $userMapping,
-            'totalCount' => $totalCount
+            'data'        => $userMapping,
+            'totalCount'  => $totalCount
         ];
     }
 
@@ -553,7 +554,16 @@ class UserStructureMappingServices extends BaseServices
 
             $userMapping = UserStructureMapping::find($id_user_mapping);
 
-            if ($userMapping) {
+            // Check if user mapping exists & has children, move childrent to usermapping parent_id
+            if ($userMapping->children()->exist()) {
+                foreach ($userMapping->children as $user) {
+                    $user->update([
+                        'parent_id' => $userMapping->parent_id,
+                    ]);
+                }
+            }
+
+            if ($request->isAllowed) {
                 $userMapping->delete();
             } else {
                 DB::rollBack();

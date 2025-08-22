@@ -21,7 +21,6 @@ class CreateUsersTable extends Migration
             $table->foreignId('department_id')->nullable()->constrained()->cascadeOnDelete()->comment('QC || REF || PRS || TEK');
             $table->date('date_of_birth')->nullable();
             $table->string('identity_card')->nullable();
-            // $table->string('identity_card')->unique()->nullable();
             $table->enum('gender', ['male', 'female'])->nullable();
             $table->string('religion')->nullable();
             $table->string('email')->unique()->nullable();
