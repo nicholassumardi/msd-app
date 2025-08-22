@@ -5,12 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ExcelRequest;
 use App\Http\Requests\UserRequest;
-use App\Jobs\ExportUserJob;
 use App\Jobs\ImportUpdatedUserJob;
 use App\Jobs\ImportUserJob;
-use App\Models\employee;
-use App\Models\Department;
 use App\Models\User;
+use App\Models\UserHistory;
 use App\Services\UserCertificateServices;
 use App\Services\UserEmployeeNumberServices;
 use App\Services\UserServices;
@@ -22,6 +20,7 @@ class UserController extends Controller
 {
 
     protected $user;
+    protected $userHistory;
     protected $service;
     protected $serviceUserServiceYear;
     protected $serviceUserCertificate;
@@ -30,6 +29,7 @@ class UserController extends Controller
     public function __construct()
     {
         $this->user = User::all();
+        $this->userHistory = UserHistory::all();
         $this->service = new UserServices();
         $this->serviceUserServiceYear = new UserServiceYearServices();
         $this->serviceUserCertificate = new UserCertificateServices();
@@ -249,7 +249,7 @@ class UserController extends Controller
             $response = [
                 'status'       => 200,
                 'data'         => $data,
-                'totalCount'   => $this->user->count(),
+                'totalCount'   => $this->userHistory->count(),
                 'message'      => 'Successfully fetched data employee'
             ];
         } else {

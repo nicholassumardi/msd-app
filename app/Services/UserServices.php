@@ -288,7 +288,6 @@ class UserServices extends BaseServices
         }
     }
 
-
     public function getDataUser($uuid = NULL, $request)
     {
         if (!empty($uuid)) {
@@ -539,13 +538,23 @@ class UserServices extends BaseServices
         $filters = json_decode($request->filters, true) ?? [];
         $sorting = json_decode($request->sorting, true) ?? [];
         $globalFilter = $request->globalFilter ?? '';
+        $startDate = date('Y-m-d', strtotime($request->start_date));
+        $endDate   = date('Y-m-d', strtotime($request->end_date));
 
-        $user = $this->userHistory->where(function ($query) use ($request, $filters, $globalFilter) {
+        $user = $this->userHistory->where(function ($query) use ($request, $filters, $globalFilter, $startDate,  $endDate) {
             if ($request->id_department) {
                 $query->where('department_id', $request->id_department);
             }
             if ($request->id_company) {
                 $query->where('company_id', $request->id_company);
+            }
+            if ($startDate && $endDate) {
+                $query->whereHas(
+                    'historyLog',
+                    function ($query) use ($startDate, $endDate) {
+                        $query->whereBetween('modified_at', [$startDate, $endDate]);
+                    }
+                );
             }
 
             if ($globalFilter) {
@@ -566,12 +575,6 @@ class UserServices extends BaseServices
                     $query->where('name', 'LIKE',  "%{$globalFilter}%");
                 })->orWhereHas('company', function ($query) use ($globalFilter) {
                     $query->where('name', 'LIKE',  "%{$globalFilter}%");
-                })->orWhereHas('userEmployeeNumber', function ($query) use ($globalFilter) {
-                    $query->where('employee_number', 'LIKE',  "%{$globalFilter}%");
-                })->orWhereHas('userJobCode', function ($query) use ($globalFilter) {
-                    $query->whereHas('jobCode', function ($query) use ($globalFilter) {
-                        $query->where('full_code', 'LIKE',  "%{$globalFilter}%");
-                    });
                 });
             }
 
@@ -592,7 +595,7 @@ class UserServices extends BaseServices
             ->get();
 
 
-        $user = $user->map(function ($data) use ($request) {
+        $user = $user->map(function ($data) {
             return [
                 'uuid'                             => $data->uuid,
                 'id'                               => $data->id,
@@ -603,8 +606,7 @@ class UserServices extends BaseServices
                 'department_id'                    => $data->department->id ??  null,
                 'department_name'                  => $data->department->name ?? '',
                 'department_code'                  => $data->department->code ?? '',
-                'employee_number'                  => $data->userEmployeeNumber()->where('status', 1)->first()->employee_number ?? "",
-                'employee_numbers'                 => $data->userEmployeeNumber ?? null,
+                'employee_number'                  => $data->employee_number ?? "",
                 'date_of_birth'                    => $data->date_of_birth,
                 'identity_card'                    => $data->identity_card,
                 'unicode'                          => $data->name . " - " . $data->identity_card,
@@ -620,23 +622,11 @@ class UserServices extends BaseServices
                 'employee_type'                    => $data->employee_type,
                 'section'                          => $data->section,
                 'position_code'                    => $data->position_code,
-                'id_staff'                         => $data->userJobCode()->where('status', 1)->first()->id_staff ?? "",
-                'id_structure'                     => $data->userJobCode()->where('status', 1)->first()->id_structure ?? "",
-                'group'                            => $data->userJobCode()->where('status', 1)->first()->group ?? "",
-                'roleCode'                         => $data->userJobCode()->where('status', 1)->first()->jobCode->full_code ?? "",
-                'positionCode'                     => $data->userJobCode()->where('status', 1)->first()->position_code_structure ?? "",
-                'employee_superior'                => $data->getSuperiorName(),
-                'employeeStructure'                => $data->userJobCode()->where('status', 1)->first() ? ($data->userJobCode()->where('status', 1)->first()->userStructureMapping() ? $data->userJobCode()->where('status', 1)->first()->userStructureMapping()->first() : "") : "",
-                'roleCodes'                        => $data->userJobCode()->get(),
                 'status_twiji'                     => $data->status_twiji,
                 'schedule_type'                    => $data->schedule_type,
                 'user_certificates'                => $data->certificates,
-                'join_date'                        => $data->userServiceYear->join_date,
-                'employeeStructures'               => $data->userJobCode()->with('userStructureMapping')->get() ?? null,
-                'totalMemberStructure'             => $data->getTotalMemberStructure() ?? null,
-                'totalSubordinates'                => $data->getTotalSubordinate(),
-                'employeeIKWSTrained'              => $data->getDetailIKWTrained() ?? null,
-                'getDetailRKI'                     => $data->getDetailRKI($request) ?? null,
+                'join_date'                        => $data->join_date,
+                'leave_date'                       => $data->leave_date,
                 'age'                              => Carbon::parse($data->date_of_birth)->age ?? null,
                 'year'                             => Carbon::parse($data->date_of_birth)->year ?? null,
                 'service_year'                     => $this->getServiceYearFull($data->userServiceYear->join_date) ?? null,

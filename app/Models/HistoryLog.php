@@ -8,4 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class HistoryLog extends Model
 {
     use HasFactory;
+    protected $fillable = [
+        'modified_at',
+        'table_name',
+    ];
+
+    public function userHistory()
+    {
+        return $this->hasMany(UserHistory::class);
+    }
 }

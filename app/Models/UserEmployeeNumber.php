@@ -10,7 +10,6 @@ class UserEmployeeNumber extends Model
 {
     use HasFactory, SoftDeletes;
 
-
     protected $table      = 'user_employee_numbers';
     protected $primaryKey = 'id';
     protected $dates      = ['deleted_at'];
