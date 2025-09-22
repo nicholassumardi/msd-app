@@ -190,7 +190,6 @@ class TrainingServices extends BaseServices
 
     public function getDataTraining($id_training = NULL)
     {
-
         if (!empty($id_training)) {
             $training =  $this->training->firstWhere('id', $id_training);
             $training = [
@@ -282,7 +281,6 @@ class TrainingServices extends BaseServices
             'totalCount' => $countData,
         ];
     }
-
 
     public function getDataTrainingPagination(Request $request)
     {

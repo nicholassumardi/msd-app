@@ -411,6 +411,7 @@ class EvaluationServices extends BaseServices
         ];
     }
 
+    // get Trainer Data that has Competent in IKW
     public function getEligibleIKWByTrainer($request)
     {
         $trainer = $this->user->firstWhere('uuid', $request->trainer_id);
@@ -459,6 +460,7 @@ class EvaluationServices extends BaseServices
         return $data;
     }
 
+    // get Trainee Data that hasn't Competent in IKW by trainer
     public function getTraineeByTrainerIKW($request)
     {
         $start = (int) $request->start ?? 0;
@@ -529,6 +531,7 @@ class EvaluationServices extends BaseServices
         ];
     }
 
+    // get Trainee Data that hasn't Competent in IKW
     public function getIKWToTrainForTrainee($request)
     {
         $start = (int) $request->start ?? 0;
