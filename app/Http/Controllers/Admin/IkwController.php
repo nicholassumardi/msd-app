@@ -17,7 +17,7 @@ class IkwController extends Controller
 
     public function __construct()
     {
-        $this->ikw = IKW::with('jobTask', 'ikwRevision');
+        $this->ikw = IKW::with('jobTaskDetail', 'ikwRevision');
         $this->service = new IkwServices();
         $this->serviceJobTaskDescription = new JobTaskDescriptionServices();
     }

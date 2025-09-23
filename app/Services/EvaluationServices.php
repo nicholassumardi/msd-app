@@ -27,7 +27,7 @@ class EvaluationServices extends BaseServices
         $this->user = User::with('company', 'department', 'userEmployeeNumber', 'userServiceYear', 'userJobCode', 'certificates', 'training');
         $this->rki = RKI::with('ikw');
         $this->ikwRevision = IKWRevision::with('ikw', 'ikwMeeting', 'ikwPosition');
-        $this->ikw = IKW::with('department', 'jobTask', 'ikwRevision');
+        $this->ikw = IKW::with('department', 'jobTaskDetail', 'ikwRevision');
         $this->userJobCode = UserJobCode::with('user', 'jobCode', 'userStructureMapping');
     }
 
@@ -411,19 +411,20 @@ class EvaluationServices extends BaseServices
         ];
     }
 
-    // get Trainer Data that has Competent in IKW
+    // get IKW Data Competent by trainer
     public function getEligibleIKWByTrainer($request)
     {
         $trainer = $this->user->firstWhere('uuid', $request->trainer_id);
-        $positionCode =  $trainer->userJobCode()->where('status', 1)->first()?->jobCode->full_code . '-' . $trainer->userJobCode()->where('status', 1)->first()?->position_code_structure;
-        $rki = $this->rki->where('user_structure_mapping_id',  $positionCode)->pluck('ikw_id');
+        $usm_id =  $trainer->userJobCode() ?  $trainer->userJobCode()->where('status', 1)->first()?->user_structure_mapping_id : null;
+
+        $rki = $this->rki->where('user_structure_mapping_id',  $usm_id)->pluck('ikw_id');
 
         $ikwRevision = $this->ikwRevision->whereIn('ikw_id', $rki)
             ->orderBy('ikw_id')
             ->orderByDesc('revision_no')
             ->get()
             ->unique('ikw_id')
-            ->pluck('id');
+            ->pluck('ikw_id');
 
         // check if trainer is competent for the latest IKW
         $data = $this->ikw->whereHas('ikwRevision', function ($query) use ($request, $ikwRevision) {
@@ -435,6 +436,14 @@ class EvaluationServices extends BaseServices
             })->whereIn('id', $ikwRevision);
         })
             ->where('status_document', 'IKW FINISH')
+            ->get();
+
+
+
+        $dataTraining = $this->training
+            ->whereHas('trainer', function ($query) use ($request) {
+                $query->where('uuid', $request->trainer_id);
+            })
             ->get();
 
         $data = $data->map(function ($data) {
@@ -457,14 +466,54 @@ class EvaluationServices extends BaseServices
         });
 
 
-        return $data;
+        return [
+            'dataIKW'      => $data,
+            'dataTraining' => $dataTraining
+        ];
+    }
+
+    // get Employee Data that has Competent in IKW
+    public function getEligibleEmployeeByIKW($request)
+    {
+        $start = (int) $request->start ? $request->start :  0;
+        $size = (int) $request->size ? $request->size :  5;
+
+        $ikwRevision = $this->ikwRevision->where('ikw_id', $request->ikw_id)
+            ->orderByDesc('revision_no')
+            ->first();
+
+        $training = $this->training->where('ikw_revision_id', $ikwRevision->id)
+            ->where('assessment_result', 'K')
+            ->with('trainee')
+            ->get();
+
+
+        $query = $training->map(function ($data) {
+            return [
+                'id'                => $data->trainee->id ?? '',
+                'name'              => $data->trainee->name ?? '',
+                'employee_type'     => $data->trainee->employee_type ?? '',
+                'department'        => $data->trainee->department->code ?? '',
+                'assessment_result' => $data->assessment_result ?? '',
+            ];
+        });
+
+
+        $query = $query->sortBy('department')->values();
+
+        $totalCount = $query->count();
+        $result = $query->slice($start, $size)->values();
+        return [
+            'totalCount'  => $totalCount,
+            'data'        => $result
+        ];
     }
 
     // get Trainee Data that hasn't Competent in IKW by trainer
     public function getTraineeByTrainerIKW($request)
     {
-        $start = (int) $request->start ?? 0;
-        $size = (int) $request->size ?? 5;
+        $start = (int) $request->start ? $request->start :  0;
+        $size = (int) $request->size ? $request->size :  5;
         $filters = json_decode($request->filters, true) ?? [];
         $sorting = json_decode($request->sorting, true) ?? [];
         $globalFilter = $request->globalFilter ?? '';
@@ -534,8 +583,8 @@ class EvaluationServices extends BaseServices
     // get Trainee Data that hasn't Competent in IKW
     public function getIKWToTrainForTrainee($request)
     {
-        $start = (int) $request->start ?? 0;
-        $size = (int) $request->size ?? 5;
+        $start = (int) $request->start ? $request->start :  0;
+        $size = (int) $request->size ? $request->size :  5;
         $filters = json_decode($request->filters, true) ?? [];
         $sorting = json_decode($request->sorting, true) ?? [];
         $globalFilter = $request->globalFilter ?? '';

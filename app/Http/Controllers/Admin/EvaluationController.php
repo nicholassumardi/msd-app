@@ -145,7 +145,29 @@ class EvaluationController extends Controller
         if ($data) {
             $response = [
                 'status'        => 200,
-                'data'          => $data,
+                'dataIKW'       => $data['dataIKW'],
+                'dataTraining'  => $data['dataTraining'],
+                'message'       => "Successfully fetched"
+            ];
+        } else {
+            $response = [
+                'status'  => 500,
+                'message' => "Failed to retrieve data"
+            ];
+        }
+
+        return response()->json($response);
+    }
+
+    public function showEligibleEmployeeByIKW(Request $request)
+    {
+        $data = $this->service->getEligibleEmployeeByIKW($request);
+
+        if ($data) {
+            $response = [
+                'status'        => 200,
+                'totalCount'    => $data['totalCount'],
+                'data'          => $data['data'],
                 'message'       => "Successfully fetched"
             ];
         } else {

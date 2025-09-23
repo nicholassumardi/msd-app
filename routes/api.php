@@ -225,6 +225,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::get('show_data_visualization', [EvaluationController::class, 'showDataVisualization']);
         Route::get('show_ikw_to_train', [EvaluationController::class, 'showIKWToTrainForTrainee']);
         Route::get('show_eligible_ikw', [EvaluationController::class, 'showEligibleIKWByTrainer']);
+        Route::get('show_eligible_employee', [EvaluationController::class, 'showEligibleEmployeeByIKW']);
         Route::get('show_trainee_by_ikw', [EvaluationController::class, 'showTraineeByTrainerIKW']);
     });
 

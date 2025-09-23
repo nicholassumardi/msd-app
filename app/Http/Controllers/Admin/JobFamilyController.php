@@ -33,7 +33,7 @@ class JobFamilyController extends Controller
     {
         $this->jobCode = JobCode::with('category');
         $this->category = Category::with('jobCode');
-        $this->jobDesc = JobDescription::with('jobDescDetails', 'jobTask');
+        $this->jobDesc = JobDescription::with('jobDescDetails', 'jobTaskDetail');
         $this->serviceCategory = new CategoryServices();
         $this->serviceJobCode = new JobCodeServices();
         $this->serviceJobTaskDescription = new JobTaskDescriptionServices();
