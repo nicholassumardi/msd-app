@@ -161,6 +161,7 @@ class DepartmentServices extends BaseServices
             }
         }
 
+        $totalCountQueryData = $queryData->count();
         $queryData = $queryData
             ->skip($start)
             ->take($size)
@@ -177,7 +178,10 @@ class DepartmentServices extends BaseServices
             ];
         });
 
-        return $queryData;
+        return [
+            'data'       => $queryData,
+            'totalCount' => $totalCountQueryData
+        ];
     }
 
 

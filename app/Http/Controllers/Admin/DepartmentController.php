@@ -20,6 +20,8 @@ class DepartmentController extends Controller
         $this->service = new DepartmentServices();
     }
 
+    public function index() {}
+
     public function importDepartmentExcel(Request $request)
     {
 
@@ -89,7 +91,6 @@ class DepartmentController extends Controller
             $response = [
                 'status'     => 200,
                 'data'       => $data,
-                'totalCount' => $data->count(),
                 'message'    => "Successfully fetched"
             ];
         } else {
@@ -131,8 +132,8 @@ class DepartmentController extends Controller
         if ($data) {
             $response = [
                 'status'     => 200,
-                'data'       => $data,
-                'totalCount' => $this->department->count(),
+                'data'       => $data['data'],
+                'totalCount' => $data['totalCount'],
                 'message'    => "Successfully fetched"
             ];
         } else {

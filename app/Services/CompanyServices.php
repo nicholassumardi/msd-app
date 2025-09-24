@@ -14,7 +14,7 @@ class CompanyServices extends BaseServices
 
     public function __construct()
     {
-        $this->company = Company::select('id', 'name', 'code');
+        $this->company = Company::select('id', 'unique_code', 'name', 'code');
     }
 
     public function importCompanyExcel(Request $request)

@@ -61,7 +61,10 @@ class IkwServices extends BaseServices
             ]);
 
 
-            $this->updateOrStoreIkwRevision($request, $ikw);
+            if ($request->revisions) {
+                $this->updateOrStoreIkwRevision($request, $ikw);
+            }
+
 
             $this->setLog('info', 'New data IKW' . json_encode($request->all()));
             DB::commit();
@@ -110,8 +113,9 @@ class IkwServices extends BaseServices
                 }
             }
 
-            // Create new revisions from the request data
-            $this->updateOrStoreIkwRevision($request, $ikw);
+            if ($request->revisions) {
+                $this->updateOrStoreIkwRevision($request, $ikw);
+            }
 
             $this->setLog('info', 'Updated data IKW ' . json_encode($request->all()));
             DB::commit();
