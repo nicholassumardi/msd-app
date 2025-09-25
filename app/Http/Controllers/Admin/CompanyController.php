@@ -90,8 +90,8 @@ class CompanyController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data company'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -110,8 +110,8 @@ class CompanyController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data company'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 

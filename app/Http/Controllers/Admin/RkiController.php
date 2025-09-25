@@ -85,8 +85,8 @@ class RkiController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data training'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -105,8 +105,8 @@ class RkiController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data training'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -125,8 +125,8 @@ class RkiController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data training'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -145,8 +145,8 @@ class RkiController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data training'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -166,8 +166,8 @@ class RkiController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data training'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 

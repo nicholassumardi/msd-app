@@ -192,8 +192,8 @@ class UserController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => "failed to fetch data employee"
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -212,8 +212,8 @@ class UserController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data employee'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -233,8 +233,8 @@ class UserController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data employee'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -254,8 +254,8 @@ class UserController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data employee'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -275,8 +275,8 @@ class UserController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data employee'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 

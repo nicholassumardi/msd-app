@@ -343,7 +343,7 @@ class UserStructureMappingServices extends BaseServices
     }
 
     // for hierarchy chart purpose (dormamu chart)
-    public function getDataUserMappingHierarchy(Request $request, $id)
+    public function getDataAllMappingHierarchy(Request $request, $id)
     {
         function mapChildren($data, $includeRelationship = false, $request)
         {
@@ -418,6 +418,10 @@ class UserStructureMappingServices extends BaseServices
             ->where('status', 1)
             ->first();
 
+        if (!$userJobCode) {
+            return [];
+        }
+
         $userJobCode =
             [
                 'id'         => $userJobCode->id,
@@ -445,6 +449,8 @@ class UserStructureMappingServices extends BaseServices
 
 
 
+
+
         return $userJobCode;
     }
 
@@ -454,6 +460,9 @@ class UserStructureMappingServices extends BaseServices
         $userJobCode = $this->userJobCode
             ->where('id', $parent_id)
             ->first();
+        if (!$userJobCode) {
+            return [];
+        }
 
         $result =
             [
@@ -513,6 +522,10 @@ class UserStructureMappingServices extends BaseServices
         $userJobCode = $this->userJobCode
             ->where('id', $id)
             ->first();
+
+        if (!$userJobCode) {
+            return [];
+        }
 
         $result = [];
         foreach ($userJobCode->children as $data) {

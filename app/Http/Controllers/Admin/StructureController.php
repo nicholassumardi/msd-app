@@ -166,8 +166,8 @@ class StructureController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data structure'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -187,8 +187,8 @@ class StructureController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => 'Failed to fetch data mapping'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -207,8 +207,8 @@ class StructureController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -228,8 +228,8 @@ class StructureController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data company'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -248,8 +248,8 @@ class StructureController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data mapping'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -276,17 +276,17 @@ class StructureController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data mapping'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
         return response()->json($response);
     }
 
-    public function showUserMappingHierarchy(Request $request, $id)
+    public function showAllMappingHierarchy(Request $request, $id)
     {
-        $data = $this->userMappingService->getDataUserMappingHierarchy($request, $id);
+        $data = $this->userMappingService->getDataAllMappingHierarchy($request, $id);
 
         if ($data) {
             $response = [
@@ -296,8 +296,8 @@ class StructureController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data mapping'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -316,8 +316,8 @@ class StructureController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data mapping'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -336,8 +336,8 @@ class StructureController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data mapping'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -356,8 +356,8 @@ class StructureController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data mapping'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -376,8 +376,8 @@ class StructureController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data position & job code'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 

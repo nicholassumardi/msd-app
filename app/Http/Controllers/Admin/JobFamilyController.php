@@ -128,7 +128,7 @@ class JobFamilyController extends Controller
     {
         // $validatedRequest = $request->validated();
         // $newRequest = new Request($validatedRequest);
-        
+
         $data = $this->serviceJobTaskDescription->storeJobDescription($request);
 
         if ($data) {
@@ -198,8 +198,8 @@ class JobFamilyController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed to retrieve data"
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -219,8 +219,8 @@ class JobFamilyController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed to retrieve data"
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -240,8 +240,8 @@ class JobFamilyController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed to retrieve data"
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -261,8 +261,8 @@ class JobFamilyController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed to retrieve data"
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -283,8 +283,8 @@ class JobFamilyController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed to retrieve data"
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -304,8 +304,8 @@ class JobFamilyController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed to retrieve data"
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -325,8 +325,8 @@ class JobFamilyController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed to retrieve data"
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -346,8 +346,8 @@ class JobFamilyController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed to retrieve data"
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -367,8 +367,8 @@ class JobFamilyController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed to retrieve data"
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -388,8 +388,8 @@ class JobFamilyController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed to retrieve data"
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -409,8 +409,8 @@ class JobFamilyController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed to retrieve data"
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -430,8 +430,8 @@ class JobFamilyController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed to retrieve data"
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -451,8 +451,8 @@ class JobFamilyController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed to retrieve data"
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 

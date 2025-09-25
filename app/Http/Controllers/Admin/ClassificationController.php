@@ -89,8 +89,8 @@ class ClassificationController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed",
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -109,8 +109,8 @@ class ClassificationController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed",
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -129,8 +129,8 @@ class ClassificationController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed",
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -151,8 +151,8 @@ class ClassificationController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed",
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -172,8 +172,8 @@ class ClassificationController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed",
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -193,8 +193,8 @@ class ClassificationController extends Controller
             ];
         } else {
             $response = [
-                'status'  => 500,
-                'message' => "Failed",
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 

@@ -179,7 +179,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::get('structure_mapping', [StructureController::class, 'showAllMappingByDepartment']);
         Route::get('show', [StructureController::class, 'showAll']);
         Route::get('show_structure_pagination', [StructureController::class, 'showStructurePagination']);
-        Route::get('show_user_mapping_hierarchy/{id}', [StructureController::class, 'showUserMappingHierarchy']);
+        Route::get('show_all_mapping_hierarchy/{id}', [StructureController::class, 'showAllMappingHierarchy']);
         Route::get('show_mapping_hierarchy/{id}', [StructureController::class, 'showMappingHierarchyUser']);
         Route::get('show_mapping_hierarchy_parent/{id}', [StructureController::class, 'showMappingHierarchyParent']);
         Route::get('show_mapping_hierarchy_children/{id}', [StructureController::class, 'showMappingHierarchychildren']);

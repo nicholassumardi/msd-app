@@ -72,8 +72,8 @@ class CertificateController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to update data certificate'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -92,8 +92,8 @@ class CertificateController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to update data certificate'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 

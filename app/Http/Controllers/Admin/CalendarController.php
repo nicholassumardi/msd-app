@@ -47,12 +47,12 @@ class CalendarController extends Controller
                 'status'      => 200,
                 'data'        => $data,
                 'totalCount'  => $data->count(),
-                'message'     => 'Successfully updated data calendar'
+                'message'     => 'Success fetched data calendar'
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to update data calendar'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
@@ -67,12 +67,12 @@ class CalendarController extends Controller
             $response = [
                 'status'  => 200,
                 'data'    => $data,
-                'message' => 'Successfully updated data calendar'
+                'message' => 'Success fetched data calendar'
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to update data calendar'
+                'status'  => 404,
+                'message' => 'No Data found'
             ];
         }
 
