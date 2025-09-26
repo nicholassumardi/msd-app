@@ -411,6 +411,8 @@ class EvaluationServices extends BaseServices
         ];
     }
 
+    public function get() {}
+
     // get IKW Data Competent by trainer
     public function getEligibleIKWByTrainer($request)
     {
@@ -475,8 +477,8 @@ class EvaluationServices extends BaseServices
     // get Employee Data that has Competent in IKW
     public function getEligibleEmployeeByIKW($request)
     {
-        $start = (int) $request->start ? $request->start :  0;
-        $size = (int) $request->size ? $request->size :  5;
+        $start = (int) $request->start ? (int) $request->start :  0;
+        $size = (int) $request->size ? (int) $request->size :  5;
 
         $ikwRevision = $this->ikwRevision->where('ikw_id', $request->ikw_id)
             ->orderByDesc('revision_no')
@@ -490,11 +492,15 @@ class EvaluationServices extends BaseServices
 
         $query = $training->map(function ($data) {
             return [
-                'id'                => $data->trainee->id ?? '',
-                'name'              => $data->trainee->name ?? '',
-                'employee_type'     => $data->trainee->employee_type ?? '',
-                'department'        => $data->trainee->department->code ?? '',
-                'assessment_result' => $data->assessment_result ?? '',
+                'id'                          => $data->trainee->id ?? '',
+                'no_training'                 => $data->no_training ?? '',
+                'name'                        => $data->trainee->name ?? '',
+                'trainer_name'                => $data->trainer->name ?? 'Unknown Data',
+                'assessor_name'               => $data->assessor->name ?? 'Unknown Data',
+                'employee_type'               => $data->trainee->employee_type ?? '',
+                'department'                  => $data->trainee->department->code ?? '',
+                'assessment_realisation_date' =>  date('Y-m-d', strtotime($data->assessment_realisation_date)) ?? '',
+                'assessment_result'           => $data->assessment_result ?? '',
             ];
         });
 
@@ -502,7 +508,7 @@ class EvaluationServices extends BaseServices
         $query = $query->sortBy('department')->values();
 
         $totalCount = $query->count();
-        $result = $query->slice($start, $size)->values();
+        $result = $query->slice(($start - 1), $size)->values();
         return [
             'totalCount'  => $totalCount,
             'data'        => $result

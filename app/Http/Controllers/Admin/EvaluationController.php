@@ -167,6 +167,7 @@ class EvaluationController extends Controller
             $response = [
                 'status'        => 200,
                 'totalCount'    => $data['totalCount'],
+                'totalPage'     => ceil($data['totalCount'] / 5),
                 'data'          => $data['data'],
                 'message'       => "Successfully fetched"
             ];
