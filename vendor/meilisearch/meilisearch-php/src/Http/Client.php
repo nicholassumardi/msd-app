@@ -21,18 +21,25 @@ use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\StreamInterface;
 
 class Client implements Http
 {
     private ClientInterface $http;
     private RequestFactoryInterface $requestFactory;
     private StreamFactoryInterface $streamFactory;
-    /** @var array<string,string> */
+    /**
+     * @var array<string, string|string[]>
+     */
     private array $headers;
+    /**
+     * @var non-empty-string
+     */
     private string $baseUrl;
     private Json $json;
 
     /**
+     * @param non-empty-string   $url
      * @param array<int, string> $clientAgents
      */
     public function __construct(
@@ -72,7 +79,7 @@ class Client implements Http
     }
 
     /**
-     * @param mixed|null $body
+     * @param non-empty-string|null $contentType
      *
      * @throws ApiException
      * @throws ClientExceptionInterface
@@ -81,10 +88,7 @@ class Client implements Http
      */
     public function post(string $path, $body = null, array $query = [], ?string $contentType = null)
     {
-        if (!\is_null($contentType)) {
-            $this->headers['Content-type'] = $contentType;
-        } else {
-            $this->headers['Content-type'] = 'application/json';
+        if (null === $contentType) {
             $body = $this->json->serialize($body);
         }
         $request = $this->requestFactory->createRequest(
@@ -92,15 +96,20 @@ class Client implements Http
             $this->baseUrl.$path.$this->buildQueryString($query)
         )->withBody($this->streamFactory->createStream($body));
 
-        return $this->execute($request);
+        return $this->execute($request, ['Content-type' => $contentType ?? 'application/json']);
     }
 
+    /**
+     * @param non-empty-string|null $contentType
+     *
+     * @throws ApiException
+     * @throws ClientExceptionInterface
+     * @throws CommunicationException
+     * @throws JsonEncodingException
+     */
     public function put(string $path, $body = null, array $query = [], ?string $contentType = null)
     {
-        if (!\is_null($contentType)) {
-            $this->headers['Content-type'] = $contentType;
-        } else {
-            $this->headers['Content-type'] = 'application/json';
+        if (null === $contentType) {
             $body = $this->json->serialize($body);
         }
         $request = $this->requestFactory->createRequest(
@@ -108,30 +117,19 @@ class Client implements Http
             $this->baseUrl.$path.$this->buildQueryString($query)
         )->withBody($this->streamFactory->createStream($body));
 
-        return $this->execute($request);
+        return $this->execute($request, ['Content-type' => $contentType ?? 'application/json']);
     }
 
-    /**
-     * @param mixed|null $body
-     *
-     * @throws ApiException
-     * @throws JsonEncodingException
-     */
     public function patch(string $path, $body = null, array $query = [])
     {
-        $this->headers['Content-type'] = 'application/json';
         $request = $this->requestFactory->createRequest(
             'PATCH',
             $this->baseUrl.$path.$this->buildQueryString($query)
         )->withBody($this->streamFactory->createStream($this->json->serialize($body)));
 
-        return $this->execute($request);
+        return $this->execute($request, ['Content-type' => 'application/json']);
     }
 
-    /**
-     * @throws ClientExceptionInterface
-     * @throws ApiException
-     */
     public function delete(string $path, array $query = [])
     {
         $request = $this->requestFactory->createRequest(
@@ -146,10 +144,28 @@ class Client implements Http
      * @throws ApiException
      * @throws ClientExceptionInterface
      * @throws CommunicationException
+     * @throws JsonEncodingException
      */
-    private function execute(RequestInterface $request)
+    public function postStream(string $path, $body = null, array $query = []): StreamInterface
     {
-        foreach ($this->headers as $header => $value) {
+        $request = $this->requestFactory->createRequest(
+            'POST',
+            $this->baseUrl.$path.$this->buildQueryString($query)
+        )->withBody($this->streamFactory->createStream($this->json->serialize($body)));
+
+        return $this->executeStream($request, ['Content-type' => 'application/json']);
+    }
+
+    /**
+     * @param array<string, string|string[]> $headers
+     *
+     * @throws ApiException
+     * @throws ClientExceptionInterface
+     * @throws CommunicationException
+     */
+    private function execute(RequestInterface $request, array $headers = [])
+    {
+        foreach (array_merge($this->headers, $headers) as $header => $value) {
             $request = $request->withAddedHeader($header, $value);
         }
 
@@ -160,8 +176,56 @@ class Client implements Http
         }
     }
 
+    /**
+     * @param array<string, string|string[]> $headers
+     *
+     * @throws ApiException
+     * @throws ClientExceptionInterface
+     * @throws CommunicationException
+     */
+    private function executeStream(RequestInterface $request, array $headers = []): StreamInterface
+    {
+        foreach (array_merge($this->headers, $headers) as $header => $value) {
+            $request = $request->withAddedHeader($header, $value);
+        }
+
+        try {
+            $response = $this->http->sendRequest($request);
+
+            if ($response->getStatusCode() >= 300) {
+                $bodyContent = (string) $response->getBody();
+
+                // Try to parse as JSON for structured errors, fall back to raw content
+                if ($this->isJSONResponse($response->getHeader('content-type'))) {
+                    try {
+                        $body = $this->json->unserialize($bodyContent) ?? $response->getReasonPhrase();
+                    } catch (JsonDecodingException $e) {
+                        $body = '' !== $bodyContent ? $bodyContent : $response->getReasonPhrase();
+                    }
+                } else {
+                    $body = '' !== $bodyContent ? $bodyContent : $response->getReasonPhrase();
+                }
+
+                throw new ApiException($response, $body);
+            }
+
+            return $response->getBody();
+        } catch (NetworkExceptionInterface $e) {
+            throw new CommunicationException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
     private function buildQueryString(array $queryParams = []): string
     {
+        foreach ($queryParams as $key => $value) {
+            if (\is_bool($value)) {
+                $queryParams[$key] = $value ? 'true' : 'false';
+            }
+            if (\is_array($value) && array_is_list($value)) {
+                $queryParams[$key] = implode(',', $value);
+            }
+        }
+
         return \count($queryParams) > 0 ? '?'.http_build_query($queryParams) : '';
     }
 

@@ -411,7 +411,29 @@ class EvaluationServices extends BaseServices
         ];
     }
 
-    public function get() {}
+    // get IKW Data Competent by trainer
+    public function getEmployeeTrainingHistory($request)
+    {
+        $user = $this->user->firstWhere('uuid', $request->uuid);
+        $usm_id =  $user->userJobCode() ?  $user->userJobCode()->where('status', 1)->first()?->user_structure_mapping_id : null;
+
+        $rki = $this->rki->where('user_structure_mapping_id',  $usm_id)->pluck('ikw_id');
+        $dataTraining = $this->training
+            ->whereHas('trainee', function ($query) use ($request) {
+                $query->where('uuid', $request->uuid);
+            })
+            ->get();
+
+
+        $result = [
+            'total_assignment'   => 0,
+            'total_assignment'   => 0,
+            'total_assignment'   => 0,
+            'total_assignment'   => 0,
+        ];
+
+        return $result;
+    }
 
     // get IKW Data Competent by trainer
     public function getEligibleIKWByTrainer($request)
