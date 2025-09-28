@@ -227,6 +227,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::get('show_eligible_ikw', [EvaluationController::class, 'showEligibleIKWByTrainer']);
         Route::get('show_eligible_employee', [EvaluationController::class, 'showEligibleEmployeeByIKW']);
         Route::get('show_trainee_by_ikw', [EvaluationController::class, 'showTraineeByTrainerIKW']);
+        Route::get('show_employee_training_history', [EvaluationController::class, 'showEmployeeTrainingHistory']);
     });
 
     Route::prefix('calendar')->group(function () {

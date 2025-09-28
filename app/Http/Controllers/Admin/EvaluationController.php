@@ -222,4 +222,25 @@ class EvaluationController extends Controller
 
         return response()->json($response);
     }
+
+    public function showEmployeeTrainingHistory(Request $request)
+    {
+        $data = $this->service->getEmployeeTrainingHistory($request);
+
+        if ($data['data']) {
+            $response = [
+                'status'        => 200,
+                'data'          => $data['data'],
+                'totalCount'    => $data['totalCount'],
+                'message'       => "Successfully fetched"
+            ];
+        } else {
+            $response = [
+                'status'  => 404,
+                'message' => 'No Data found'
+            ];
+        }
+
+        return response()->json($response);
+    }
 }

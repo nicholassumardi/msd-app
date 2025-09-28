@@ -9,7 +9,9 @@ use App\Models\Training;
 use App\Models\User;
 use App\Models\UserJobCode;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class EvaluationServices extends BaseServices
 {
@@ -185,7 +187,6 @@ class EvaluationServices extends BaseServices
             'not_competent_assessment' => $result->not_competent_assessment ?? 0,
         ];
     }
-
 
     public function getTrainingPlanningRKI($id)
     {
@@ -411,29 +412,129 @@ class EvaluationServices extends BaseServices
         ];
     }
 
+
+    protected function businessDaysAgo(int $businessDays): Carbon
+    {
+        $d = Carbon::now()->startOfDay();
+        $daysToGo = $businessDays;
+        while ($daysToGo > 0) {
+            $d = $d->subDay();
+            // skip weekend (Sat=6 Sun=0)
+            if (! in_array($d->dayOfWeek, [Carbon::SATURDAY, Carbon::SUNDAY])) {
+                $daysToGo--;
+            }
+        }
+        return $d;
+    }
+
     // get IKW Data Competent by trainer
     public function getEmployeeTrainingHistory($request)
     {
+        // 1) find user early
         $user = $this->user->firstWhere('uuid', $request->uuid);
-        $usm_id =  $user->userJobCode() ?  $user->userJobCode()->where('status', 1)->first()?->user_structure_mapping_id : null;
+        if (! $user) {
+            return ['data' => null, 'totalCount' => 0];
+        }
 
-        $rki = $this->rki->where('user_structure_mapping_id',  $usm_id)->pluck('ikw_id');
-        $dataTraining = $this->training
-            ->whereHas('trainee', function ($query) use ($request) {
-                $query->where('uuid', $request->uuid);
-            })
+        // 2) base query for this trainee (re-usable)
+        $base = $this->training->newQuery()
+            ->whereHas('trainee', function ($q) use ($request) {
+                $q->where('uuid', $request->uuid);
+            });
+
+        // 3) compute business-days threshold for "more than 7 business days ago"
+        $thresholdDate = $this->businessDaysAgo(7); // returns Carbon instance (date)
+
+        // 4) counts (cloning builder to avoid modifying base)
+        $totalTraining     = (clone $base)->count();
+        // on-progress = no assessment_result AND training_date <= threshold (older than 7 business days)
+        $onProgressCount   = (clone $base)
+            ->whereNull('assessment_result')
+            ->whereDate('training_date', '<=', $thresholdDate->toDateString())
+            ->count();
+        $competentCount    = (clone $base)->where('assessment_result', 'K')->count();
+        $nonCompetentCount = (clone $base)->where('assessment_result', 'BK')->count();
+        $remedialCount     = (clone $base)->where('assessment_result', 'RK')->count();
+
+        // 5) fetch the training rows for display (with eager loads, pagination if needed)
+        $trainings = (clone $base)
+            ->with(['trainee']) // eager load relationships you will display - add others if necessary
+            ->orderByDesc('training_date')
             ->get();
 
+        // 6) BI metrics: percentages and success rate
+        $pct = function ($n) use ($totalTraining) {
+            return $totalTraining ? round($n / $totalTraining * 100, 2) : 0.0;
+        };
 
+        $percentCompetent    = $pct($competentCount);
+        $percentNonCompetent = $pct($nonCompetentCount);
+        $percentRemedial     = $pct($remedialCount);
+        $percentOnProgress   = $pct($onProgressCount);
+
+        // Success rate: I present two sensible definitions and compute both
+        $assessedCount = $totalTraining - $onProgressCount; // trainings that are "assessed" (not still on-progress by our rule)
+        $successRateByAssessed = $assessedCount ? round($competentCount / $assessedCount * 100, 2) : null;
+        $successRateOverall    = $totalTraining ? round($competentCount / $totalTraining * 100, 2) : null;
+
+        // 7) Extra BI: trend in last 30 days and average time-to-assessment (if fields exist)
+        $last30Trainings = (clone $base)
+            ->whereDate('training_date', '>=', Carbon::now()->subDays(30)->toDateString())
+            ->get();
+
+        // daily counts grouped by date (collection grouping to keep simple)
+        $dailyTrend = $last30Trainings->groupBy(function ($t) {
+            $d = $t->training_date ? Carbon::parse($t->training_date)->format('Y-m-d') : 'unknown';
+            return $d;
+        })->map->count()->toArray();
+
+        // average time (days) from training_date -> assessment_date (if assessment_date exists)
+        $avgTimeToAssess = null;
+        if (Schema::hasColumn($this->training->getTable(), 'assessment_date')) {
+            $times = (clone $base)
+                ->whereNotNull('assessment_date')
+                ->get()
+                ->map(function ($t) {
+                    try {
+                        $start = $t->training_date ? Carbon::parse($t->training_date) : null;
+                        $end   = $t->assessment_date ? Carbon::parse($t->assessment_date) : null;
+                        return ($start && $end) ? $end->diffInDays($start) : null;
+                    } catch (\Throwable $e) {
+                        return null;
+                    }
+                })->filter();
+            $avgTimeToAssess = $times->count() ? round($times->avg(), 2) : null;
+        }
+
+        // 8) assemble result
         $result = [
-            'total_assignment'   => 0,
-            'total_assignment'   => 0,
-            'total_assignment'   => 0,
-            'total_assignment'   => 0,
+            'total_training'            => $totalTraining,
+            'on_progress'               => $onProgressCount,
+            'competent'                 => $competentCount,
+            'non_competent'             => $nonCompetentCount,
+            'remedial'                  => $remedialCount,
+            'percent' => [
+                'competent'  => $percentCompetent,
+                'non'        => $percentNonCompetent,
+                'remedial'   => $percentRemedial,
+                'on_progress' => $percentOnProgress,
+            ],
+            'success_rate' => [
+                'by_assessed' => $successRateByAssessed, // competent / assessed (excluding on-progress)
+                'overall'     => $successRateOverall,    // competent / total
+            ],
+            'avg_time_to_assess_days' => $avgTimeToAssess,
+            'trend_last_30_days'      => $dailyTrend,   // simple daily counts map
+            'training_rows'           => $trainings,
+            'employee'                => $user,
         ];
 
-        return $result;
+        return [
+            'data'       => $result,
+            'totalCount' => count($result),
+        ];
     }
+
 
     // get IKW Data Competent by trainer
     public function getEligibleIKWByTrainer($request)
