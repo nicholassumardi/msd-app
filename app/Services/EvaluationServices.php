@@ -43,8 +43,8 @@ class EvaluationServices extends BaseServices
 
     public function getDataEvaluationPagination(Request $request)
     {
-        $start = (int) $request->start;
-        $size = (int) $request->size ?? 6;
+        $start = (int) $request->start ? (int) $request->start : 0;
+        $size = (int) $request->size ? (int) $request->size : 6;
         $filters = json_decode($request->filters, true) ?? [];
         $sorting = json_decode($request->sorting, true) ?? [];
         $globalFilter = $request->globalFilter ?? '';
@@ -430,6 +430,8 @@ class EvaluationServices extends BaseServices
     // get IKW Data Competent by trainer
     public function getEmployeeTrainingHistory($request)
     {
+        $start = (int) $request->start ? (int) $request->start :  0;
+        $size = (int) $request->size ? (int) $request->size :  5;
         // 1) find user early
         $user = $this->user->firstWhere('uuid', $request->uuid);
         if (! $user) {
@@ -447,19 +449,30 @@ class EvaluationServices extends BaseServices
 
         // 4) counts (cloning builder to avoid modifying base)
         $totalTraining     = (clone $base)->count();
-        // on-progress = no assessment_result AND training_date <= threshold (older than 7 business days)
+        // on-progress = no assessment_result AND assessment_realisation_date <= threshold (older than 7 business days)
         $onProgressCount   = (clone $base)
             ->whereNull('assessment_result')
-            ->whereDate('training_date', '<=', $thresholdDate->toDateString())
+            ->whereDate('assessment_realisation_date', '<=', $thresholdDate->toDateString())
             ->count();
         $competentCount    = (clone $base)->where('assessment_result', 'K')->count();
         $nonCompetentCount = (clone $base)->where('assessment_result', 'BK')->count();
         $remedialCount     = (clone $base)->where('assessment_result', 'RK')->count();
 
         // 5) fetch the training rows for display (with eager loads, pagination if needed)
-        $trainings = (clone $base)
+        $trainingCompetent = (clone $base)
+            ->where('assessment_result', 'K')
+            ->skip(($start - 1) * $size)
+            ->take($size)
             ->with(['trainee']) // eager load relationships you will display - add others if necessary
-            ->orderByDesc('training_date')
+            ->orderByDesc('assessment_realisation_date')
+            ->get();
+
+        $trainingNonCompetent = (clone $base)
+            ->where('assessment_result', "!=", 'K')
+            ->skip(($start - 1) * $size)
+            ->take($size)
+            ->with(['trainee']) // eager load relationships you will display - add others if necessary
+            ->orderByDesc('assessment_realisation_date')
             ->get();
 
         // 6) BI metrics: percentages and success rate
@@ -473,36 +486,42 @@ class EvaluationServices extends BaseServices
         $percentOnProgress   = $pct($onProgressCount);
 
         // Success rate: I present two sensible definitions and compute both
-        $assessedCount = $totalTraining - $onProgressCount; // trainings that are "assessed" (not still on-progress by our rule)
+        $assessedCount = $totalTraining - ($onProgressCount + $nonCompetentCount); // trainings that are "assessed" (not still on-progress by our rule)
         $successRateByAssessed = $assessedCount ? round($competentCount / $assessedCount * 100, 2) : null;
         $successRateOverall    = $totalTraining ? round($competentCount / $totalTraining * 100, 2) : null;
 
         // 7) Extra BI: trend in last 30 days and average time-to-assessment (if fields exist)
         $last30Trainings = (clone $base)
-            ->whereDate('training_date', '>=', Carbon::now()->subDays(30)->toDateString())
+            ->whereDate('assessment_realisation_date', '>=', Carbon::now()->subDays(30)->toDateString())
             ->get();
 
         // daily counts grouped by date (collection grouping to keep simple)
         $dailyTrend = $last30Trainings->groupBy(function ($t) {
-            $d = $t->training_date ? Carbon::parse($t->training_date)->format('Y-m-d') : 'unknown';
+            $d = $t->assessment_realisation_date ? Carbon::parse($t->assessment_realisation_date)->format('Y-m-d') : 'unknown';
             return $d;
         })->map->count()->toArray();
 
-        // average time (days) from training_date -> assessment_date (if assessment_date exists)
+        // average time (days) from assessment_realisation_date -> assessment_plan_date (if assessment_plan_date exists)
         $avgTimeToAssess = null;
-        if (Schema::hasColumn($this->training->getTable(), 'assessment_date')) {
-            $times = (clone $base)
-                ->whereNotNull('assessment_date')
+        // If $this->training is a query builder:
+        $table = $this->training->getModel()->getTable();
+
+        // Then:
+        if (Schema::hasColumn($table, 'assessment_plan_date')) {
+            $times = (clone $this->training)
+                ->whereNotNull('assessment_plan_date')
                 ->get()
                 ->map(function ($t) {
                     try {
-                        $start = $t->training_date ? Carbon::parse($t->training_date) : null;
-                        $end   = $t->assessment_date ? Carbon::parse($t->assessment_date) : null;
+                        $start = $t->assessment_realisation_date ? Carbon::parse($t->assessment_realisation_date) : null;
+                        $end   = $t->assessment_plan_date ? Carbon::parse($t->assessment_plan_date) : null;
                         return ($start && $end) ? $end->diffInDays($start) : null;
                     } catch (\Throwable $e) {
                         return null;
                     }
-                })->filter();
+                })
+                ->filter();
+
             $avgTimeToAssess = $times->count() ? round($times->avg(), 2) : null;
         }
 
@@ -525,7 +544,8 @@ class EvaluationServices extends BaseServices
             ],
             'avg_time_to_assess_days' => $avgTimeToAssess,
             'trend_last_30_days'      => $dailyTrend,   // simple daily counts map
-            'training_rows'           => $trainings,
+            'training_competent'      => $trainingCompetent,
+            'training_non_competent'  => $trainingNonCompetent,
             'employee'                => $user,
         ];
 
@@ -631,7 +651,8 @@ class EvaluationServices extends BaseServices
         $query = $query->sortBy('department')->values();
 
         $totalCount = $query->count();
-        $result = $query->slice(($start - 1), $size)->values();
+        $result = $query->slice(($start - 1) * $size, $size)->values();
+
         return [
             'totalCount'  => $totalCount,
             'data'        => $result
@@ -701,7 +722,7 @@ class EvaluationServices extends BaseServices
             });
 
         $totalCount = $query->count();
-        $result = $query->slice($start, $size)->values();
+        $result = $query->slice(($start - 1) * $size, $size)->values();
 
         return [
             'totalCount'  => $totalCount,
@@ -767,8 +788,10 @@ class EvaluationServices extends BaseServices
             });
 
         $totalCount = $query->count();
-        $result = $query->slice($start, $size)
+        $result = $query
+            ->slice(($start - 1) * $size, $size)
             ->values();
+
 
         return [
             'totalCount'  => $totalCount,
