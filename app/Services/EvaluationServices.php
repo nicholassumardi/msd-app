@@ -432,6 +432,8 @@ class EvaluationServices extends BaseServices
     {
         $start = (int) $request->start ? (int) $request->start :  0;
         $size = (int) $request->size ? (int) $request->size :  5;
+        $startNonCompetent = (int) $request->startNonCompetent ? (int) $request->startNonCompetent :  0;
+        $sizeNonCompetent = (int) $request->sizeNonCompetent ? (int) $request->sizeNonCompetent :  5;
         // 1) find user early
         $user = $this->user->firstWhere('uuid', $request->uuid);
         if (! $user) {
@@ -457,6 +459,9 @@ class EvaluationServices extends BaseServices
         $competentCount    = (clone $base)->where('assessment_result', 'K')->count();
         $nonCompetentCount = (clone $base)->where('assessment_result', 'BK')->count();
         $remedialCount     = (clone $base)->where('assessment_result', 'RK')->count();
+        $otherCount = (clone $base)
+            ->whereNotIn('assessment_result', ['K', 'BK', 'RK'])
+            ->count();
 
         // 5) fetch the training rows for display (with eager loads, pagination if needed)
         $trainingCompetent = (clone $base)
@@ -484,6 +489,7 @@ class EvaluationServices extends BaseServices
         $percentNonCompetent = $pct($nonCompetentCount);
         $percentRemedial     = $pct($remedialCount);
         $percentOnProgress   = $pct($onProgressCount);
+        $percentOther        = $pct($otherCount);
 
         // Success rate: I present two sensible definitions and compute both
         $assessedCount = $totalTraining - ($onProgressCount + $nonCompetentCount); // trainings that are "assessed" (not still on-progress by our rule)
@@ -532,11 +538,13 @@ class EvaluationServices extends BaseServices
             'competent'                 => $competentCount,
             'non_competent'             => $nonCompetentCount,
             'remedial'                  => $remedialCount,
+            'other'                     => $otherCount,
             'percent' => [
-                'competent'  => $percentCompetent,
-                'non'        => $percentNonCompetent,
-                'remedial'   => $percentRemedial,
+                'competent'   => $percentCompetent,
+                'non'         => $percentNonCompetent,
+                'remedial'    => $percentRemedial,
                 'on_progress' => $percentOnProgress,
+                'other'       => $percentOther,
             ],
             'success_rate' => [
                 'by_assessed' => $successRateByAssessed, // competent / assessed (excluding on-progress)
