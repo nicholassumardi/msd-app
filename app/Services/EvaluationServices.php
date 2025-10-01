@@ -431,9 +431,8 @@ class EvaluationServices extends BaseServices
     public function getEmployeeTrainingHistory($request)
     {
         $start = (int) $request->start ? (int) $request->start :  0;
-        $size = (int) $request->size ? (int) $request->size :  5;
         $startNonCompetent = (int) $request->startNonCompetent ? (int) $request->startNonCompetent :  0;
-        $sizeNonCompetent = (int) $request->sizeNonCompetent ? (int) $request->sizeNonCompetent :  5;
+        $size = (int) $request->size ? (int) $request->size :  5;
         // 1) find user early
         $user = $this->user->firstWhere('uuid', $request->uuid);
         if (! $user) {
@@ -472,9 +471,9 @@ class EvaluationServices extends BaseServices
             ->orderByDesc('assessment_realisation_date')
             ->get();
 
-        $trainingNonCompetent = (clone $base)
+        $anotherTrainingResult = (clone $base)
             ->where('assessment_result', "!=", 'K')
-            ->skip(($start - 1) * $size)
+            ->skip(($startNonCompetent  - 1) * $size)
             ->take($size)
             ->with(['trainee']) // eager load relationships you will display - add others if necessary
             ->orderByDesc('assessment_realisation_date')
@@ -492,7 +491,7 @@ class EvaluationServices extends BaseServices
         $percentOther        = $pct($otherCount);
 
         // Success rate: I present two sensible definitions and compute both
-        $assessedCount = $totalTraining - ($onProgressCount + $nonCompetentCount); // trainings that are "assessed" (not still on-progress by our rule)
+        $assessedCount = $totalTraining - ($onProgressCount + $otherCount); // trainings that are "assessed" (not still on-progress by our rule)
         $successRateByAssessed = $assessedCount ? round($competentCount / $assessedCount * 100, 2) : null;
         $successRateOverall    = $totalTraining ? round($competentCount / $totalTraining * 100, 2) : null;
 
@@ -509,10 +508,19 @@ class EvaluationServices extends BaseServices
 
         // average time (days) from assessment_realisation_date -> assessment_plan_date (if assessment_plan_date exists)
         $avgTimeToAssess = null;
-        // If $this->training is a query builder:
+
+
+        // 8) Most Frequent Trainer 
+        $mostFrequentTrainer = (clone $base)
+            ->where('trainer_id', "!=", NULL)
+            ->select('trainer_id', DB::raw("count(*) as count"))
+            ->groupBy('trainer_id')
+            ->orderByDesc('count')
+            ->first();
+
+
         $table = $this->training->getModel()->getTable();
 
-        // Then:
         if (Schema::hasColumn($table, 'assessment_plan_date')) {
             $times = (clone $this->training)
                 ->whereNotNull('assessment_plan_date')
@@ -531,7 +539,6 @@ class EvaluationServices extends BaseServices
             $avgTimeToAssess = $times->count() ? round($times->avg(), 2) : null;
         }
 
-        // 8) assemble result
         $result = [
             'total_training'            => $totalTraining,
             'on_progress'               => $onProgressCount,
@@ -539,6 +546,7 @@ class EvaluationServices extends BaseServices
             'non_competent'             => $nonCompetentCount,
             'remedial'                  => $remedialCount,
             'other'                     => $otherCount,
+            'mostFrequentTrainer'       => $mostFrequentTrainer->trainer->name,
             'percent' => [
                 'competent'   => $percentCompetent,
                 'non'         => $percentNonCompetent,
@@ -553,7 +561,7 @@ class EvaluationServices extends BaseServices
             'avg_time_to_assess_days' => $avgTimeToAssess,
             'trend_last_30_days'      => $dailyTrend,   // simple daily counts map
             'training_competent'      => $trainingCompetent,
-            'training_non_competent'  => $trainingNonCompetent,
+            'another_training_result' => $anotherTrainingResult,
             'employee'                => $user,
         ];
 
