@@ -119,6 +119,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
                 Route::get('show/{id}', [IkwController::class, 'show']);
                 Route::get('show', [IkwController::class, 'showAll']);
                 Route::get('show_revision', [IkwController::class, 'showAllRevision']);
+                Route::get('show_revision_by_ikw/{id}', [IkwController::class, 'showIKWRevisionByIKW']);
                 Route::get('show_ikw_pagination', [IkwController::class, 'showIkwPagination']);
                 Route::delete('delete/{id}', [IkwController::class, 'destroyIkws']);
             });

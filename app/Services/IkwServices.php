@@ -289,6 +289,43 @@ class IkwServices extends BaseServices
         return $ikw;
     }
 
+    public function getDataIKWRevisionByIKW($id_ikw)
+    {
+        $revision_ikw =  $this->ikwRevision
+            ->where('ikw_id', $id_ikw)
+            ->orderByDesc('revision_no')
+            ->get()->map(function ($data) {
+                return [
+                    'id'                            => $data->id ?? null,
+                    'ikw_id'                        => $data->ikw_id,
+                    'ikw_name'                      => $data->ikw->name . "/" . $data->ikw->code,
+                    'revision_no'                   => $data->revision_no ?? "",
+                    'reason'                        => $data->reason ?? "",
+                    'process_status'                => $data->process_status ?? "",
+                    'ikw_fix_status'                => $data->ikw_fix_status ?? "",
+                    'confirmation'                  => $data->confirmation ?? "",
+                    'change_description'            => $data->change_description ?? "",
+                    'submission_no'                 => $data->submission_no ?? "",
+                    'submission_received_date'      => date('d/m/y', strtotime($data->submission_received_date)) ?? "",
+                    'submission_mr_date'            => date('d/m/y', strtotime($data->submission_mr_date)) ?? "",
+                    'backoffice_return_date'        => date('d/m/y', strtotime($data->backoffice_return_date)) ?? "",
+                    'revision_status'               => $data->revision_status ?? "",
+                    'print_date'                    => date('d/m/y', strtotime($data->print_date)) ?? "",
+                    'handover_date'                 => date('d/m/y', strtotime($data->handover_date)) ?? "",
+                    'signature_mr_date'             => date('d/m/y', strtotime($data->signature_mr_date)) ?? "",
+                    'distribution_date'             => date('d/m/y', strtotime($data->distribution_date)) ?? "",
+                    'document_return_date'          => date('d/m/y', strtotime($data->document_return_date)) ?? "",
+                    'document_disposal_date'        => date('d/m/y', strtotime($data->document_disposal_date)) ?? "",
+                    'document_location_description' => $data->document_location_description ?? "",
+                    'revision_description'          => $data->revision_description ?? "",
+                    'status_check'                  => $data->status_check  == '1' ? "TRUE" : "FALSE",
+                ];
+            });
+
+
+        return $revision_ikw;
+    }
+
     public function getDataIKWRevision($id_ikw_revision = NULL)
     {
 
@@ -358,7 +395,6 @@ class IkwServices extends BaseServices
 
         return $revision_ikw;
     }
-
 
     public function getDataIKWPagination(Request $request)
     {

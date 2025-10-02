@@ -145,11 +145,12 @@ class TrainingController extends Controller
     {
         $data = $this->service->getDataTrainingPagination($request);
 
-        if ($data) {
+        if ($data['data']) {
             $response = [
                 'status'     => 200,
-                'data'       => $data,
-                'totalCount' => $this->training->count(),
+                'data'       => $data['data'],
+                'totalCount' => $data['totalCount'],
+                'totalData'  => $this->training->count(),
                 'message'    => 'Successfully fetched data training'
             ];
         } else {

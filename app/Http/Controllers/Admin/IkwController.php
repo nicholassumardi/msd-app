@@ -113,8 +113,8 @@ class IkwController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data training'
+                'status'  => 404,
+                'message' => 'Data not found'
             ];
         }
 
@@ -134,8 +134,8 @@ class IkwController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data training'
+                'status'  => 404,
+                'message' => 'Data not found'
             ];
         }
 
@@ -162,6 +162,27 @@ class IkwController extends Controller
         return response()->json($response);
     }
 
+    public function showIKWRevisionByIKW($id)
+    {
+        $data = $this->service->getDataIKWRevisionByIKW($id);
+
+        if ($data) {
+            $response = [
+                'status'     => 200,
+                'data'       => $data,
+                'totalCount' => $this->ikw->count(),
+                'message'    => 'Successfully fetched data training'
+            ];
+        } else {
+            $response = [
+                'status'  => 404,
+                'message' => 'Data not found'
+            ];
+        }
+
+        return response()->json($response);
+    }
+
     public function showIkwPagination(Request $request)
     {
         $data = $this->service->getDataIKWPagination($request);
@@ -175,8 +196,8 @@ class IkwController extends Controller
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data training'
+                'status'  => 404,
+                'message' => 'Data not found'
             ];
         }
 
