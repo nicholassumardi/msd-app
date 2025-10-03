@@ -70,31 +70,31 @@ class IkwController extends Controller
         if ($data) {
             $response = [
                 'status'     => 201,
-                'message'    => 'Successfully fetched data training'
+                'message'    => 'Successfully fetched data ikw'
             ];
         } else {
             $response = [
                 'status' => 500,
-                'message' => 'Failed to fetch data training'
+                'message' => 'Failed to fetch data ikw'
             ];
         }
 
         return response()->json($response);
     }
 
-    public function update(Request $request, $id_training)
+    public function update(Request $request, $id_ikw)
     {
-        $data = $this->service->updateIKW($request, $id_training);
+        $data = $this->service->updateIKW($request, $id_ikw);
 
         if ($data) {
             $response = [
                 'status'     => 200,
-                'message'    => 'Successfully fetched data training'
+                'message'    => 'Successfully fetched data ikw'
             ];
         } else {
             $response = [
                 'status' => 500,
-                'message' => 'Failed to fetch data training'
+                'message' => 'Failed to fetch data ikw'
             ];
         }
 
@@ -109,7 +109,7 @@ class IkwController extends Controller
             $response = [
                 'status'     => 200,
                 'data'       => $data,
-                'message'    => 'Successfully fetched data training'
+                'message'    => 'Successfully fetched data ikw'
             ];
         } else {
             $response = [
@@ -130,7 +130,7 @@ class IkwController extends Controller
                 'status'     => 200,
                 'data'       => $data,
                 'totalCount' => $this->ikw->count(),
-                'message'    => 'Successfully fetched data training'
+                'message'    => 'Successfully fetched data ikw'
             ];
         } else {
             $response = [
@@ -150,12 +150,12 @@ class IkwController extends Controller
             $response = [
                 'status'     => 200,
                 'data'       => $data,
-                'message'    => 'Successfully fetched data training'
+                'message'    => 'Successfully fetched data revision ikw'
             ];
         } else {
             $response = [
-                'status' => 500,
-                'message' => 'Failed to fetch data training'
+                'status'  => 404,
+                'message' => 'Data not found'
             ];
         }
 
@@ -170,8 +170,7 @@ class IkwController extends Controller
             $response = [
                 'status'     => 200,
                 'data'       => $data,
-                'totalCount' => $this->ikw->count(),
-                'message'    => 'Successfully fetched data training'
+                'message'    => 'Successfully fetched data ikw'
             ];
         } else {
             $response = [
@@ -192,7 +191,7 @@ class IkwController extends Controller
                 'status'     => 200,
                 'data'       => $data,
                 'totalCount' => $this->ikw->count(),
-                'message'    => 'Successfully fetched data training'
+                'message'    => 'Successfully fetched data ikw'
             ];
         } else {
             $response = [

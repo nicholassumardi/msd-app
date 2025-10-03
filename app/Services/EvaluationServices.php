@@ -546,7 +546,7 @@ class EvaluationServices extends BaseServices
             'non_competent'             => $nonCompetentCount,
             'remedial'                  => $remedialCount,
             'other'                     => $otherCount,
-            'mostFrequentTrainer'       => $mostFrequentTrainer->trainer->name,
+            'mostFrequentTrainer'       => $mostFrequentTrainer->trainer?->name ?? "Unknown",
             'percent' => [
                 'competent'   => $percentCompetent,
                 'non'         => $percentNonCompetent,

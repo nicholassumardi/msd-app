@@ -472,6 +472,7 @@ class IkwServices extends BaseServices
             return [
                 'id'                             => $data->id,
                 'revision_no'                    => $data->ikwRevision()->orderBy('revision_no', 'DESC')->first()->revision_no ?? "",
+                'latest_revision_id'             => $data->ikwRevision()->orderBy('revision_no', 'DESC')->first()->id ?? null,
                 'department_id'                  => $data->department_id ?? "",
                 'department_name'                => $data->department->name ?? "",
                 'code'                           => $data->code ?? "",
