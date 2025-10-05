@@ -79,11 +79,11 @@ class TrainingServices extends BaseServices
                     'assessment_plan_date'           => date('d/m/y', strtotime($training->assessment_plan_date)),
                     'assessment_realisation_date'    => date('d/m/y', strtotime($training->assessment_realisastion_date)),
                     'assessment_duration'            => $training->assessment_duration,
-                    'status_fa_print'                => $training->status_fa_print,
+                    // 'status_fa_print'                => $training->status_fa_print,
                     'assessment_result'              => $training->assessment_result,
-                    'status'                         => $training->status == 1 ? 'DONE' : '',
+                    // 'status'                         => $training->status == 1 ? 'DONE' : '',
                     'description'                    => $training->description,
-                    'status_active'                  => $training->status_active == 1 ? 'ACTIVE' : 'NON ACTIVE',
+                    // 'status_active'                  => $training->status_active == 1 ? 'ACTIVE' : 'NON ACTIVE',
                 ];
             });
 
@@ -103,24 +103,37 @@ class TrainingServices extends BaseServices
             $this->setLog('info', 'Start');
             DB::beginTransaction();
 
+
+            if (!$request->ikw_id) {
+                $this->setLog('info', 'store failed data not found');
+                return false;
+            }
+
+            $ikwRevisionID  = $this->ikwRevision->where('ikw_id', $request->ikw_id)->orderByDesc('revision_no')->first()->id ?? null;
+
+            if (!$ikwRevisionID) {
+                $this->setLog('info', 'store failed data not found');
+                return false;
+            }
+
             Training::create([
                 'no_training'                    => (Training::max('no_training') ?? 0) + 1,
                 'trainee_id'                     => $this->getUserByUUID($request->trainee_id) ?? NULL,
                 'trainer_id'                     => $this->getUserByUUID($request->trainer_id) ?? NULL,
                 'assessor_id'                    => $this->getUserByUUID($request->assessor_id) ?? NULL,
-                'ikw_revision_id'                => $request->ikw_revision_id,
-                'training_plan_date'             => date('Y-m-d', strtotime($request->training_plan_date)),
-                'training_realisation_date'      => date('Y-m-d', strtotime($request->training_realisation_date)),
+                'ikw_revision_id'                => $ikwRevisionID,
+                'training_plan_date'             => $request->training_plan_date ? date('Y-m-d', strtotime($request->training_plan_date)) : null,
+                'training_realisation_date'      => $request->training_realisation_date ? date('Y-m-d', strtotime($request->training_realisation_date)) : null,
                 'training_duration'              => $request->training_duration,
-                'ticket_return_date'             => date('Y-m-d', strtotime($request->ticket_return_date)),
-                'assessment_plan_date'           => date('Y-m-d', strtotime($request->assessment_plan_date)),
-                'assessment_realisation_date'    => date('Y-m-d', strtotime($request->assessment_realisation_date)),
+                'ticket_return_date'             => $request->ticket_return_date ? date('Y-m-d', strtotime($request->ticket_return_date)) : null,
+                'assessment_plan_date'           => $request->assessment_plan_date ? date('Y-m-d', strtotime($request->assessment_plan_date)) : null,
+                'assessment_realisation_date'    => $request->assessment_realisation_date ? date('Y-m-d', strtotime($request->assessment_realisation_date)) : null,
                 'assessment_duration'            => $request->assessment_duration,
-                'status_fa_print'                => $request->status_fa_print,
+                // 'status_fa_print'                => $request->status_fa_print,
                 'assessment_result'              => $request->assessment_result,
-                'status'                         => $request->status,
+                // 'status'                         => $request->status,
                 'description'                    => $request->description,
-                'status_active'                  => $request->status_active,
+                // 'status_active'                  => $request->status_active,
             ]);
 
             $this->setLog('info', 'New data Training' . json_encode($request->all()));
@@ -155,18 +168,18 @@ class TrainingServices extends BaseServices
                     'trainer_id'                     => $this->getUserByUUID($request->trainer_id) ?? NULL,
                     'assessor_id'                    => $this->getUserByUUID($request->assessor_id) ?? NULL,
                     'ikw_revision_id'                => $ikw_revision->id,
-                    'training_plan_date'             => date('Y-m-d', strtotime($request->training_plan_date)),
-                    'training_realisation_date'      => date('Y-m-d', strtotime($request->training_realisation_date)),
+                    'training_plan_date'             => $request->training_plan_date ? date('Y-m-d', strtotime($request->training_plan_date)) : null,
+                    'training_realisation_date'      => $request->training_realisation_date ? date('Y-m-d', strtotime($request->training_realisation_date)) : null,
                     'training_duration'              => $request->training_duration,
-                    'ticket_return_date'             => date('Y-m-d', strtotime($request->ticket_return_date)),
-                    'assessment_plan_date'           => date('Y-m-d', strtotime($request->assessment_plan_date)),
-                    'assessment_realisation_date'    => date('Y-m-d', strtotime($request->assessment_realisation_date)),
+                    'ticket_return_date'             => $request->ticket_return_date ? date('Y-m-d', strtotime($request->ticket_return_date)) : null,
+                    'assessment_plan_date'           => $request->assessment_plan_date ? date('Y-m-d', strtotime($request->assessment_plan_date)) : null,
+                    'assessment_realisation_date'    => $request->assessment_realisation_date ? date('Y-m-d', strtotime($request->assessment_realisation_date)) : null,
                     'assessment_duration'            => $request->assessment_duration,
-                    'status_fa_print'                => $request->status_fa_print,
+                    // 'status_fa_print'                => $request->status_fa_print,
                     'assessment_result'              => $request->assessment_result,
-                    'status'                         => $request->status,
+                    // 'status'                         => $request->status,
                     'description'                    => $request->description,
-                    'status_active'                  => $request->status_active,
+                    // 'status_active'                  => $request->status_active,
                 ]);
             } else {
                 DB::rollBack();
@@ -205,11 +218,11 @@ class TrainingServices extends BaseServices
                 'assessment_plan_date'           => $training->assessment_plan_date,
                 'assessment_realisation_date'    => $training->assessment_realisation_date,
                 'assessment_duration'            => $training->assessment_duration,
-                'status_fa_print'                => $training->status_fa_print,
+                // 'status_fa_print'                => $training->status_fa_print,
                 'assessment_result'              => $training->assessment_result,
-                'status'                         => $training->status,
+                // 'status'                         => $training->status,
                 'description'                    => $training->description,
-                'status_active'                  => $training->status_active,
+                // 'status_active'                  => $training->status_active,
             ];
         } else {
             $training = $this->training->get();
@@ -227,11 +240,11 @@ class TrainingServices extends BaseServices
                     'assessment_plan_date'           => $data->assessment_plan_date,
                     'assessment_realisation_date'    => $data->assessment_realisation_date,
                     'assessment_duration'            => $data->assessment_duration,
-                    'status_fa_print'                => $data->status_fa_print,
+                    // 'status_fa_print'                => $data->status_fa_print,
                     'assessment_result'              => $data->assessment_result,
-                    'status'                         => $data->status,
+                    // 'status'                         => $data->status,
                     'description'                    => $data->description,
-                    'status_active'                  => $data->status_active,
+                    // 'status_active'                  => $data->status_active,
                 ];
             });
         }
@@ -394,11 +407,11 @@ class TrainingServices extends BaseServices
                 'assessment_plan_date'           => date('d/m/y', strtotime($data->assessment_plan_date)),
                 'assessment_realisation_date'    => date('d/m/y', strtotime($data->assessment_realisastion_date)),
                 'assessment_duration'            => $data->assessment_duration,
-                'status_fa_print'                => $data->status_fa_print,
+                // 'status_fa_print'                => $data->status_fa_print,
                 'assessment_result'              => $data->assessment_result,
-                'status'                         => $data->status == 1 ? 'DONE' : '',
+                // 'status'                         => $data->status == 1 ? 'DONE' : '',
                 'description'                    => $data->description,
-                'status_active'                  => $data->status_active == 1 ? 'ACTIVE' : 'NON ACTIVE',
+                // 'status_active'                  => $data->status_active == 1 ? 'ACTIVE' : 'NON ACTIVE',
             ];
         });
 

@@ -652,6 +652,7 @@ class EvaluationServices extends BaseServices
         $query = $training->map(function ($data) {
             return [
                 'id'                          => $data->trainee->id ?? '',
+                'uuid'                        => $data->trainee->uuid ?? null,
                 'no_training'                 => $data->no_training ?? '',
                 'name'                        => $data->trainee->name ?? '',
                 'trainer_name'                => $data->trainer->name ?? 'Unknown Data',
