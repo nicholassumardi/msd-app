@@ -211,6 +211,7 @@ class TrainingServices extends BaseServices
                 'trainer_id'                     => $training->trainer->uuid ?? NULL,
                 'assessor_id'                    => $training->assessor->uuid ?? NULL,
                 'ikw_revision_id'                => $training->ikw_revision_id,
+                'ikw_id'                         => $training->ikwRevision->ikw_id,
                 'training_plan_date'             => $training->training_plan_date,
                 'training_realisation_date'      => $training->training_realisation_date,
                 'training_duration'              => $training->training_duration,
@@ -229,10 +230,11 @@ class TrainingServices extends BaseServices
             $training = $training->map(function ($data) {
                 return [
                     'no_training'                    => $data->no_training,
-                    'trainee_id'                     => $data->trainee_id,
-                    'trainer_id'                     => $data->trainer_id,
-                    'assessor_id'                    => $data->assessor_id,
+                    'trainee_id'                     => $data->trainee->uuid ?? NULL,
+                    'trainer_id'                     => $data->trainer->uuid ?? NULL,
+                    'assessor_id'                    => $data->assessor->uuid ?? NULL,
                     'ikw_revision_id'                => $data->ikw_revision_id,
+                    'ikw_id'                         => $data->ikwRevision->ikw_id,
                     'training_plan_date'             => $data->training_plan_date,
                     'training_realisation_date'      => $data->training_realisation_date,
                     'training_duration'              => $data->training_duration,
