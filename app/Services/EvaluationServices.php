@@ -25,7 +25,7 @@ class EvaluationServices extends BaseServices
     public function __construct()
     {
 
-        $this->training = Training::with('trainee', 'trainer', 'assessor', 'ikwRevision');
+        $this->training = Training::with('trainee.department', 'trainer', 'assessor', 'ikwRevision.ikw');
         $this->user = User::with('company', 'department', 'userEmployeeNumber', 'userServiceYear', 'userJobCode', 'certificates', 'training');
         $this->rki = RKI::with('ikw');
         $this->ikwRevision = IKWRevision::with('ikw', 'ikwMeeting', 'ikwPosition');

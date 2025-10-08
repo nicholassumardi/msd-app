@@ -17,7 +17,7 @@ class TrainingServices extends BaseServices
     protected $ikwRevision;
     public function __construct()
     {
-        $this->training = Training::with('trainee', 'trainer', 'assessor', 'ikwRevision');
+        $this->training = Training::with('trainee', 'trainer', 'assessor', 'ikwRevision.ikw.department');
         $this->ikw = IKW::with('ikwRevision.training');
         $this->ikwRevision = IKWRevision::with('ikw');
     }
@@ -206,50 +206,55 @@ class TrainingServices extends BaseServices
         if (!empty($id_training)) {
             $training =  $this->training->firstWhere('id', $id_training);
             $training = [
-                'no_training'                    => $training->no_training,
+                'no_training'                    => $training->no_training ?? NULL,
                 'trainee_id'                     => $training->trainee->uuid ?? NULL,
                 'trainer_id'                     => $training->trainer->uuid ?? NULL,
                 'assessor_id'                    => $training->assessor->uuid ?? NULL,
-                'ikw_revision_id'                => $training->ikw_revision_id,
-                'ikw_id'                         => $training->ikwRevision->ikw_id,
-                'training_plan_date'             => $training->training_plan_date,
-                'training_realisation_date'      => $training->training_realisation_date,
-                'training_duration'              => $training->training_duration,
-                'ticket_return_date'             => $training->ticket_return_date,
-                'assessment_plan_date'           => $training->assessment_plan_date,
-                'assessment_realisation_date'    => $training->assessment_realisation_date,
-                'assessment_duration'            => $training->assessment_duration,
-                // 'status_fa_print'                => $training->status_fa_print,
-                'assessment_result'              => $training->assessment_result,
-                // 'status'                         => $training->status,
-                'description'                    => $training->description,
-                // 'status_active'                  => $training->status_active,
+                'trainee_name'                   => $training->trainee->name ?? "",
+                'trainer_name'                   => $training->trainer->name ?? "",
+                'assessor_name'                  => $training->assessor->name ?? "",
+                'ikw_revision_id'                => $training->ikw_revision_id ?? NULL,
+                'revision_no'                    => $training->ikwRevision->revision_no ?? 0,
+                'ikw_id'                         => $training->ikwRevision->ikw_id ?? NULL,
+                'ikw'                            => $training->ikwRevision->ikw ?? NULL,
+                'training_plan_date'             => $training->training_plan_date ?? NULL,
+                'training_realisation_date'      => $training->training_realisation_date ?? NULL,
+                'training_duration'              => $training->training_duration ?? NULL,
+                'ticket_return_date'             => $training->ticket_return_date ?? NULL,
+                'assessment_plan_date'           => $training->assessment_plan_date ?? NULL,
+                'assessment_realisation_date'    => $training->assessment_realisation_date ?? NULL,
+                'assessment_duration'            => $training->assessment_duration ?? NULL,
+                // 'status_fa_print'                => $training->status_fa_print ?? NULL,
+                'assessment_result'              => $training->assessment_result ?? NULL,
+                // 'status'                         => $training->status ?? NULL,
+                'description'                    => $training->description ?? NULL,
+                // 'status_active'                  => $training->status_active ?? NULL,
             ];
         } else {
             $training = $this->training->get();
             $training = $training->map(function ($data) {
                 return [
-                    'no_training'                    => $data->no_training,
+                    'no_training'                    => $data->no_training ?? NULL,
                     'trainee_id'                     => $data->trainee->uuid ?? NULL,
                     'trainer_id'                     => $data->trainer->uuid ?? NULL,
                     'assessor_id'                    => $data->assessor->uuid ?? NULL,
                     'trainee_name'                   => $data->trainee->name ?? "",
                     'trainer_name'                   => $data->trainer->name ?? "",
                     'assessor_name'                  => $data->assessor->name ?? "",
-                    'ikw_revision_id'                => $data->ikw_revision_id,
-                    'ikw_id'                         => $data->ikwRevision->ikw_id,
-                    'training_plan_date'             => $data->training_plan_date,
-                    'training_realisation_date'      => $data->training_realisation_date,
-                    'training_duration'              => $data->training_duration,
-                    'ticket_return_date'             => $data->ticket_return_date,
-                    'assessment_plan_date'           => $data->assessment_plan_date,
-                    'assessment_realisation_date'    => $data->assessment_realisation_date,
-                    'assessment_duration'            => $data->assessment_duration,
-                    // 'status_fa_print'                => $data->status_fa_print,
-                    'assessment_result'              => $data->assessment_result,
-                    // 'status'                         => $data->status,
-                    'description'                    => $data->description,
-                    // 'status_active'                  => $data->status_active,
+                    'ikw_revision_id'                => $data->ikw_revision_id ?? NULL,
+                    'ikw_id'                         => $data->ikwRevision->ikw_id ?? NULL,
+                    'training_plan_date'             => $data->training_plan_date ?? NULL,
+                    'training_realisation_date'      => $data->training_realisation_date ?? NULL,
+                    'training_duration'              => $data->training_duration ?? NULL,
+                    'ticket_return_date'             => $data->ticket_return_date ?? NULL,
+                    'assessment_plan_date'           => $data->assessment_plan_date ?? NULL,
+                    'assessment_realisation_date'    => $data->assessment_realisation_date ?? NULL,
+                    'assessment_duration'            => $data->assessment_duration ?? NULL,
+                    // 'status_fa_print'                => $data->status_fa_print?? NULL,
+                    'assessment_result'              => $data->assessment_result ?? NULL,
+                    // 'status'                         => $data->status?? NULL,
+                    'description'                    => $data->description ?? NULL,
+                    // 'status_active'                  => $data->status_active?? NULL,
                 ];
             });
         }
