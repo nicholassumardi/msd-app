@@ -159,11 +159,10 @@ class TrainingServices extends BaseServices
             DB::beginTransaction();
 
             $training = Training::find($id_training);
-            $ikw_revision = $this->ikwRevision->where('ikw_id', $request->ikw_id)->orderBy('revision', 'DESC')->first();
+            $ikw_revision = $this->ikwRevision->where('ikw_id', $request->ikw_id)->orderBy('revision_no', 'DESC')->first();
 
             if ($training) {
                 $training->update([
-                    'no_training'                    => (Training::max('no_training') ?? 0) + 1,
                     'trainee_id'                     => $this->getUserByUUID($request->trainee_id) ?? NULL,
                     'trainer_id'                     => $this->getUserByUUID($request->trainer_id) ?? NULL,
                     'assessor_id'                    => $this->getUserByUUID($request->assessor_id) ?? NULL,

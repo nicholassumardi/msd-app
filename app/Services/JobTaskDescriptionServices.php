@@ -205,18 +205,31 @@ class JobTaskDescriptionServices extends BaseServices
             $this->setLog('info', 'Start');
             DB::beginTransaction();
 
+            // $data = [];
+            // $structures = json_decode(json_encode($request->structures)); // convert array to object
+            // foreach ($structures as $structure) {
+            //     foreach ($structure->jobDesc as $desc) {
+            //         foreach ($desc->jobTask as $task) {
+            //             $data[] = [
+            //                 'job_description_id' => $desc->id,
+            //                 'description'        => $task->description
+            //             ];
+            //         }
+            //     }
+            // }
+
             $data = [];
-            $structures = json_decode(json_encode($request->structures)); // convert array to object
-            foreach ($structures as $structure) {
-                foreach ($structure->jobDesc as $desc) {
-                    foreach ($desc->jobTask as $task) {
-                        $data[] = [
-                            'job_description_id' => $desc->id,
-                            'description'        => $task->description
-                        ];
-                    }
-                }
+
+            // Convert jobTask array to object
+            $jobTasks = json_decode(json_encode($request->jobTask ?? []));
+
+            foreach ($jobTasks as $task) {
+                $data[] = [
+                    'job_description_id' => $task->job_description_id ?? null,
+                    'description'        => $task->description ?? null,
+                ];
             }
+
 
             JobTask::insert($data);
 
@@ -321,7 +334,7 @@ class JobTaskDescriptionServices extends BaseServices
     public function assignJobDescTask(Request $request)
     {
         try {
-            $this->setLog('info', 'Request delete data Job Task ' . json_encode($request->all()));
+            $this->setLog('info', 'Request assign data Job Task ' . json_encode($request->all()));
             $this->setLog('info', 'Start');
             DB::beginTransaction();
             $dataJobDesc = [];
@@ -352,17 +365,17 @@ class JobTaskDescriptionServices extends BaseServices
             JobTaskDetail::insert($dataJobTask);
 
 
-            $this->setLog('info', 'deleted  JobTask data' . json_encode($request->all()));
+            $this->setLog('info', 'assigned  JobTask data' . json_encode($request->all()));
             DB::commit();
             $this->setLog('info', 'End');
 
             return true;
         } catch (\Exception $exception) {
             DB::rollBack();
-            $this->setLog('error', 'Error delete JobTask = ' . $exception->getMessage());
-            $this->setLog('error', 'Error delete JobTask = ' . $exception->getLine());
-            $this->setLog('error', 'Error delete JobTask = ' . $exception->getFile());
-            $this->setLog('error', 'Error delete JobTask = ' . $exception->getTraceAsString());
+            $this->setLog('error', 'Error assign JobTask = ' . $exception->getMessage());
+            $this->setLog('error', 'Error assign JobTask = ' . $exception->getLine());
+            $this->setLog('error', 'Error assign JobTask = ' . $exception->getFile());
+            $this->setLog('error', 'Error assign JobTask = ' . $exception->getTraceAsString());
             return null;
         }
     }

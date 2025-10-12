@@ -14,23 +14,26 @@ use Illuminate\Support\Facades\DB;
 class UserStructureMappingServices extends BaseServices
 {
     protected $userMapping;
+    protected $userMappingRaw;
     protected $userJobCode;
     protected $userStructureMappingHistories;
     public function __construct()
     {
         $this->userMapping =  UserStructureMapping::with('department', 'jobCode', 'children')->with([
             'userJobCode.user.userEmployeeNumber' => function ($query) {
-                $query->where('status', 1)->first();
+                $query->where('status', 1);
             }
         ]);
 
         $this->userJobCode = UserJobCode::with('UserStructureMapping', 'jobCode')->with([
             'user.userEmployeeNumber' => function ($query) {
-                $query->where('status', 1)->first();
+                $query->where('status', 1);
             }
         ]);
 
         $this->userStructureMappingHistories = UserStructureMappingHistories::with('userStructureMapping');
+
+        $this->userMappingRaw = UserStructureMapping::get();
     }
 
     public function importStructureExcel(Request $request, $cacheKey)
@@ -182,14 +185,14 @@ class UserStructureMappingServices extends BaseServices
                     UserStructureMappingHistories::create([
                         'user_structure_mapping_id' => $userMapping->id,
                         'revision_no'               =>  $this->userStructureMappingHistories->where('user_structure_mapping_id', $userMapping->id)->max('revision_no') + 1,
-                        'valid_date'                => $request->valid_date,
-                        'updated_date'              => $request->updated_date,
-                        'authorized_date'           => $request->authorized_date,
-                        'approval_date'             => $request->approval_date,
-                        'acknowledged_date'         => $request->acknowledged_date,
-                        'created_date'              => $request->created_date,
-                        'distribution_date'         => $request->distribution_date,
-                        'withdrawal_date'           => $request->withdrawal_date,
+                        'valid_date'                => $request->valid_date ? date('Y-m-d', strtotime($request->valid_date)) : null,
+                        'updated_date'              => $request->updated_date ? date('Y-m-d', strtotime($request->updated_date)) : null,
+                        'authorized_date'           => $request->authorized_date ? date('Y-m-d', strtotime($request->authorized_date)) : null,
+                        'approval_date'             => $request->approval_date ? date('Y-m-d', strtotime($request->approval_date)) : null,
+                        'acknowledged_date'         => $request->acknowledged_date ?  date('Y-m-d', strtotime($request->acknowledged_date)) : null,
+                        'created_date'              => $request->created_date ? date('Y-m-d', strtotime($request->created_date)) : null,
+                        'distribution_date'         => $request->distribution_date ? date('Y-m-d', strtotime($request->distribution_date)) : null,
+                        'withdrawal_date'           => $request->withdrawal_date ? date('Y-m-d', strtotime($request->withdrawal_date)) : null,
                         'logs'                      => $logMessage,
                     ]);
                 }
@@ -197,6 +200,77 @@ class UserStructureMappingServices extends BaseServices
                 DB::rollBack();
                 return false;
             }
+
+            $this->setLog('info', 'updated data user mapping ' . json_encode($request->all()));
+            DB::commit();
+            $this->setLog('info', 'End');
+
+            return true;
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            $this->setLog('error', 'Error store data user mapping = ' . $exception->getMessage());
+            $this->setLog('error', 'Error store data user mapping = ' . $exception->getLine());
+            $this->setLog('error', 'Error store data user mapping = ' . $exception->getFile());
+            $this->setLog('error', 'Error store data user mapping = ' . $exception->getTraceAsString());
+            return null;
+        }
+    }
+
+    public function updateBulkUserMapping(Request $request)
+    {
+        try {
+            $this->setLog('info', 'Request store data user mapping ' . json_encode($request->all()));
+            $this->setLog('info', 'Start');
+            DB::beginTransaction();
+
+            foreach ($request->bulk_edit as $item) {
+
+                // Use array access
+                $userMapping = $this->userMappingRaw->firstWhere('id', $item['id']);
+
+                if ($userMapping) {
+
+                    $oldQuota = $userMapping->quota;
+                    $newQuota = $item['quota'];
+
+                    $logMessage = '';
+
+                    if ($newQuota > $oldQuota) {
+                        $logMessage = "Quota has been added from $oldQuota to $newQuota";
+                    } elseif ($newQuota < $oldQuota) {
+                        $logMessage = "Quota has been decreased from $oldQuota to $newQuota";
+                    }
+
+                    $userMapping->update([
+                        'department_id'   => (int) $item['department_id'] ?? null,
+                        'job_code_id'     => (int) $item['job_code_id'] ?? null,
+                        'parent_id'       => (int) $item['parent_id'] ?? null,
+                        'name'            => $item['name'],
+                        'quota'           => (int) $item['quota'],
+                        'structure_type'  => $item['structure_type'],
+                    ]);
+
+                    if ($newQuota != $oldQuota) {
+                        UserStructureMappingHistories::create([
+                            'user_structure_mapping_id' => (int) $userMapping->id ?? null,
+                            'revision_no'               => $this->userStructureMappingHistories->where('user_structure_mapping_id', $userMapping->id)->max('revision_no') + 1 ?? 0,
+                            'valid_date'                => $request->valid_date ? date('Y-m-d', strtotime($request->valid_date)) : null,
+                            'updated_date'              => $request->updated_date ? date('Y-m-d', strtotime($request->updated_date)) : null,
+                            'authorized_date'           => $request->authorized_date ? date('Y-m-d', strtotime($request->authorized_date)) : null,
+                            'approval_date'             => $request->approval_date ? date('Y-m-d', strtotime($request->approval_date)) : null,
+                            'acknowledged_date'         => $request->acknowledged_date ? date('Y-m-d', strtotime($request->acknowledged_date)) : null,
+                            'created_date'              => $request->created_date ? date('Y-m-d', strtotime($request->created_date)) : null,
+                            'distribution_date'         => $request->distribution_date ? date('Y-m-d', strtotime($request->distribution_date)) : null,
+                            'withdrawal_date'           => $request->withdrawal_date ? date('Y-m-d', strtotime($request->withdrawal_date)) : null,
+                            'logs'                      => $logMessage,
+                        ]);
+                    }
+                } else {
+                    DB::rollBack();
+                    return false;
+                }
+            }
+
 
             $this->setLog('info', 'updated data user mapping ' . json_encode($request->all()));
             DB::commit();
@@ -301,7 +375,7 @@ class UserStructureMappingServices extends BaseServices
             $userMapping['company_name'] = $userMapping->department->company->name ?? "None";
             $userMapping['hasChildren'] = $userMapping->children()->exists();
         } else {
-            $userMapping = $this->userMapping->get();
+            $userMapping = $this->userMapping;
         }
 
         return $userMapping;

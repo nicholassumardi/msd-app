@@ -114,7 +114,9 @@ class BaseServices
 
     public function getUserByUUID($search)
     {
-        return User::firstWhere('uuid', $search)->id;
+        $uuid = User::firstWhere('uuid', $search)->id ?? null;
+
+        return $uuid;
     }
 
     public function getDaydiff($startDate, $endDate)
@@ -138,7 +140,7 @@ class BaseServices
     public function parseDateMdY($arg)
     {
         $date = Carbon::parse($arg)->format('M d, Y');
-        
+
         return $date;
     }
 

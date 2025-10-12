@@ -423,6 +423,25 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
+    public function updateBulkUserMapping(Request $request)
+    {
+        $data = $this->userMappingService->updateBulkUserMapping($request);
+
+        if ($data) {
+            $response = [
+                'status' => 200,
+                'message' => 'Successfully updated data user mapping'
+            ];
+        } else {
+            $response = [
+                'status' => 500,
+                'message' => 'Failed to update data user mapping'
+            ];
+        }
+
+        return response()->json($response);
+    }
+
     public function updateUserMappingRequest(Request $request, $id)
     {
         $data = $this->userMappingService->updateUserMappingRequest($request, $id);

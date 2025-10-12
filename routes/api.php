@@ -95,10 +95,10 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
             Route::prefix('job_description')->group(function () {
                 Route::get('/', [JobFamilyController::class, 'index']);
                 Route::post('store', [JobFamilyController::class, 'storeJobDescription']);
+                Route::post('assign_job', [JobFamilyController::class, 'assignJobDescTask']);
                 Route::put('update/{id}', [JobFamilyController::class, 'updateJobDescription']);
                 Route::get('show/{id}', [JobFamilyController::class, 'showJobDescription']);
                 Route::get('show', [JobFamilyController::class, 'showJobDescriptionAll']);
-                Route::get('assign_job', [JobFamilyController::class, 'assignJobDescTask']);
                 Route::get('show_job_desc_pagination', [JobFamilyController::class, 'showJobDescriptionPagination']);
                 Route::delete('delete/{id}', [JobFamilyController::class, 'destroyJobDescription']);
             });
@@ -170,6 +170,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::post('store', [StructureController::class, 'store']);
         Route::post('store_request_employee', [StructureController::class, 'storeRequestEmployee']);
         Route::put('update_mapping/{id}', [StructureController::class, 'updateUserMapping']);
+        Route::put('update_bulk_mapping', [StructureController::class, 'updateBulkUserMapping']);
         Route::put('update_mapping_request/{id}', [StructureController::class, 'updateUserMappingRequest']);
         Route::put('move_mapping_request/{id}', [StructureController::class, 'moveUserMappingRequest']);
         Route::put('update/{uuid}', [StructureController::class, 'update']);
