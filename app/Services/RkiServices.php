@@ -182,17 +182,22 @@ class RkiServices extends BaseServices
         $sorting = json_decode($request->sorting, true) ?? [];
         $globalFilter = $request->globalFilter ?? '';
 
-        $queryData = $this->rki->where(function ($query) use ($filters, $globalFilter) {
-            if ($globalFilter) {
-                $query->where(function ($query) use ($globalFilter) {
-                    $query->where('position_job_code', 'LIKE', "%$globalFilter%");
-                });
-            }
+        $queryData = $this->rki
+            ->with(['ikw', 'ikw.department', 'userStructureMapping'])
+            ->where(function ($query) use ($filters, $globalFilter) {
+                if ($globalFilter) {
+                    $query->where(function ($query) use ($globalFilter) {
+                        $query->where('position_job_code', 'LIKE', "%$globalFilter%")
+                            ->orWhereHas('userStructureMapping', function ($q) use ($globalFilter) {
+                                $q->where('name', 'LIKE', "%$globalFilter%");
+                            });
+                    });
+                }
 
-            foreach ($filters as $filter) {
-                $query->where($filter['id'], $filter['value']);
-            }
-        });
+                foreach ($filters as $filter) {
+                    $query->where($filter['id'], $filter['value']);
+                }
+            });
 
         foreach ($sorting as $sort) {
             if (isset($sort['id'])) {
@@ -200,29 +205,48 @@ class RkiServices extends BaseServices
             }
         }
 
-        $queryData = $queryData
-            ->get()
-            ->groupBy('position_job_code');
+        $allData = $queryData->get();
 
-        $totalCount = $queryData->count();
+        // Group by user_structure_mapping_id
+        $groupedData = $allData->groupBy('user_structure_mapping_id');
 
-        $queryData = $queryData->skip($start)->take($size)->map(function ($group) {
-            $data = $group->first();
+        $totalCount =  ceil($groupedData->count() / $size);
+
+
+        // Paginate the grouped data
+        $paginatedGroups = $groupedData->slice($start, $size);
+
+        $formattedData = $paginatedGroups->map(function ($group, $userStructureId) {
+            $firstRecord = $group->first();
+
+            // Map each IKW in the group
+            $ikwList = $group->map(function ($record) {
+                return [
+                    'id'                => $record->id,
+                    'ikw_id'            => $record->ikw->id ?? null,
+                    'ikw_code'          => $record->ikw->code ?? "",
+                    'ikw_name'          => $record->ikw->name ?? "",
+                    'position_job_code' => $record->position_job_code ?? "",
+                    'training_time'     => $record->training_time ?? "",
+                    'department'        => $record->ikw->department->code ?? "",
+                    'ikw_page'          => $record->ikw->total_page ?? "",
+                ];
+            })->values();
+
             return [
-                'id'                 => $data->id,
-                'unique_code'        => ($data->ikw->code ?? "") . "/" . ($data->position_job_code ?? ""),
-                'position_job_code'  => $data->position_job_code ?? "",
-                'ikw_code'           => $data->ikw->code ?? "",
-                'ikw_name'           => $data->ikw->name ?? "",
-                'ikw_page'           => $data->ikw->total_page ?? "",
-                'department'         => $data->ikw->department->code ?? "",
-                'training_time'      => $data->training_time ?? "",
+                'user_structure_mapping_id' => $userStructureId,
+                'structure_name'            => $firstRecord->userStructureMapping->name ?? "",
+                'structure_description'     => $firstRecord->userStructureMapping->description ?? "",
+                'structure_code'            => $firstRecord->userStructureMapping->code ?? "",
+                'ikw_count'                 => $group->count(),
+                'total_training_hours'      => $group->sum('training_time'),
+                'ikwList'                   => $ikwList,
             ];
         })->values();
 
         return [
             'count' => $totalCount,
-            'data'  => $queryData,
+            'data'  => $formattedData,
         ];
     }
 
