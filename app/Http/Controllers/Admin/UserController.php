@@ -78,7 +78,6 @@ class UserController extends Controller
 
     public function importUserExcel(Request $request)
     {
-
         $cacheKey = uniqid();
         $query = $this->service->importUserExcel($request, $cacheKey);
         $filepath = Cache::get($cacheKey);
@@ -180,6 +179,95 @@ class UserController extends Controller
         ]);
     }
 
+    public function dedicatedStoreEmployeeNumber(Request $request)
+    {
+        $employeeNumbers = !empty($request->userEmployeeNumbers)
+            ? $this->serviceUserEmployeeNumber->storeEmployeeNumber($request)
+            : false;
+
+        if (!$employeeNumbers) {
+            return response()->json([
+                'status'  => 500,
+                'message' => "Failed to create data",
+            ]);
+        }
+
+        return response()->json([
+            'status'  => 201,
+            'message' => "Successfully created",
+        ]);
+    }
+
+    public function update(UserRequest $request, $uuid)
+    {
+        $validatedRequest = $request->validated();
+        $newRequest = new Request($validatedRequest);
+
+        // Update Split database first so at the end of the code it would be saved on history
+        $this->serviceUserServiceYear->updateUserService($newRequest, $uuid);
+
+        $userCertificates = !empty($newRequest->userCertificates)
+            ? $this->serviceUserCertificate->updateUserCertificate($newRequest, $uuid)
+            : true;
+
+        if (!$userCertificates) {
+            return response()->json([
+                'status'  => 500,
+                'message' => "Failed to create data",
+            ]);
+        }
+
+        $data = $this->service->updateUser($newRequest, $uuid);
+
+        if (!$data) {
+            return response()->json([
+                'status'  => 500,
+                'message' => "Failed to create data",
+            ]);
+        }
+
+        return response()->json([
+            'status'  => 200,
+            'message' => "Successfully updated",
+        ]);
+    }
+
+    public function dedicatedUpdateEmployeeNumber(Request $request, $uuid)
+    {
+        $employeeNumbers = $this->serviceUserEmployeeNumber->updateEmployeeNumber($request, $uuid);
+
+        if (!$employeeNumbers) {
+            return response()->json([
+                'status'  => 500,
+                'message' => "Failed to create data",
+            ]);
+        }
+
+        return response()->json([
+            'status'  => 200,
+            'message' => "Successfully updated",
+        ]);
+    }
+
+    public function updateStatus($id_employee_number)
+    {
+        $data = $this->serviceUserEmployeeNumber->updateEmployeeNumberStatus($id_employee_number);
+
+        if ($data) {
+            $response = [
+                'status'  => 200,
+                'message' => "Successfully updated",
+            ];
+        } else {
+            $response = [
+                'status'  => 500,
+                'message' => "Failed to create data",
+            ];
+        }
+
+        return response()->json($response);
+    }
+
     public function show($uuid, Request $request)
     {
         $data = $this->service->getDataUser($uuid, $request);
@@ -262,7 +350,6 @@ class UserController extends Controller
         return response()->json($response);
     }
 
-
     public function showByDepartment($id_department)
     {
         $data = $this->service->getDataUserByDepartment($id_department);
@@ -277,62 +364,6 @@ class UserController extends Controller
             $response = [
                 'status'  => 404,
                 'message' => 'No Data found'
-            ];
-        }
-
-        return response()->json($response);
-    }
-
-
-    public function update(UserRequest $request, $uuid)
-    {
-        $validatedRequest = $request->validated();
-        $newRequest = new Request($validatedRequest);
-        $data = $this->service->updateUser($newRequest, $uuid);
-
-        if (!$data) {
-            return response()->json([
-                'status'  => 500,
-                'message' => "Failed to create data",
-            ]);
-        }
-
-        $this->serviceUserServiceYear->updateUserService($newRequest, $uuid);
-
-        $employeeNumbers = !empty($newRequest->userEmployeeNumbers)
-            ? $this->serviceUserEmployeeNumber->updateEmployeeNumber($newRequest, $uuid)
-            : true;
-
-        $userCertificates = !empty($newRequest->userCertificates)
-            ? $this->serviceUserCertificate->updateUserCertificate($newRequest, $uuid)
-            : true;
-
-        if (!$employeeNumbers || !$userCertificates) {
-            return response()->json([
-                'status'  => 500,
-                'message' => "Failed to create data",
-            ]);
-        }
-
-        return response()->json([
-            'status'  => 200,
-            'message' => "Successfully updated",
-        ]);
-    }
-
-    public function updateStatus($id_employee_number)
-    {
-        $data = $this->serviceUserEmployeeNumber->updateEmployeeNumberStatus($id_employee_number);
-
-        if ($data) {
-            $response = [
-                'status'  => 200,
-                'message' => "Successfully updated",
-            ];
-        } else {
-            $response = [
-                'status'  => 500,
-                'message' => "Failed to create data",
             ];
         }
 

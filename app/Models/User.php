@@ -42,6 +42,10 @@ class User extends Authenticatable
         'schedule_type',
         'password',
         'status_account',
+        'contract_start_date',
+        'contract_end_date',
+        'resign_date',
+        'contract_status',
     ];
 
     public function company()

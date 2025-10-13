@@ -151,7 +151,9 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::post('import_update', [UserController::class, 'importUpdateUserExcel']);
         Route::get('export', [UserController::class, 'exportDataUserExcel']);
         Route::post('store', [UserController::class, 'store']);
+        Route::post('store_employee_number', [UserController::class, 'dedicatedStoreEmployeeNumber']);
         Route::put('update/{uuid}', [UserController::class, 'update']);
+        Route::put('update_employee_number/{uuid}', [UserController::class, 'dedicatedUpdateEmployeeNumber']);
         Route::put('update_status/{id}', [UserController::class, 'updateStatus']);
         Route::get('show/{uuid}', [UserController::class, 'show']);
         Route::get('show', [UserController::class, 'showAll']);

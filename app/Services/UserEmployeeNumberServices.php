@@ -23,7 +23,7 @@ class UserEmployeeNumberServices extends BaseServices
                 return [
                     'user_id'          => $request->user_id,
                     'employee_number'  => $employeeNumber['employee_number'] ?? null,
-                    'registry_date'    => $employeeNumber['registry_date'] ?? null,
+                    'registry_date'    => $employeeNumber['registry_date'] ? date('Y-m-d', strtotime($employeeNumber['registry_date'])) : now()->format('Y-m-d'),
                     'status'           => $index === 0 ? 1 : 0
                 ];
             }, $request->userEmployeeNumbers, array_keys($request->userEmployeeNumbers));
@@ -53,9 +53,6 @@ class UserEmployeeNumberServices extends BaseServices
             DB::beginTransaction();
 
             $user = User::firstWhere('uuid', $uuid);
-
-
-
 
             if ($user) {
                 $historyLog =  HistoryLog::create([
@@ -87,7 +84,7 @@ class UserEmployeeNumberServices extends BaseServices
                         'schedule_type'   => $user->schedule_type,
                         'employee_number' => $user->userEmployeeNumber()
                             ->where('status', 1)
-                            ->latest('id') // or 'created_at'
+                            ->latest('id')
                             ->first()
                             ->employee_number ?? "",
                         'join_date' => optional(
@@ -102,7 +99,7 @@ class UserEmployeeNumberServices extends BaseServices
                         $data =   [
                             'user_id'          => $user->id,
                             'employee_number'  => $userEmployeeNumber["employee_number"],
-                            'registry_date'    => $userEmployeeNumber["registry_date"],
+                            'registry_date'    =>  $userEmployeeNumber['registry_date'] ? date('Y-m-d', strtotime($userEmployeeNumber['registry_date'])) : null,
                             'status'           => $key == 0 ? 1 : 0
                         ];
 

@@ -38,6 +38,10 @@ class CreateUserHistoriesTable extends Migration
             $table->string('employee_number')->unique();
             $table->date('join_date')->nullable();
             $table->date('leave_date')->nullable();
+            $table->date('contract_start_date')->nullable();
+            $table->date('contract_end_date')->nullable();
+            $table->date('resign_date')->nullable();
+            $table->tinyInteger('contract_status')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

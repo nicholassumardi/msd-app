@@ -36,7 +36,11 @@ class CreateUsersTable extends Migration
             $table->string('status_twiji')->comment('Guteji || Intiji')->nullable();
             $table->string('schedule_type')->comment('Shift || Non Shift')->nullable();
             $table->string('password');
-            $table->tinyInteger('status_account')->nullable()->comment('1: AKTIF || 2: NON AKTIF');
+            $table->tinyInteger('status_account')->nullable()->comment('1: AKTIF || 0: NON AKTIF');
+            $table->date('contract_start_date')->nullable();
+            $table->date('contract_end_date')->nullable();
+            $table->date('resign_date')->nullable();
+            $table->tinyInteger('contract_status')->nullable()->comment('2:TERMINATED || 1: ACTIVE || 0:  EXPIRED');
             $table->timestamps();
             $table->softDeletes();
         });
