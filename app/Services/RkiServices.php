@@ -101,17 +101,18 @@ class RkiServices extends BaseServices
         }
     }
 
-    public function getDataRKIByUserStructureMapping(Request $request)
+    public function getDataRKIByUserStructureMapping($user_structure_mapping_id)
     {
         $rki = collect();
-        if ($request->user_structure_mapping_id) {
-            $rki = $this->rki->where('user_structure_mapping_id', $request->user_structure_mapping_id)->get()?->map(function ($data) {
+        if ($user_structure_mapping_id) {
+            $rki = $this->rki->where('user_structure_mapping_id', $user_structure_mapping_id)->get()?->map(function ($data) {
                 return [
                     'id'                      => $data->id ?? null,
                     'unique_code'             => $data->userStructureMapping
                         ?  $data->userStructureMapping->position_code_structure . "/" .
                         ($data->ikw ?  $data->ikw->code : "No Code") : null,
                     'user_structure_mapping'  => $data->userStructureMapping ?? "",
+                    'ikws'                    => $data->userStructureMapping ?? "",
                     'ikw_id'                  => $data->ikw->id ?? "",
                     'ikw_code'                => $data->ikw->code ?? "",
                     'ikw_name'                => $data->ikw->name ?? "",
@@ -126,6 +127,7 @@ class RkiServices extends BaseServices
 
         return $rki;
     }
+
     public function getDataRKIByIKW(Request $request)
     {
         if ($request->ikw_id) {
@@ -187,10 +189,9 @@ class RkiServices extends BaseServices
             ->where(function ($query) use ($filters, $globalFilter) {
                 if ($globalFilter) {
                     $query->where(function ($query) use ($globalFilter) {
-                        $query->where('position_job_code', 'LIKE', "%$globalFilter%")
-                            ->orWhereHas('userStructureMapping', function ($q) use ($globalFilter) {
-                                $q->where('name', 'LIKE', "%$globalFilter%");
-                            });
+                        $query->orWhereHas('userStructureMapping', function ($q) use ($globalFilter) {
+                            $q->where('name', 'LIKE', "%$globalFilter%");
+                        });
                     });
                 }
 
@@ -218,15 +219,15 @@ class RkiServices extends BaseServices
 
         $formattedData = $paginatedGroups->map(function ($group, $userStructureId) {
             $firstRecord = $group->first();
-
             // Map each IKW in the group
             $ikwList = $group->map(function ($record) {
+                $position_job_code =  ($record->userStructureMapping->jobCode->full_code ?? "") . "-" . ($record->userStructureMapping->position_code_structure ?? "");
                 return [
                     'id'                => $record->id,
                     'ikw_id'            => $record->ikw->id ?? null,
                     'ikw_code'          => $record->ikw->code ?? "",
                     'ikw_name'          => $record->ikw->name ?? "",
-                    'position_job_code' => $record->position_job_code ?? "",
+                    'position_job_code' => $position_job_code,
                     'training_time'     => $record->training_time ?? "",
                     'department'        => $record->ikw->department->code ?? "",
                     'ikw_page'          => $record->ikw->total_page ?? "",

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RkiRequest;
 use App\Models\RKI;
 use App\Services\RkiServices;
 use Illuminate\Http\Request;
@@ -39,18 +40,20 @@ class RkiController extends Controller
         return response()->json($response);
     }
 
-    public function store(Request $request)
+    public function store(RkiRequest $request)
     {
-        $data = $this->service->storeRKI($request);
+        $validatedRequest = $request->validated();
+        $newRequest = new Request($validatedRequest);
+        $data = $this->service->storeRKI($newRequest);
 
         if ($data) {
             return response()->json([
-                'message'    => 'Training created successfully',
+                'message'    => 'RKI created successfully',
                 'status'     => 201,
             ]);
         } else {
             return response()->json([
-                'message' => 'Failed to create training',
+                'message' => 'Failed to create RKI',
                 'status'     => 500,
             ]);
         }
@@ -113,9 +116,9 @@ class RkiController extends Controller
         return response()->json($response);
     }
 
-    public function showByUserStructureMapping(Request $request)
+    public function showByUserStructureMapping($user_structure_mapping_id)
     {
-        $data = $this->service->getDataRKIByUserStructureMapping($request);
+        $data = $this->service->getDataRKIByUserStructureMapping($user_structure_mapping_id);
 
         if ($data) {
             $response = [
