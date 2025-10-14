@@ -240,6 +240,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::put('update/{id}', [CalendarController::class, 'update']);
         Route::get('show/{id}', [CalendarController::class, 'show']);
         Route::get('show', [CalendarController::class, 'showAll']);
+        Route::get('show_weekly', [CalendarController::class, 'showWeekly']);
         Route::delete('delete/{id}', [CalendarController::class, 'destroy']);
     });
 });

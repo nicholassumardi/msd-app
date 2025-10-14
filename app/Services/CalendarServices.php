@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Calendar;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class CalendarServices extends BaseServices
@@ -107,6 +108,22 @@ class CalendarServices extends BaseServices
         }
 
         return $calendar;
+    }
+
+
+    public function getDataCalendarWeekly()
+    {
+        $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
+        $endOfWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY);
+
+        $weekRange = $startOfWeek->format('d M') . ' - ' . $endOfWeek->format('d M Y');
+
+        $data = $this->calendar->whereBetween('start_date', [$startOfWeek, $endOfWeek])->get();
+
+        return [
+            'data'      => $data,
+            'weekRange' => $weekRange,
+        ];
     }
 
     public function getDataCalendarPagination(Request $request)

@@ -79,6 +79,28 @@ class CalendarController extends Controller
         return response()->json($response);
     }
 
+
+    public function showWeekly()
+    {
+        $data = $this->service->getDataCalendarWeekly();
+
+        if ($data['data']) {
+            $response = [
+                'status'  => 200,
+                'data'         => $data['data'],
+                'weekRange'    => $data['weekRange'],
+                'message' => 'Success fetched data calendar'
+            ];
+        } else {
+            $response = [
+                'status'  => 404,
+                'message' => 'No Data found'
+            ];
+        }
+
+        return response()->json($response);
+    }
+
     public function update(Request $request, $id_Calendar)
     {
         $data = $this->service->updateCalendar($request, $id_Calendar);
