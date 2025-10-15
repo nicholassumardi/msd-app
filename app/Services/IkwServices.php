@@ -146,6 +146,126 @@ class IkwServices extends BaseServices
         }
     }
 
+    // public function updateIKW(Request $request, $id)
+    // {
+    //     try {
+    //         $this->setLog('info', 'Request update data IKW ' . json_encode($request->all()));
+    //         $this->setLog('info', 'Start');
+    //         DB::beginTransaction();
+
+    //         $ikw = IKW::findOrFail($id);
+
+    //         $ikw->update([
+    //             'department_id'               => $request->department_id,
+    //             'code'                        => $request->code,
+    //             'name'                        => $request->name,
+    //             'total_page'                  => $request->total_page,
+    //             'registration_date'           => date('Y-m-d', strtotime($request->registration_date)),
+    //             'print_by_back_office_date'   => date('Y-m-d', strtotime($request->print_by_back_office_date)),
+    //             'submit_to_department_date'   => date('Y-m-d', strtotime($request->submit_to_department_date)),
+    //             'ikw_return_date'             => date('Y-m-d', strtotime($request->ikw_return_date)),
+    //             'ikw_creation_duration'       => $request->ikw_creation_duration,
+    //             'status_document'             => $request->status_document,
+    //             'last_update_date'            => date('Y-m-d', strtotime($request->last_update_date)),
+    //             'description'                 => $request->description,
+    //         ]);
+
+    //         // Delete existing revisions and their related data
+    //         if ($ikw->ikwRevision) {
+    //             foreach ($ikw->revisions as $revision) {
+    //                 $revision->ikwMeeting()->delete();
+    //                 $revision->ikwPosition()->delete();
+    //                 $revision->delete();
+    //             }
+    //         }
+
+    //         if ($request->revisions) {
+    //             $this->updateOrStoreIkwRevision($request, $ikw);
+    //         }
+
+    //         $this->setLog('info', 'Updated data IKW ' . json_encode($request->all()));
+    //         DB::commit();
+    //         $this->setLog('info', 'End');
+    //         return true;
+    //     } catch (\Exception $exception) {
+    //         DB::rollBack();
+    //         $this->setLog('error', 'Error updating data IKW = ' . $exception->getMessage());
+    //         $this->setLog('error', 'Error updating data IKW = ' . $exception->getLine());
+    //         $this->setLog('error', 'Error updating data IKW = ' . $exception->getFile());
+    //         $this->setLog('error', 'Error updating data IKW = ' . $exception->getTraceAsString());
+    //         return null;
+    //     }
+    // }
+
+    // public function updateOrStoreIkwRevision(Request $request, $ikw = NULL)
+    // {
+    //     foreach ($request->revisions as $ikwRevision) {
+    //         $dataIkwRevision = [
+    //             'ikw_id'                          => $ikw ? $ikw->id : $request->ikw_id,
+    //             'ikw_code'                        => $ikw ? $ikw->code : $request->code,
+    //             'revision_no'                     => (int)$ikwRevision['revision_no'],
+    //             'reason'                          => $ikwRevision['reason'],
+    //             'process_status'                  => $ikwRevision['process_status'],
+    //             'ikw_fix_status'                  => $ikwRevision['ikw_fix_status'],
+    //             'confirmation'                    => $ikwRevision['confirmation'],
+    //             'change_description'              => $ikwRevision['change_description'],
+    //             'submission_no'                   => $ikwRevision['submission_no'],
+    //             'submission_received_date'        => $ikwRevision['submission_received_date'] ?  date('Y-m-d', strtotime($ikwRevision['submission_received_date'])) : NULL,
+    //             'submission_mr_date'              => $ikwRevision['submission_mr_date'] ? date('Y-m-d', strtotime($ikwRevision['submission_mr_date'])) : NULL,
+    //             'backoffice_return_date'          => $ikwRevision['backoffice_return_date'] ? date('Y-m-d', strtotime($ikwRevision['backoffice_return_date'])) : NULL,
+    //             'revision_status'                 => $ikwRevision['revision_status'],
+    //             'print_date'                      => $ikwRevision['print_date'] ? date('Y-m-d', strtotime($ikwRevision['print_date'])) : NULL,
+    //             'handover_date'                   => $ikwRevision['handover_date'] ? date('Y-m-d', strtotime($ikwRevision['handover_date'])) : NULL,
+    //             'signature_mr_date'               => $ikwRevision['signature_mr_date'] ? date('Y-m-d', strtotime($ikwRevision['signature_mr_date'])) : NULL,
+    //             'distribution_date'               => $ikwRevision['distribution_date'] ? date('Y-m-d', strtotime($ikwRevision['distribution_date'])) : NULL,
+    //             'document_return_date'            => $ikwRevision['document_return_date'] ? date('Y-m-d', strtotime($ikwRevision['document_return_date'])) : NULL,
+    //             'document_disposal_date'          => $ikwRevision['document_disposal_date'] ? date('Y-m-d', strtotime($ikwRevision['document_disposal_date'])) : NULL,
+    //             'document_location_description'   => $ikwRevision['document_location_description'],
+    //             'revision_description'            => $ikwRevision['revision_description'],
+    //             'status_check'                    => $ikwRevision['status_check'],
+
+    //         ];
+
+    //         $ikw_revision =  IKWRevision::create($dataIkwRevision);
+
+    //         if ($ikwRevision['meeting_contents']) {
+    //             foreach ($ikwRevision['meeting_contents'] as $key => $ikwMeeting) {
+    //                 $data =   [
+    //                     'ikw_revision_id'    => $ikw_revision->id,
+    //                     'department_id'      => $ikw->department_id,
+    //                     'revision_no'        => $ikw_revision->revision_no,
+    //                     'ikw_code'           => $ikw->code,
+    //                     'ikw_meeting_no'     => $key,
+    //                     'meeting_date'       => $ikwMeeting['meeting_date'] ? date('Y-m-d', strtotime($ikwMeeting['meeting_date'])) : NULL,
+    //                     'meeting_duration'   => $ikwMeeting['meeting_duration'],
+    //                     'revision_status'    => $ikwMeeting['revision_status'],
+
+    //                 ];
+
+    //                 IkwMeeting::create($data);
+    //             }
+    //         }
+
+    //         if ($ikwRevision['position_calls']) {
+    //             foreach ($ikwRevision['position_calls'] as $key => $ikwPosition) {
+    //                 $data =   [
+    //                     'ikw_revision_id'      => $ikw_revision->id,
+    //                     'department_id'        => $ikw->department_id,
+    //                     'revision_no'          => $ikw_revision->revision_no,
+    //                     'ikw_code'             => $ikw->code,
+    //                     'ikw_position_no'      => $key,
+    //                     'position_call_number' => $ikwPosition['position_call_number'],
+    //                     'field_operator'       => $ikwPosition['field_operator'],
+
+    //                 ];
+
+    //                 IkwPosition::create($data);
+    //             }
+    //         }
+    //     }
+    // }
+
+    // updateIKW stays the same except it still calls updateOrStoreIkwRevision()
     public function updateIKW(Request $request, $id)
     {
         try {
@@ -160,26 +280,17 @@ class IkwServices extends BaseServices
                 'code'                        => $request->code,
                 'name'                        => $request->name,
                 'total_page'                  => $request->total_page,
-                'registration_date'           => date('Y-m-d', strtotime($request->registration_date)),
-                'print_by_back_office_date'   => date('Y-m-d', strtotime($request->print_by_back_office_date)),
-                'submit_to_department_date'   => date('Y-m-d', strtotime($request->submit_to_department_date)),
-                'ikw_return_date'             => date('Y-m-d', strtotime($request->ikw_return_date)),
+                'registration_date'           => $this->parseDateYMD($request->registration_date),
+                'print_by_back_office_date'   => $this->parseDateYMD($request->print_by_back_office_date),
+                'submit_to_department_date'   => $this->parseDateYMD($request->submit_to_department_date),
+                'ikw_return_date'             => $this->parseDateYMD($request->ikw_return_date),
                 'ikw_creation_duration'       => $request->ikw_creation_duration,
                 'status_document'             => $request->status_document,
-                'last_update_date'            => date('Y-m-d', strtotime($request->last_update_date)),
+                'last_update_date'            => $this->parseDateYMD($request->last_update_date),
                 'description'                 => $request->description,
             ]);
 
-            // Delete existing revisions and their related data
-            if ($ikw->ikwRevision) {
-                foreach ($ikw->revisions as $revision) {
-                    $revision->ikwMeeting()->delete();
-                    $revision->ikwPosition()->delete();
-                    $revision->delete();
-                }
-            }
-
-            if ($request->revisions) {
+            if ($request->has('revisions') && is_array($request->revisions) && count($request->revisions)) {
                 $this->updateOrStoreIkwRevision($request, $ikw);
             }
 
@@ -197,73 +308,105 @@ class IkwServices extends BaseServices
         }
     }
 
-    public function updateOrStoreIkwRevision(Request $request, $ikw = NULL)
+    // updateOrStoreIkwRevision — NO deletions here anymore
+    public function updateOrStoreIkwRevision(Request $request, $ikw = null)
     {
-        foreach ($request->revisions as $ikwRevision) {
-            $dataIkwRevision = [
-                'ikw_id'                          => $ikw ? $ikw->id : $request->ikw_id,
-                'ikw_code'                        => $ikw ? $ikw->code : $request->code,
-                'revision_no'                     => (int)$ikwRevision['revision_no'],
-                'reason'                          => $ikwRevision['reason'],
-                'process_status'                  => $ikwRevision['process_status'],
-                'ikw_fix_status'                  => $ikwRevision['ikw_fix_status'],
-                'confirmation'                    => $ikwRevision['confirmation'],
-                'change_description'              => $ikwRevision['change_description'],
-                'submission_no'                   => $ikwRevision['submission_no'],
-                'submission_received_date'        => $ikwRevision['submission_received_date'] ?  date('Y-m-d', strtotime($ikwRevision['submission_received_date'])) : NULL,
-                'submission_mr_date'              => $ikwRevision['submission_mr_date'] ? date('Y-m-d', strtotime($ikwRevision['submission_mr_date'])) : NULL,
-                'backoffice_return_date'          => $ikwRevision['backoffice_return_date'] ? date('Y-m-d', strtotime($ikwRevision['backoffice_return_date'])) : NULL,
-                'revision_status'                 => $ikwRevision['revision_status'],
-                'print_date'                      => $ikwRevision['print_date'] ? date('Y-m-d', strtotime($ikwRevision['print_date'])) : NULL,
-                'handover_date'                   => $ikwRevision['handover_date'] ? date('Y-m-d', strtotime($ikwRevision['handover_date'])) : NULL,
-                'signature_mr_date'               => $ikwRevision['signature_mr_date'] ? date('Y-m-d', strtotime($ikwRevision['signature_mr_date'])) : NULL,
-                'distribution_date'               => $ikwRevision['distribution_date'] ? date('Y-m-d', strtotime($ikwRevision['distribution_date'])) : NULL,
-                'document_return_date'            => $ikwRevision['document_return_date'] ? date('Y-m-d', strtotime($ikwRevision['document_return_date'])) : NULL,
-                'document_disposal_date'          => $ikwRevision['document_disposal_date'] ? date('Y-m-d', strtotime($ikwRevision['document_disposal_date'])) : NULL,
-                'document_location_description'   => $ikwRevision['document_location_description'],
-                'revision_description'            => $ikwRevision['revision_description'],
-                'status_check'                    => $ikwRevision['status_check'],
+        $incoming = collect($request->revisions ?? [])->map(fn($r) => is_array($r) ? $r : (array) $r);
+        $existing = $ikw->revisions()->get()->keyBy('id');
 
+        foreach ($incoming as $ikwRevision) {
+            $dataIkwRevision = [
+                'ikw_id'                          => $ikw ? $ikw->id : ($request->ikw_id ?? null),
+                'ikw_code'                        => $ikw ? $ikw->code : ($request->code ?? null),
+                'revision_no'                     => (int) ($ikwRevision['revision_no'] ?? null),
+                'reason'                          => $ikwRevision['reason'] ?? null,
+                'process_status'                  => $ikwRevision['process_status'] ?? null,
+                'ikw_fix_status'                  => $ikwRevision['ikw_fix_status'] ?? null,
+                'confirmation'                    => $ikwRevision['confirmation'] ?? null,
+                'change_description'              => $ikwRevision['change_description'] ?? null,
+                'submission_no'                   => $ikwRevision['submission_no'] ?? null,
+                'submission_received_date'        => !empty($ikwRevision['submission_received_date']) ? $this->parseDateYMD($ikwRevision['submission_received_date']) : null,
+                'submission_mr_date'              => !empty($ikwRevision['submission_mr_date']) ? $this->parseDateYMD($ikwRevision['submission_mr_date']) : null,
+                'backoffice_return_date'          => !empty($ikwRevision['backoffice_return_date']) ? $this->parseDateYMD($ikwRevision['backoffice_return_date']) : null,
+                'revision_status'                 => $ikwRevision['revision_status'] ?? null,
+                'print_date'                      => !empty($ikwRevision['print_date']) ? $this->parseDateYMD($ikwRevision['print_date']) : null,
+                'handover_date'                   => !empty($ikwRevision['handover_date']) ? $this->parseDateYMD($ikwRevision['handover_date']) : null,
+                'signature_mr_date'               => !empty($ikwRevision['signature_mr_date']) ? $this->parseDateYMD($ikwRevision['signature_mr_date']) : null,
+                'distribution_date'               => !empty($ikwRevision['distribution_date']) ? $this->parseDateYMD($ikwRevision['distribution_date']) : null,
+                'document_return_date'            => !empty($ikwRevision['document_return_date']) ? $this->parseDateYMD($ikwRevision['document_return_date']) : null,
+                'document_disposal_date'          => !empty($ikwRevision['document_disposal_date']) ? $this->parseDateYMD($ikwRevision['document_disposal_date']) : null,
+                'document_location_description'   => $ikwRevision['document_location_description'] ?? null,
+                'revision_description'            => $ikwRevision['revision_description'] ?? null,
+                'status_check'                    => $ikwRevision['status_check'] ?? null,
             ];
 
-            $ikw_revision =  IKWRevision::create($dataIkwRevision);
-
-            if ($ikwRevision['meeting_contents']) {
-                foreach ($ikwRevision['meeting_contents'] as $key => $ikwMeeting) {
-                    $data =   [
-                        'ikw_revision_id'    => $ikw_revision->id,
-                        'department_id'      => $ikw->department_id,
-                        'revision_no'        => $ikw_revision->revision_no,
-                        'ikw_code'           => $ikw->code,
-                        'ikw_meeting_no'     => $key,
-                        'meeting_date'       => $ikwMeeting['meeting_date'] ? date('Y-m-d', strtotime($ikwMeeting['meeting_date'])) : NULL,
-                        'meeting_duration'   => $ikwMeeting['meeting_duration'],
-                        'revision_status'    => $ikwMeeting['revision_status'],
-
-                    ];
-
-                    IkwMeeting::create($data);
-                }
+            if (!empty($ikwRevision['id']) && $existing->has($ikwRevision['id'])) {
+                $ikw_revision = $existing->get($ikwRevision['id']);
+                $ikw_revision->update($dataIkwRevision);
+            } else {
+                $ikw_revision = IKWRevision::create($dataIkwRevision);
             }
 
-            if ($ikwRevision['position_calls']) {
-                foreach ($ikwRevision['position_calls'] as $key => $ikwPosition) {
-                    $data =   [
-                        'ikw_revision_id'      => $ikw_revision->id,
-                        'department_id'        => $ikw->department_id,
-                        'revision_no'          => $ikw_revision->revision_no,
-                        'ikw_code'             => $ikw->code,
-                        'ikw_position_no'      => $key,
-                        'position_call_number' => $ikwPosition['position_call_number'],
-                        'field_operator'       => $ikwPosition['field_operator'],
+            $incomingMeetings = collect($ikwRevision['meeting_contents'] ?? [])->map(fn($m) => is_array($m) ? $m : (array) $m);
+            $this->syncIkwMeetings($ikw_revision, $ikw, $incomingMeetings);
 
-                    ];
+            $incomingPositions = collect($ikwRevision['position_calls'] ?? [])->map(fn($p) => is_array($p) ? $p : (array) $p);
+            $this->syncIkwPositions($ikw_revision, $ikw, $incomingPositions);
+        }
+    }
 
-                    IkwPosition::create($data);
-                }
+    // syncIkwMeetings — only update/create; DO NOT delete missing rows
+    protected function syncIkwMeetings($ikw_revision, $ikw, $incomingMeetings)
+    {
+        $existingMeetings = $ikw_revision->ikwMeeting()->get()->keyBy('id');
+
+        foreach ($incomingMeetings as $key => $ikwMeeting) {
+            $data = [
+                'ikw_revision_id'    => $ikw_revision->id,
+                'department_id'      => $ikw ? $ikw->department_id : null,
+                'revision_no'        => $ikw_revision->revision_no,
+                'ikw_code'           => $ikw ? $ikw->code : null,
+                'ikw_meeting_no'     => $ikwMeeting['ikw_meeting_no'] ?? $key,
+                'meeting_date'       => !empty($ikwMeeting['meeting_date']) ? $this->parseDateYMD($ikwMeeting['meeting_date']) : null,
+                'meeting_duration'   => $ikwMeeting['meeting_duration'] ?? null,
+                'revision_status'    => $ikwMeeting['revision_status'] ?? null,
+            ];
+
+            if (!empty($ikwMeeting['id']) && $existingMeetings->has($ikwMeeting['id'])) {
+                $existingMeetings->get($ikwMeeting['id'])->update($data);
+            } else {
+                IkwMeeting::create($data);
             }
         }
     }
+
+    // syncIkwPositions — only update/create; DO NOT delete missing rows
+    protected function syncIkwPositions($ikw_revision, $ikw, $incomingPositions)
+    {
+        $existingPositions = $ikw_revision->ikwPosition()->get()->keyBy('id');
+
+        foreach ($incomingPositions as $key => $ikwPosition) {
+            $data = [
+                'ikw_revision_id'      => $ikw_revision->id,
+                'department_id'        => $ikw ? $ikw->department_id : null,
+                'revision_no'          => $ikw_revision->revision_no,
+                'ikw_code'             => $ikw ? $ikw->code : null,
+                'ikw_position_no'      => $ikwPosition['ikw_position_no'] ?? $key,
+                'position_call_number' => $ikwPosition['position_call_number'] ?? null,
+                'field_operator'       => $ikwPosition['field_operator'] ?? null,
+            ];
+
+            if (!empty($ikwPosition['id']) && $existingPositions->has($ikwPosition['id'])) {
+                $existingPositions->get($ikwPosition['id'])->update($data);
+            } else {
+                IkwPosition::create($data);
+            }
+        }
+    }
+
+
+
+
 
     public function getDataIKW($id_IKW = NULL)
     {

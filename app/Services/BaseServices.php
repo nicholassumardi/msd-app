@@ -137,6 +137,17 @@ class BaseServices
         return (new DateTimeImmutable($arg))->setTimezone(new DateTimeZone("UTC"))->format('Y-m-d\TH:i:s');
     }
 
+    protected function parseDateYMD($value)
+    {
+        if (empty($value)) return null;
+
+        try {
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
     public function parseDateMdY($arg)
     {
         $date = Carbon::parse($arg)->format('M d, Y');
