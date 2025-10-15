@@ -61,8 +61,74 @@ class IkwServices extends BaseServices
             ]);
 
 
-            if ($request->revisions) {
-                $this->updateOrStoreIkwRevision($request, $ikw);
+            if ($ikw) {
+                if ($request->revisions) {
+                    foreach ($request->revision as $ikwRevision) {
+                        $dataIkwRevision = [
+                            'ikw_id'                          => $ikw ? $ikw->id : $request->ikw_id,
+                            'ikw_code'                        => $ikw ? $ikw->code : $request->code,
+                            'revision_no'                     => 0,
+                            'reason'                          => "",
+                            'process_status'                  => null,
+                            'ikw_fix_status'                  => null,
+                            'confirmation'                    => null,
+                            'change_description'              => "",
+                            'submission_no'                   => "",
+                            'submission_received_date'        => NULL,
+                            'submission_mr_date'              => NULL,
+                            'backoffice_return_date'          => NULL,
+                            'revision_status'                 => 0,
+                            'print_date'                      => NULL,
+                            'handover_date'                   => NULL,
+                            'signature_mr_date'               => NULL,
+                            'distribution_date'               => NULL,
+                            'document_return_date'            => NULL,
+                            'document_disposal_date'          => NULL,
+                            'document_location_description'   => "",
+                            'revision_description'            => "",
+                            'status_check'                    => 0,
+
+                        ];
+
+
+                        $ikw_revision = IKWRevision::create($dataIkwRevision);
+
+                        if ($ikwRevision['meeting_contents']) {
+                            foreach ($ikwRevision['meeting_contents'] as $key => $ikwMeeting) {
+                                $data =   [
+                                    'ikw_revision_id'    => $ikw_revision->id,
+                                    'department_id'      => $ikw->department_id,
+                                    'revision_no'        => $ikw_revision->revision_no,
+                                    'ikw_code'           => $ikw->code,
+                                    'ikw_meeting_no'     => $key,
+                                    'meeting_date'       => $ikwMeeting['meeting_date'] ? date('Y-m-d', strtotime($ikwMeeting['meeting_date'])) : NULL,
+                                    'meeting_duration'   => $ikwMeeting['meeting_duration'],
+                                    'revision_status'    => $ikwMeeting['revision_status'],
+
+                                ];
+
+                                IkwMeeting::create($data);
+                            }
+                        }
+
+                        if ($ikwRevision['position_calls']) {
+                            foreach ($ikwRevision['position_calls'] as $key => $ikwPosition) {
+                                $data =   [
+                                    'ikw_revision_id'      => $ikw_revision->id,
+                                    'department_id'        => $ikw->department_id,
+                                    'revision_no'          => $ikw_revision->revision_no,
+                                    'ikw_code'             => $ikw->code,
+                                    'ikw_position_no'      => $key,
+                                    'position_call_number' => $ikwPosition['position_call_number'],
+                                    'field_operator'       => $ikwPosition['field_operator'],
+
+                                ];
+
+                                IkwPosition::create($data);
+                            }
+                        }
+                    }
+                }
             }
 
 
@@ -136,7 +202,8 @@ class IkwServices extends BaseServices
         foreach ($request->revisions as $ikwRevision) {
             $dataIkwRevision = [
                 'ikw_id'                          => $ikw ? $ikw->id : $request->ikw_id,
-                'revision_no'                     => $ikwRevision['revision_no'],
+                'ikw_code'                        => $ikw ? $ikw->code : $request->code,
+                'revision_no'                     => (int)$ikwRevision['revision_no'],
                 'reason'                          => $ikwRevision['reason'],
                 'process_status'                  => $ikwRevision['process_status'],
                 'ikw_fix_status'                  => $ikwRevision['ikw_fix_status'],

@@ -343,8 +343,29 @@ class EvaluationServices extends BaseServices
                 }
             });
 
+        $departmentStats = (clone $baseQuery)
+            ->join('users', 'users.id', '=', 'trainings.trainee_id')
+            ->join('departments', 'departments.id', '=', 'users.department_id')
+            ->selectRaw('
+                departments.name as department_name,
+                COUNT(CASE WHEN assessment_result = "K" THEN 1 END) as total_competent,
+                COUNT(CASE WHEN assessment_result = "BK" THEN 1 END) as total_non_competent,
+                SUM(assessment_result IN ("BK", "K")) as total_assessment,
+                ROUND(
+                    (COUNT(CASE WHEN assessment_result = "K" THEN 1 END) / 
+                    NULLIF(SUM(assessment_result IN ("BK", "K")), 0)) * 100, 2
+                ) as percent_competent,
+                ROUND(
+                    (COUNT(CASE WHEN assessment_result = "BK" THEN 1 END) / 
+                    NULLIF(SUM(assessment_result IN ("BK", "K")), 0)) * 100, 2
+                ) as percent_non_competent
+            ')
+            ->groupBy('departments.name')
+            ->get();
+
+
         // Single query for all main metrics
-        $mainMetrics = $baseQuery->selectRaw('
+        $mainMetrics = (clone $baseQuery)->selectRaw('
             COUNT(CASE WHEN assessment_result = "K" THEN 1 END) as total_competent,
             COUNT(CASE WHEN assessment_result = "BK" THEN 1 END) as total_non_competent,
             COUNT(CASE WHEN assessment_result = "RK" THEN 1 END) as total_remedial_competent,
@@ -368,11 +389,32 @@ class EvaluationServices extends BaseServices
                     THEN 1 
                     ELSE 0 
                 END
-            ) as cancel_assessment
+            ) as cancel_assessment,
+             AVG(
+                CASE
+                    WHEN assessment_plan_date IS NOT NULL 
+                    AND assessment_result != "-" 
+                    THEN assessment_duration
+                    ELSE NULL
+                END
+            ) AS avg_assessment_duration
         ')->first();
 
+        $durationVsResult = (clone $baseQuery)
+            ->whereNotNull('assessment_plan_date')
+            ->selectRaw('
+                assessment_result,
+                COUNT(*) as total_participants,
+                AVG(assessment_duration) as avg_duration,
+                MIN(assessment_duration) as min_duration,
+                MAX(assessment_duration) as max_duration
+            ')
+            ->whereIn('assessment_result', ['BK', 'K'])
+            ->groupBy('assessment_result')
+            ->get();
+
         // Single query for monthly trends
-        $monthlyTrends = $baseQuery
+        $monthlyTrends = (clone $baseQuery)
             ->selectRaw('
                 YEAR(assessment_realisation_date) as year,
                 MONTH(assessment_realisation_date) as month,
@@ -388,10 +430,11 @@ class EvaluationServices extends BaseServices
             ->get();
 
         // Single query for training efficiency
-        $trainingEfficiency = $baseQuery->selectRaw('
+        $trainingEfficiency = (clone $baseQuery)->selectRaw('
             SUM(assessment_result = "K" AND DATEDIFF(assessment_realisation_date, training_realisation_date) <= 30) as effective_trainings,
             COUNT(*) as total_trainings
         ')->first();
+
 
         return [
             // Main metrics
@@ -401,6 +444,9 @@ class EvaluationServices extends BaseServices
             'total_in_progress_assessment' => (int)$mainMetrics->total_in_progress_assessment,
             'total_assessment'             => (int)$mainMetrics->total_assessment,
             'cancel_assessment'            => (int)$mainMetrics->cancel_assessment,
+            'avg_time_assessment'          => (int)$mainMetrics->avg_assessment_duration,
+            'department_stats'             => $departmentStats,
+            'duration_result'              => $durationVsResult,
             'monthly_trends'               => $monthlyTrends,
             'training_efficiency' => [
                 'effective'  => (int)$trainingEfficiency->effective_trainings,
@@ -408,7 +454,8 @@ class EvaluationServices extends BaseServices
                 'percentage' => $trainingEfficiency->total_trainings > 0
                     ? round(($trainingEfficiency->effective_trainings / $trainingEfficiency->total_trainings) * 100, 2)
                     : 0
-            ]
+            ],
+
         ];
     }
 
