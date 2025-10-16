@@ -42,6 +42,11 @@ class UserJobCode extends Model
         return $this->belongsTo(UserStructureMapping::class);
     }
 
+    public function UserStructureMappingRequest()
+    {
+        return $this->hasOne(UserStructureMappingRequest::class);
+    }
+
     public function parent()
     {
         return $this->belongsTo(UserJobCode::class, 'parent_id');

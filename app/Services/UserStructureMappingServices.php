@@ -7,6 +7,7 @@ use App\Models\UserJobCode;
 use App\Models\UserStructureMapping;
 use App\Models\UserStructureMappingHistories;
 use App\Models\UserStructureMappingRequest;
+use Illuminate\Foundation\Auth\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,7 @@ class UserStructureMappingServices extends BaseServices
     protected $userMappingRaw;
     protected $userJobCode;
     protected $userStructureMappingHistories;
+    protected $user;
     public function __construct()
     {
         $this->userMapping =  UserStructureMapping::with('department', 'jobCode', 'children')->with([
@@ -34,6 +36,8 @@ class UserStructureMappingServices extends BaseServices
         $this->userStructureMappingHistories = UserStructureMappingHistories::with('userStructureMapping');
 
         $this->userMappingRaw = UserStructureMapping::get();
+
+        $this->user = User::query();
     }
 
     public function importStructureExcel(Request $request, $cacheKey)
@@ -300,7 +304,6 @@ class UserStructureMappingServices extends BaseServices
                 }
             }
 
-
             $this->setLog('info', 'updated data user mapping ' . json_encode($request->all()));
             DB::commit();
             $this->setLog('info', 'End');
@@ -316,49 +319,51 @@ class UserStructureMappingServices extends BaseServices
         }
     }
 
-    public function updateUserMappingRequest(Request $request, $id)
+    public function updateUserMappingRequest(Request $request, $id_user_job_code)
     {
         try {
-            $this->setLog('info', 'Request store data user mapping ' . json_encode($request->all()));
+            $this->setLog('info', 'Request update data user mapping ' . json_encode($request->all()));
             $this->setLog('info', 'Start');
             DB::beginTransaction();
 
-            $userMappingRequest =   UserStructureMappingRequest::find($id);
+
+            $user = $this->user->firstWhere('uuid', $request->uuid);
+            // check if user already have/ or inside another structure
+            // need to work on this
+            $exist = UserJobCode::where('user_id', $user->id)->update([
+                'status'   => 0,
+            ]);
+
+            $mapping = $this->userMapping->where('id', $request->user_structure_mapping_id)->first();
+            $parentId = 0;
+
+            if ($mapping && $mapping->parent && $mapping->parent->userJobCode) {
+                $match = $mapping->parent->userJobCode->firstWhere('group', 'LIKE', "%{$request->group}%");
+                $parentId = $match ? $match->id : 0;
+            }
+
+            $userJobCode =  UserJobCode::where('id', $id_user_job_code)->update([
+                'user_id'                    => $user->id ?? null,
+                'parent_id'                  => $parentId ?? 0,
+                'job_code_id'                => $this->userMapping->where('id', $request->user_structure_mapping_id)->first() ? $this->userMapping->where('id', $request->user_structure_mapping_id)->first()->job_code_id : null,
+                'user_structure_mapping_id'  => (int) $request->user_structure_mapping_id ?? null,
+                'id_structure'               => $request->id_structure ?? null,
+                'id_staff'                   => $request->id_staff ?? null,
+                'position_code_structure'    => $this->userMapping->where('id', $request->user_structure_mapping_id)->first() ? $this->userMapping->where('id', $request->user_structure_mapping_id)->first()->position_code_structure : null,
+                'group'                      => $request->group ?? null,
+                'assign_date'                => $request->assign_date ? date('Y-m-d', strtotime($request->assign_date)) : null,
+                'employee_type'              => $mapping->structure_type == "Staff" ? "Staff" : "Non Staff",
+                'status'                     => 1,
+            ]);
 
 
-            if ($userMappingRequest) {
-
-                $mapping = $this->userMapping->where('id', $request->user_structure_mapping_id)->first();
-
-                $parentId = 0;
-
-                if ($mapping && $mapping->parent && $mapping->parent->userJobCode) {
-                    $match = $mapping->parent->userJobCode->firstWhere('group', 'LIKE', "%{$request->group}%");
-                    $parentId = $match ? $match->id : 0;
-                }
-
-                $userJobCode =  UserJobCode::where('id', $request->user_job_code_id)->update([
-                    'user_id'                    => $request->user_id,
-                    'parent_id'                  => $parentId ?? 0,
-                    'job_code_id'                => $this->userMapping->where('id', $request->user_structure_mapping_id)->first() ? $this->userMapping->where('id', $request->user_structure_mapping_id)->first()->job_code_id : null,
-                    'user_structure_mapping_id'  => $request->user_structure_mapping_id ?? null,
-                    'id_structure'               => $request->id_structure,
-                    'id_staff'                   => null,
-                    'position_code_structure'    => $this->userMapping->where('id', $request->user_structure_mapping_id)->first() ? $this->userMapping->where('id', $request->user_structure_mapping_id)->first()->position_code_structure : null,
-                    'group'                      => $request->group ?? null,
-                    'assign_date'                => date('Y-m-d', strtotime($request->assign_date)),
-                    'status'                     => 1,
-                ]);
-
-                if ($userJobCode) {
-                    $userMappingRequest->update([
-                        'user_job_code_id' => $userJobCode->id,
+            if ($userJobCode) {
+                UserStructureMappingRequest::where('user_job_code_id', $id_user_job_code)
+                    ->update([
+                        'user_job_code_id' => $id_user_job_code,
                         'group'            => $request->group,
-                        'description'      => $request->description,
-                        'request_date'     => $request->request_date,
-                        'status_slot'      => $request->status_slot,
+                        'status_slot'      => 1,
                     ]);
-                }
             } else {
                 DB::rollBack();
                 return false;
@@ -372,10 +377,10 @@ class UserStructureMappingServices extends BaseServices
             return true;
         } catch (\Exception $exception) {
             DB::rollBack();
-            $this->setLog('error', 'Error store data user mapping = ' . $exception->getMessage());
-            $this->setLog('error', 'Error store data user mapping = ' . $exception->getLine());
-            $this->setLog('error', 'Error store data user mapping = ' . $exception->getFile());
-            $this->setLog('error', 'Error store data user mapping = ' . $exception->getTraceAsString());
+            $this->setLog('error', 'Error update data user mapping = ' . $exception->getMessage());
+            $this->setLog('error', 'Error update data user mapping = ' . $exception->getLine());
+            $this->setLog('error', 'Error update data user mapping = ' . $exception->getFile());
+            $this->setLog('error', 'Error update data user mapping = ' . $exception->getTraceAsString());
             return null;
         }
     }
@@ -422,13 +427,24 @@ class UserStructureMappingServices extends BaseServices
     public function getDataUserMapping($id_user_mapping = NULL)
     {
         if (!empty($id_user_mapping)) {
-            $userMapping = $this->userMapping->withCount(['userJobCode as totalAssignedEmployee' => function ($query) {
-                $query->where('status', 1);
-            }])->firstWhere('id', $id_user_mapping);
-            $userMapping['employee_number'] = "";
-            $userMapping['superior'] = $userMapping->parent->name ?? "None";
-            $userMapping['company_name'] = $userMapping->department->company->name ?? "None";
-            $userMapping['hasChildren'] = $userMapping->children()->exists();
+            $userMapping = $this->userMapping
+                ->withCount([
+                    'userJobCode as totalAssignedEmployee' => function ($query) {
+                        $query->where('status', 1);
+                    }
+                ])
+                ->findOrFail($id_user_mapping);
+
+            $userMapping->userJobCode->transform(function ($item) {
+                $item->uuid = $item->user->uuid ?? null;
+                $item->employee_name = $item->user->name ?? null;
+                return $item;
+            });
+
+            $userMapping->employee_number = '';
+            $userMapping->superior = $userMapping->parent->name ?? 'None';
+            $userMapping->company_name = $userMapping->department->company->name ?? 'None';
+            $userMapping->hasChildren = $userMapping->children()->exists();
         } else {
             $userMapping = $this->userMapping;
         }
