@@ -60,7 +60,7 @@ class UserStructureMappingServices extends BaseServices
                 'department_id'           => $request->department_id,
                 'position_code_structure' => $request->position_code_structure ?? null,
                 'job_code_id'             => $request->job_code_id ?? null,
-                'parent_id'               => $request->parent_id ?? null,
+                'parent_id'               => $request->parent_id ?? 0,
                 'name'                    => $request->name,
                 'quota'                   => $request->quota,
                 'structure_type'          => $request->structure_type,
@@ -110,11 +110,11 @@ class UserStructureMappingServices extends BaseServices
             DB::beginTransaction();
 
             // create empty userjobcode with no user that will be filled later when user is assigned
-            $userJobCode =  UserJobCode::insert([
+            $userJobCode =  UserJobCode::create([
                 'user_id'                    => null,
-                'parent_id'                  => null,
+                'parent_id'                  => 0,
                 'job_code_id'                => $this->userMapping->where('id', $request->user_structure_mapping_id)->first() ? $this->userMapping->where('id', $request->user_structure_mapping_id)->first()->job_code_id : null,
-                'user_structure_mapping_id'  => $request->user_structure_mapping_id ?? null,
+                'user_structure_mapping_id'  => (int) $request->user_structure_mapping_id ?? null,
                 'id_structure'               => $request->id_structure,
                 'id_staff'                   => null,
                 'position_code_structure'    => $this->userMapping->where('id', $request->user_structure_mapping_id)->first() ? $this->userMapping->where('id', $request->user_structure_mapping_id)->first()->position_code_structure : null,
@@ -162,37 +162,66 @@ class UserStructureMappingServices extends BaseServices
 
             if ($userMapping) {
 
-                $oldQuota = $userMapping->quota;
-                $newQuota = $request->quota;
-                $logMessage = '';
+                $logMessages = [];
 
-                if ($newQuota > $oldQuota) {
-                    $logMessage = "Quota has been added from $oldQuota to $newQuota";
-                } elseif ($newQuota < $oldQuota) {
-                    $logMessage = "Quota has been decreased from $oldQuota to $newQuota";
+                $fieldsToCheck = [
+                    'department_id'           => 'Department',
+                    'position_code_structure' => 'Position Code Structure',
+                    'job_code_id'             => 'Job Code',
+                    'parent_id'               => 'Parent',
+                    'name'                    => 'Name',
+                    'structure_type'          => 'Structure Type',
+                    'quota'                   => 'Quota',
+                ];
+
+                $hasChanges = false;
+
+                foreach ($fieldsToCheck as $field => $label) {
+                    $oldValue = $userMapping->$field;
+                    $newValue = $request->$field ?? ($field === 'parent_id' ? 0 : null);
+
+                    if ($newValue != $oldValue) {
+                        $hasChanges = true;
+
+                        if ($field === 'quota') {
+                            if ($newValue > $oldValue) {
+                                $logMessages[] = "$label has been increased from $oldValue to $newValue";
+                            } else {
+                                $logMessages[] = "$label has been decreased from $oldValue to $newValue";
+                            }
+                        } else {
+                            $logMessages[] = "$label has been changed from '$oldValue' to '$newValue'";
+                        }
+                    }
                 }
 
                 $userMapping->update([
-                    'department_id'   => $request->department_id,
-                    'job_code_id'     => $request->job_code_id ?? null,
-                    'parent_id'       => $request->parent_id ?? null,
-                    'name'            => $request->name,
-                    'quota'           => $request->quota,
-                    'structure_type'  => $request->structure_type,
+                    'department_id'            => $request->department_id,
+                    'position_code_structure'  => $request->position_code_structure,
+                    'job_code_id'              => $request->job_code_id ?? null,
+                    'parent_id'                => $request->parent_id ?? 0,
+                    'name'                     => $request->name,
+                    'quota'                    => $request->quota,
+                    'structure_type'           => $request->structure_type,
                 ]);
 
-                if ($newQuota != $oldQuota) {
+                $logMessage = implode('; ', $logMessages);
+
+
+                $now = Carbon::now();
+
+                if ($hasChanges) {
                     UserStructureMappingHistories::create([
                         'user_structure_mapping_id' => $userMapping->id,
                         'revision_no'               =>  $this->userStructureMappingHistories->where('user_structure_mapping_id', $userMapping->id)->max('revision_no') + 1,
-                        'valid_date'                => $request->valid_date ? date('Y-m-d', strtotime($request->valid_date)) : null,
-                        'updated_date'              => $request->updated_date ? date('Y-m-d', strtotime($request->updated_date)) : null,
-                        'authorized_date'           => $request->authorized_date ? date('Y-m-d', strtotime($request->authorized_date)) : null,
-                        'approval_date'             => $request->approval_date ? date('Y-m-d', strtotime($request->approval_date)) : null,
-                        'acknowledged_date'         => $request->acknowledged_date ?  date('Y-m-d', strtotime($request->acknowledged_date)) : null,
-                        'created_date'              => $request->created_date ? date('Y-m-d', strtotime($request->created_date)) : null,
-                        'distribution_date'         => $request->distribution_date ? date('Y-m-d', strtotime($request->distribution_date)) : null,
-                        'withdrawal_date'           => $request->withdrawal_date ? date('Y-m-d', strtotime($request->withdrawal_date)) : null,
+                        'valid_date'                => $request->valid_date ? date('Y-m-d', strtotime($request->valid_date)) : $now,
+                        'updated_date'              => $request->updated_date ? date('Y-m-d', strtotime($request->updated_date)) : $now,
+                        'authorized_date'           => $request->authorized_date ? date('Y-m-d', strtotime($request->authorized_date)) : $now,
+                        'approval_date'             => $request->approval_date ? date('Y-m-d', strtotime($request->approval_date)) : $now,
+                        'acknowledged_date'         => $request->acknowledged_date ?  date('Y-m-d', strtotime($request->acknowledged_date)) : $now,
+                        'created_date'              => $request->created_date ? date('Y-m-d', strtotime($request->created_date)) : $now,
+                        'distribution_date'         => $request->distribution_date ? date('Y-m-d', strtotime($request->distribution_date)) : $now,
+                        'withdrawal_date'           => $request->withdrawal_date ? date('Y-m-d', strtotime($request->withdrawal_date)) : $now,
                         'logs'                      => $logMessage,
                     ]);
                 }
@@ -296,14 +325,40 @@ class UserStructureMappingServices extends BaseServices
 
             $userMappingRequest =   UserStructureMappingRequest::find($id);
 
+
             if ($userMappingRequest) {
-                $userMappingRequest->update([
-                    'user_job_code_id' => $request->user_job_code_id,
-                    'group'            => $request->group,
-                    'description'      => $request->description,
-                    'request_date'     => $request->request_date,
-                    'status_slot'      => $request->status_slot,
+
+                $mapping = $this->userMapping->where('id', $request->user_structure_mapping_id)->first();
+
+                $parentId = 0;
+
+                if ($mapping && $mapping->parent && $mapping->parent->userJobCode) {
+                    $match = $mapping->parent->userJobCode->firstWhere('group', 'LIKE', "%{$request->group}%");
+                    $parentId = $match ? $match->id : 0;
+                }
+
+                $userJobCode =  UserJobCode::where('id', $request->user_job_code_id)->update([
+                    'user_id'                    => $request->user_id,
+                    'parent_id'                  => $parentId ?? 0,
+                    'job_code_id'                => $this->userMapping->where('id', $request->user_structure_mapping_id)->first() ? $this->userMapping->where('id', $request->user_structure_mapping_id)->first()->job_code_id : null,
+                    'user_structure_mapping_id'  => $request->user_structure_mapping_id ?? null,
+                    'id_structure'               => $request->id_structure,
+                    'id_staff'                   => null,
+                    'position_code_structure'    => $this->userMapping->where('id', $request->user_structure_mapping_id)->first() ? $this->userMapping->where('id', $request->user_structure_mapping_id)->first()->position_code_structure : null,
+                    'group'                      => $request->group ?? null,
+                    'assign_date'                => date('Y-m-d', strtotime($request->assign_date)),
+                    'status'                     => 1,
                 ]);
+
+                if ($userJobCode) {
+                    $userMappingRequest->update([
+                        'user_job_code_id' => $userJobCode->id,
+                        'group'            => $request->group,
+                        'description'      => $request->description,
+                        'request_date'     => $request->request_date,
+                        'status_slot'      => $request->status_slot,
+                    ]);
+                }
             } else {
                 DB::rollBack();
                 return false;
@@ -390,7 +445,7 @@ class UserStructureMappingServices extends BaseServices
         if ($request->id_department) {
             $query = $query->where('department_id', $request->id_department);
         }
-        // Base query with relationship count
+
         $query = $query
             ->withCount(['userJobCode as totalAssignedEmployee' => function ($query) {
                 $query->where('status', 1);
@@ -399,12 +454,11 @@ class UserStructureMappingServices extends BaseServices
                     $query->where('name', 'LIKE', "%$request->globalFilter%");
                 }
             })
-            ->orderBy('id'); // Crucial for consistent pagination
+            ->orderBy('id');
 
-        // Get total count before pagination
         $totalCount = $query->count();
 
-        // Apply pagination at database level
+
         $userMapping = $query
             ->skip(($currentPage - 1) * $perPage)
             ->take($perPage)

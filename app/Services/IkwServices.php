@@ -404,10 +404,6 @@ class IkwServices extends BaseServices
         }
     }
 
-
-
-
-
     public function getDataIKW($id_IKW = NULL)
     {
         if (!empty($id_IKW)) {

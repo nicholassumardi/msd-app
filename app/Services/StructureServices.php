@@ -51,7 +51,7 @@ class StructureServices extends BaseServices
 
                 if ($mapping && $mapping->parent && $mapping->parent->userJobCode) {
                     $match = $mapping->parent->userJobCode->firstWhere('group', 'LIKE', "%{$request->group[0]}%");
-                    $parentId = $match ? $mapping->id : 0;
+                    $parentId = $match ? $match->id : 0;
                 }
 
                 if ($request->employeeStructures) {
@@ -98,7 +98,6 @@ class StructureServices extends BaseServices
             return null;
         }
     }
-
 
     public function requestNewEmployee(Request $request)
     {
