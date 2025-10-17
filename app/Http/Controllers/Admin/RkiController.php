@@ -40,11 +40,11 @@ class RkiController extends Controller
         return response()->json($response);
     }
 
-    public function store(RkiRequest $request)
+    public function store(Request $request)
     {
-        $validatedRequest = $request->validated();
-        $newRequest = new Request($validatedRequest);
-        $data = $this->service->storeRKI($newRequest);
+        // $validatedRequest = $request->validated();
+        // $newRequest = new Request($validatedRequest);
+        $data = $this->service->storeRKI($request);
 
         if ($data) {
             return response()->json([

@@ -6,6 +6,7 @@ use App\Jobs\ImportUserJobCodeJob;
 use App\Models\User;
 use App\Models\UserJobCode;
 use App\Models\UserStructureMapping;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -301,23 +302,25 @@ class StructureServices extends BaseServices
     public function updateStructureStatus($id_user_job_code)
     {
         try {
-            $this->setLog('info', 'Request update data employee number ');
+            $this->setLog('info', 'Request update data structure');
             $this->setLog('info', 'Start');
 
             DB::beginTransaction();
 
             $userJobCode = UserJobCode::find($id_user_job_code);
-
+            $now = Carbon::now()->format('Y-m-d');
             if ($userJobCode) {
                 $userJobCode->update([
-                    'status' => 0
+                    'status'        => 0,
+                    'reassign_date' => $now
+
                 ]);
             } else {
                 DB::rollBack();
                 return false;
             }
 
-            $this->setLog('info', 'updated data employee number ');
+            $this->setLog('info', 'updated data structure');
             DB::commit();
             $this->setLog('info', 'End');
 

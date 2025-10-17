@@ -46,7 +46,7 @@ class RkiServices extends BaseServices
             foreach ($request->ikws as $ikw_id) {
                 RKI::create([
                     'user_structure_mapping_id'   => $request->user_structure_mapping_id,
-                    'ikw_id'                      => $ikw_id,
+                    'ikw_id'                      => (int) $ikw_id,
                     'training_time'               => (int) $request->training_time,
                 ]);
             }

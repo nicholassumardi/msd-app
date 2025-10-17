@@ -177,6 +177,10 @@ class User extends Authenticatable
         $rkiResults = RKI::where('user_structure_mapping_id', $jobCodeRecord->user_structure_mapping_id)
             ->get();
 
+        if (!$rkiResults) {
+            return [];
+        }
+
         $resultArray = [];
         foreach ($rkiResults as $rki) {
             if (!$rki->ikw) continue;

@@ -62,8 +62,8 @@ class IkwServices extends BaseServices
 
 
             if ($ikw) {
-                if ($request->revisions) {
-                    foreach ($request->revision as $ikwRevision) {
+                if (!empty($request->revisions) && is_array($request->revisions)) {
+                    foreach ($request->revisions as $ikwRevision) {
                         $dataIkwRevision = [
                             'ikw_id'                          => $ikw ? $ikw->id : $request->ikw_id,
                             'ikw_code'                        => $ikw ? $ikw->code : $request->code,
@@ -312,7 +312,7 @@ class IkwServices extends BaseServices
     public function updateOrStoreIkwRevision(Request $request, $ikw = null)
     {
         $incoming = collect($request->revisions ?? [])->map(fn($r) => is_array($r) ? $r : (array) $r);
-        $existing = $ikw->revisions()->get()->keyBy('id');
+        $existing = $ikw->ikwRevision()->get()->keyBy('id');
 
         foreach ($incoming as $ikwRevision) {
             $dataIkwRevision = [
@@ -337,7 +337,7 @@ class IkwServices extends BaseServices
                 'document_disposal_date'          => !empty($ikwRevision['document_disposal_date']) ? $this->parseDateYMD($ikwRevision['document_disposal_date']) : null,
                 'document_location_description'   => $ikwRevision['document_location_description'] ?? null,
                 'revision_description'            => $ikwRevision['revision_description'] ?? null,
-                'status_check'                    => $ikwRevision['status_check'] ?? null,
+                'status_check'                    => (int)$ikwRevision['status_check'] ?? null,
             ];
 
             if (!empty($ikwRevision['id']) && $existing->has($ikwRevision['id'])) {

@@ -70,7 +70,7 @@ class UserStructureMappingServices extends BaseServices
                 'structure_type'          => $request->structure_type,
             ]);
 
-            $now = Carbon::now();
+            $now = Carbon::now()->format('Y-m-d');
 
             if ($usm) {
                 UserStructureMappingHistories::create([
@@ -212,7 +212,7 @@ class UserStructureMappingServices extends BaseServices
                 $logMessage = implode('; ', $logMessages);
 
 
-                $now = Carbon::now();
+                $now = Carbon::now()->format('Y-m-d');
 
                 if ($hasChanges) {
                     UserStructureMappingHistories::create([
@@ -326,12 +326,13 @@ class UserStructureMappingServices extends BaseServices
             $this->setLog('info', 'Start');
             DB::beginTransaction();
 
-
+            $now = Carbon::now()->format('Y-m-d');
             $user = $this->user->firstWhere('uuid', $request->uuid);
             // check if user already have/ or inside another structure
             // need to work on this
             $exist = UserJobCode::where('user_id', $user->id)->update([
-                'status'   => 0,
+                'status'        => 0,
+                'reassign_date' => $now,
             ]);
 
             $mapping = $this->userMapping->where('id', $request->user_structure_mapping_id)->first();

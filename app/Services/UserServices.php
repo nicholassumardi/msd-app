@@ -420,7 +420,7 @@ class UserServices extends BaseServices
                     'status_twiji'                     => $data->status_twiji,
                     'schedule_type'                    => $data->schedule_type,
                     'user_certificates'                => $data->certificates,
-                    'join_date'                        => $data->userServiceYear->join_date,
+                    'join_date'                        => $data->userServiceYear->join_date ?? null,
                     'employeeStructures'               => $data->userJobCode()->with('userStructureMapping')->get() ?? null,
                     'totalMemberStructure'             => $data->getTotalMemberStructure(),
                     'totalSubordinates'                => $data->getTotalSubordinate(),
@@ -559,12 +559,12 @@ class UserServices extends BaseServices
     public function getDataUserHistoryPagination(Request $request)
     {
         $start = (int) $request->start ? (int)$request->start : 0;
-        $size = (int)$request->size ?  (int)$request->size : 5;
+        $size = (int)$request->size ?  (int)$request->size : 10;
         $filters = json_decode($request->filters, true) ?? [];
         $sorting = json_decode($request->sorting, true) ?? [];
         $globalFilter = $request->globalFilter ?? '';
-        $startDate = date('Y-m-d', strtotime($request->start_date));
-        $endDate   = date('Y-m-d', strtotime($request->end_date));
+        $startDate = $request->start_date ? date('Y-m-d', strtotime($request->start_date)) : null;
+        $endDate   = $request->end_date ? date('Y-m-d', strtotime($request->end_date)) : null;
 
         $user = $this->userHistory->where(function ($query) use ($request, $filters, $globalFilter, $startDate,  $endDate) {
             if ($request->id_department) {
@@ -619,7 +619,6 @@ class UserServices extends BaseServices
             ->take($size)
             ->get();
 
-
         $user = $user->map(function ($data) {
             return [
                 'uuid'                             => $data->uuid,
@@ -637,27 +636,27 @@ class UserServices extends BaseServices
                 'unicode'                          => $data->name . " - " . $data->identity_card,
                 'gender'                           => strtoupper($data->gender),
                 'religion'                         => strtoupper($data->religion),
-                'email'                            => $data->email,
-                'photo'                            => $data->photo,
-                'education'                        => $data->education,
+                'email'                            => $data->email ?? null,
+                'photo'                            => $data->photo ?? null,
+                'education'                        => $data->education ?? null,
                 'status'                           => $data->status == 1 ? "Aktif" : "Non Aktif",
                 'marital_status'                   => $data->marital_status,
-                'address'                          => $data->address,
-                'phone'                            => $data->phone,
-                'employee_type'                    => $data->employee_type,
-                'section'                          => $data->section,
-                'position_code'                    => $data->position_code,
-                'status_twiji'                     => $data->status_twiji,
-                'schedule_type'                    => $data->schedule_type,
-                'user_certificates'                => $data->certificates,
-                'join_date'                        => $data->join_date,
-                'leave_date'                       => $data->leave_date,
+                'address'                          => $data->address ?? "",
+                'phone'                            => $data->phone ?? "",
+                'employee_type'                    => $data->employee_type ?? "",
+                'section'                          => $data->section ?? "",
+                'position_code'                    => $data->position_code ?? "",
+                'status_twiji'                     => $data->status_twiji ?? "",
+                'schedule_type'                    => $data->schedule_type ?? "",
+                'user_certificates'                => $data->certificates ?? "",
+                'join_date'                        => $data->join_date ?? null,
+                'leave_date'                       => $data->leave_date ?? null,
                 'age'                              => Carbon::parse($data->date_of_birth)->age ?? null,
                 'year'                             => Carbon::parse($data->date_of_birth)->year ?? null,
-                'service_year'                     => $this->getServiceYearFull($data->userServiceYear->join_date) ?? null,
-                'age_classification'               => $this->ageClassification($data->date_of_birth) ?? null,
-                'general_classification'           => $this->generalClassification($data->date_of_birth) ?? null,
-                'working_duration_classification'  => $this->workingDurationClassification($data->userServiceYear->join_date) ?? null,
+                'service_year'                     => $data->join_date ? $this->getServiceYearFull($data->join_date) : null,
+                'age_classification'               => $data->date_of_birth ? $this->ageClassification($data->date_of_birth) : null,
+                'general_classification'           => $data->date_of_birth ? $this->generalClassification($data->date_of_birth) : null,
+                'working_duration_classification'  => $data->join_date ? $this->workingDurationClassification($data->join_date) : null,
             ];
         });
 

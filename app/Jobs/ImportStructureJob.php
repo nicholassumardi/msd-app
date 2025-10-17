@@ -294,8 +294,7 @@ class ImportStructureJob implements ShouldQueue
             })
             ->get(['id']);
 
-
-        $now = Carbon::now();
+        $now = Carbon::now()->format('Y-m-d');
 
         // TO RECORD HISTORIES OF STRUCTURE REVISION
         $histories = $usmRecords->map(function ($usm) use ($now) {
@@ -490,6 +489,8 @@ class ImportStructureJob implements ShouldQueue
             'SUB POSISI',
             'ID STAFF',
             'NIP',
+            'NIP BARU',
+            'No KTP',
             'NAMA',
             'TGL NON AKTIF',
             'LEVEL'
