@@ -194,8 +194,9 @@ class ImportStructureJob implements ShouldQueue
 
     private function saveDataUserJobCode($dataUserJobCode, $dataUserNotFound, $row)
     {
-        $userEmployeeNumber = $this->findDataByEmployeeNumber($row->getCells()[17]->getValue());
-        $user = $this->findDataUser($row->getCells()[18]->getValue());
+        $userEmployeeNumber = $this->findDataByEmployeeNumber($row->getCells()[18]->getValue());
+        $identity_card = $this->findDataByEmployeeNIK($row->getCells()[19]->getValue());
+        $user = $this->findDataUser($row->getCells()[20]->getValue());
         $jobCode = $this->jobCode->firstWhere('full_code', $row->getCells()[10]->getValue()) ? $this->jobCode->firstWhere('full_code', $row->getCells()[10]->getValue())->id : NULL;
         $jobCodeParent =  $this->jobCode->firstWhere('full_code', $row->getCells()[3]->getValue()) ? $this->jobCode->firstWhere('full_code', $row->getCells()[3]->getValue())->id : NULL;
         $parentName = $jobCodeParent . "-" . $row->getCells()[4]->getValue() . "-" . $row->getCells()[5]->getValue();
@@ -208,9 +209,23 @@ class ImportStructureJob implements ShouldQueue
             }
         }
 
-        if (!$userEmployeeNumber || !$user) {
-            $dataUserNotFound[] = $row->toArray();
+        if (!$identity_card) {
+            if (!$userEmployeeNumber) {
+                $dataUserNotFound[] = $row->toArray();
+            } elseif (!$user) {
+                $dataUserNotFound[] = $row->toArray();
+            }
+        } else {
+            // Example: track duplicates by a unique key
+            $rowKey = $row->getCells()[19]->getValue() . '|' . $row->getCells()[18]->getValue();
+            static $seenRows = [];
+            if (isset($seenRows[$rowKey])) {
+                $dataUserNotFound[] = $row->toArray(); // add duplicate to not found
+            } else {
+                $seenRows[$rowKey] = true;
+            }
         }
+
 
         if ($userEmployeeNumber || $user) {
             $dataUserJobCode[] = [
@@ -441,14 +456,21 @@ class ImportStructureJob implements ShouldQueue
 
     private function findDataUser($search)
     {
-        return User::where(DB::raw('LOWER(name)'), '=', strtolower($search))
-            ->first();
+        return User::whereFuzzy('name', $search)->first();
+        // return User::where(DB::raw('LOWER(name)'), '=', strtolower($search))
+        //     ->first();
     }
 
     public function findDataByEmployeeNumber($search)
     {
         return UserEmployeeNumber::where('employee_number', $search)
             ->where('status', 1)
+            ->first();
+    }
+
+    public function findDataByEmployeeNIK($search)
+    {
+        return User::where('identity_card', $search)
             ->first();
     }
 

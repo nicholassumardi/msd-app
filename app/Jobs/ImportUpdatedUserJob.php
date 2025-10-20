@@ -98,6 +98,10 @@ class ImportUpdatedUserJob implements ShouldQueue
 
                             $userId = $this->user->firstWhere('identity_card', $row->getCells()[0]->getValue()) ? $this->user->firstWhere('identity_card', $row->getCells()[0]->getValue())->id : null;
 
+                            if (!$userId) {
+                                $userId = $this->user->whereFuzzy('name', $row->getCells()[1]->getValue())->first() ? $this->user->whereFuzzy('name', $row->getCells()[1]->getValue())->first()->id : null;
+                            }
+
                             if (!in_array($cellValue, $excludedFields)) {
                                 $data = [
                                     'id'        => $userId,
@@ -165,8 +169,14 @@ class ImportUpdatedUserJob implements ShouldQueue
 
     private function prepareUserData($row)
     {
+        $userId = $this->user->firstWhere('identity_card', $row->getCells()[6]->getValue())?->id ?? null;
+        if (!$userId) {
+            $departmentId = $this->department->firstWhere('code', $row->getCells()[4]->getValue())?->id ?? null;
+            $companyId = $this->company->firstWhere('code', $row->getCells()[3]->getValue())?->id ?? null;
+            $userId = $this->user->where('department_id', $departmentId)->where('company_id', $companyId)->whereFuzzy('name', $row->getCells()[2]->getValue())?->id ?? null;
+        }
         return [
-            'id'              => $this->user->firstWhere('identity_card', $row->getCells()[6]->getValue())?->id,
+            'id'              => $userId,
             'name'            => $row->getCells()[2]->getValue(),
             'company_id'      => $this->company->firstWhere('code', $row->getCells()[3]->getValue())?->id ?? null,
             'department_id'   => $this->department->firstWhere('code', $row->getCells()[4]->getValue())?->id ?? null,

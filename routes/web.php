@@ -23,14 +23,14 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [UserController::class, 'index']);
-Route::post('store', [UserController::class, 'storeTest'])->name('store');
+// Route::post('store', [UserController::class, 'storeTest'])->name('store');
 // Route::post('store', [UserController::class, 'importUpdatedUserExcel'])->name('store.ikw');
 // Route::post('store', [UserController::class, 'importUserExcel'])->name('store.ikw');
 // Route::post('store', [JobFamilyController::class, 'importJobFamilyExcel'])->name('store.jobcode');
 // Route::post('store', [DepartmentController::class, 'importDepartmentExcel'])->name('store.dept');
 // Route::post('store', [TrainingController::class, 'importTrainingExcel'])->name('store.training');
-// Route::post('store', [StructureController::class, 'importStructureExcel'])->name('store.ikw');
-Route::post('store', [JobTaskDescController::class, 'importJobTaskDescExcel'])->name('store.ikw');
+Route::post('store', [StructureController::class, 'importStructureExcel'])->name('store.ikw');
+// Route::post('store', [JobTaskDescController::class, 'importJobTaskDescExcel'])->name('store.ikw');
 // Route::post('store', [IkwController::class, 'importIkwExcel'])->name('store.ikw');
 // Route::post('store', [RkiController::class, 'importRkiExcel'])->name('store.ikw');
 // Route::post('store', [TrainingController::class, 'importTrainingExcel'])->name('store.ikw');

@@ -217,7 +217,7 @@ class UserServices extends BaseServices
                     'schedule_type'   => $user->schedule_type,
                     'employee_number' => $user->userEmployeeNumber()
                         ->where('status', 1)
-                        ->latest('id') // or 'created_at'
+                        ->latest('id')
                         ->first()
                         ->employee_number ?? "",
                     'join_date' => optional(

@@ -56,64 +56,13 @@ class ImportUserJob implements ShouldQueue
             $filePathExportData = '';
 
             if ($this->user->isEmpty()) {
-                $dataArrayParent = [];
-                // $dataArrayEmployeeNumber = [];
-                // $dataArrayEmployeeServiceYear = [];
                 $currentChunk = [];
                 $processedUsers = [];
                 $dataChunk = 200;
                 foreach ($reader->getSheetIterator() as $i =>  $sheet) {
-
                     if ($i == 1) {
                         foreach ($sheet->getRowIterator() as $key => $row) {
                             if ($key != 1) {
-                                // $data = [
-                                //     'uuid'              => Str::uuid(),
-                                //     'name'              => $row->getCells()[2]->getValue(),
-                                //     'company_id'        => $this->company->firstWhere('code',  $row->getCells()[3]->getValue()) ? $this->company->firstWhere('code',  $row->getCells()[3]->getValue())->id : null,
-                                //     'department_id'     => $this->department->firstWhere('code',  $row->getCells()[4]->getValue()) ? $this->department->firstWhere('code',  $row->getCells()[4]->getValue())->id : null,
-                                //     'date_of_birth'     => CarbonImmutable::instance($row->getCells()[5]->getValue())->format('Y-m-d'),
-                                //     'identity_card'     => $row->getCells()[6]->getValue(),
-                                //     'gender'            => $row->getCells()[11]->getValue() == 'L' ? 'male' : 'female',
-                                //     'religion'          => $row->getCells()[12]->getValue(),
-                                //     'education'         => $row->getCells()[13]->getValue(),
-                                //     'status'            => $row->getCells()[8]->getValue() == "AKTIF" ? 1 : 0,
-                                //     'marital_status'    => $row->getCells()[14]->getValue(),
-                                //     'address'           => $row->getCells()[15]->getValue(),
-                                //     'phone'             => $row->getCells()[16]->getValue(),
-                                //     'employee_type'     => $row->getCells()[17]->getValue(),
-                                //     'section'           => $row->getCells()[18]->getValue(),
-                                //     'position_code'     => $row->getCells()[19]->getValue(),
-                                //     'schedule_type'     => $row->getCells()[22]->getValue(),
-                                //     'status_twiji'      => $row->getCells()[23]->getValue(),
-                                //     'password'          => 'asdqweqwe123',
-                                //     'status_account'    => 1,
-                                // ];
-
-                                // $dataEmployeeNumber = [
-                                //     'user_id'          => NULL,
-                                //     'employee_number'  => $row->getCells()[1]->getValue() ? $row->getCells()[1]->getValue() : "",
-                                //     'registry_date'    => Carbon::today()->format('Y-m-d'),
-                                //     'status'           => 1,
-                                // ];
-
-                                // $dataEmployeeServiceYear = [
-                                //     'user_id'          => NULL,
-                                //     'join_date'         => $row->getCells()[28]->getValue() ? CarbonImmutable::instance($row->getCells()[28]->getValue())->format('Y-m-d') : null,
-                                //     'leave_date'        => $row->getCells()[29]->getValue() ? CarbonImmutable::instance($row->getCells()[29]->getValue())->format('Y-m-d') : null,
-                                // ];
-
-
-                                // $dataArrayParent[] = $data;
-                                // $dataArrayEmployeeNumber[] = $dataEmployeeNumber;
-                                // $dataArrayEmployeeServiceYear[] = $dataEmployeeServiceYear;
-
-                                // if (count($dataArrayParent) == $dataChunk) {
-                                //     $this->insertChunk($dataArrayParent, $dataArrayEmployeeNumber, $dataArrayEmployeeServiceYear);
-                                //     $dataArrayParent = [];
-                                //     $dataArrayEmployeeNumber = [];
-                                //     $dataArrayEmployeeServiceYear = [];
-                                // }
                                 $identityCard = $row->getCells()[6]->getValue();
 
                                 $currentChunk[] = [
@@ -172,7 +121,35 @@ class ImportUserJob implements ShouldQueue
                     }
                 }
 
-                $missingData = $this->user->whereNotIn('identity_card', $identityCard)->values()->map(function ($data, $i) {
+                $employeeNumber = Arr::pluck($newData, 'employee_number');
+                $missingData = collect();
+                $oldData = collect();
+                if (!empty($identityCard)) {
+                    $missingData =  $this->user->whereNotIn('identity_card', $identityCard)->values();
+                    $oldData =  $this->user->whereIn('identity_card', $identityCard);
+                }
+
+                if ($missingData) {
+                    $missingData = User::query()
+                        ->whereHas('userEmployeeNumber', fn($q) => $q->where('status', 1))
+                        ->whereDoesntHave('userEmployeeNumber', function ($q) use ($employeeNumber) {
+                            $q->where('status', 1)
+                                ->whereIn('employee_number', $employeeNumber);
+                        })
+                        ->get();
+                }
+
+                if (!$oldData) {
+                    $oldData = User::query()
+                        ->whereHas('userEmployeeNumber', function ($q) use ($employeeNumber) {
+                            $q->where('status', 1)
+                                ->whereIn('employee_number', $employeeNumber);
+                        })
+                        ->get();
+                }
+
+
+                $missingData = $missingData->map(function ($data, $i) {
                     return [
                         'no'                 => $i + 1,
                         'employee_number'    => $data->userEmployeeNumber()->where('status', 1)->first()->employee_number ?? "",
@@ -201,29 +178,30 @@ class ImportUserJob implements ShouldQueue
                     ];
                 })->toArray();
 
-                $oldData = $this->user
-                    ->whereIn('identity_card', $identityCard)
-                    ->mapWithKeys(function ($user) {
-                        $data = $user->toArray();
 
-                        $data['company_id'] = $user->company ?  $user->company->code : null;
-                        $data['department_id'] = $user->department ?  $user->department->code : null;
-                        $data['status'] = $user->status == '1' ? "AKTIF" : "OUT";
-                        $data['gender'] = $user->gender == "female" ? 'P' : 'L';
+                $oldData = $oldData->mapWithKeys(function ($user) {
+                    $data = $user->toArray();
 
-
-                        $data['employee_number'] = $user->userEmployeeNumber()
-                            ->latest()
-                            ->first(['employee_number'])
-                            ->employee_number ?? "";
-
-                        $data['join_date']  = $user->userServiceYear->join_date ??  null;
-                        $data['leave_date']  = $user->userServiceYear->leave_date ??  null;
+                    $data['company_id'] = $user->company ?  $user->company->code : null;
+                    $data['department_id'] = $user->department ?  $user->department->code : null;
+                    $data['status'] = $user->status == '1' ? "AKTIF" : "OUT";
+                    $data['gender'] = $user->gender == "female" ? 'P' : 'L';
 
 
-                        return [$user->identity_card => $data];
-                    })
+                    $data['employee_number'] = $user->userEmployeeNumber()
+                        ->latest()
+                        ->first(['employee_number'])
+                        ->employee_number ?? "";
+
+                    $data['join_date']  = $user->userServiceYear->join_date ??  null;
+                    $data['leave_date']  = $user->userServiceYear->leave_date ??  null;
+
+
+                    return [$user->identity_card => $data];
+                })
                     ->toArray();
+
+                dd($missingData, $oldData);
                 $dataDiff = $this->getDifferenceData($oldData, $newData, $processedUsers);
                 $filePathExportData =  $this->exportData($missingData, $dataDiff);
                 Cache::put($this->cacheKey, $filePathExportData, now()->addMinutes(10));
@@ -363,28 +341,6 @@ class ImportUserJob implements ShouldQueue
                 $newArray['password'] = 'asd1234';
                 $newArray['status_account'] = 1;
 
-                // $dataArrayParent[] = $newArray;
-
-                // $dataArrayEmployeeNumber[] = [
-                //     'user_id'          => null,
-                //     'employee_number'  => $new['employee_number'],
-                //     'registry_date'    => Carbon::today()->format('Y-m-d'),
-                //     'status'           => 1
-                // ];
-
-                // $dataArrayUserService[] = [
-                //     'user_id'          => null,
-                //     'join_date'        => $new['join_date'],
-                //     'leave_date'       => $new['leave_date'],
-                // ];
-
-
-                // if (count($dataArrayParent) == $dataChunk) {
-                //     $this->insertChunk($dataArrayParent, $dataArrayEmployeeNumber, $dataArrayUserService);
-                //     $dataArrayParent = [];
-                //     $dataArrayEmployeeNumber = [];
-                //     $dataArrayUserService = [];
-                // }
 
                 $dataArrayEmployeeNumber = [
                     'employee_number'  => $new['employee_number'],

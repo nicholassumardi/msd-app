@@ -23,7 +23,7 @@ class CreateUserHistoriesTable extends Migration
             $table->string('identity_card')->nullable();
             $table->enum('gender', ['male', 'female'])->nullable();
             $table->string('religion')->nullable();
-            $table->string('email')->unique()->nullable();
+            $table->string('email')->nullable();
             $table->string('photo')->nullable();
             $table->string('education')->nullable();
             $table->string('marital_status')->nullable();
@@ -35,7 +35,7 @@ class CreateUserHistoriesTable extends Migration
             $table->string('position_code')->comment('SPV || KRB || KARU 1 || MTC || BONGKAR 1 || ADM')->nullable();
             $table->string('status_twiji')->comment('Guteji || Intiji')->nullable();
             $table->string('schedule_type')->comment('Shift || Non Shift')->nullable();
-            $table->string('employee_number')->unique();
+            $table->string('employee_number');
             $table->date('join_date')->nullable();
             $table->date('leave_date')->nullable();
             $table->date('contract_start_date')->nullable();
