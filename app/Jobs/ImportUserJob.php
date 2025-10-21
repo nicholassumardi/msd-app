@@ -124,24 +124,21 @@ class ImportUserJob implements ShouldQueue
                 $employeeNumber = Arr::pluck($newData, 'employee_number');
                 $missingData = collect();
                 $oldData = collect();
+
                 if (!empty($identityCard)) {
                     $missingData =  $this->user->whereNotIn('identity_card', $identityCard)->values();
-                    $oldData =  $this->user->whereIn('identity_card', $identityCard);
                 }
 
+                // if fallback check by employee_number
                 if ($missingData) {
+                    // get missing data inside db to compare old data vs new
+                    $missingIdentityCards = $missingData->pluck('identity_card')->toArray();
+                    $identityCard = array_merge($identityCard, $missingIdentityCards);
+                    $identityCard = array_unique($identityCard);
+
                     $missingData = User::query()
                         ->whereHas('userEmployeeNumber', fn($q) => $q->where('status', 1))
                         ->whereDoesntHave('userEmployeeNumber', function ($q) use ($employeeNumber) {
-                            $q->where('status', 1)
-                                ->whereIn('employee_number', $employeeNumber);
-                        })
-                        ->get();
-                }
-
-                if (!$oldData) {
-                    $oldData = User::query()
-                        ->whereHas('userEmployeeNumber', function ($q) use ($employeeNumber) {
                             $q->where('status', 1)
                                 ->whereIn('employee_number', $employeeNumber);
                         })
@@ -178,6 +175,7 @@ class ImportUserJob implements ShouldQueue
                     ];
                 })->toArray();
 
+                $oldData =  $this->user->whereIn('identity_card', $identityCard);
 
                 $oldData = $oldData->mapWithKeys(function ($user) {
                     $data = $user->toArray();
@@ -201,7 +199,7 @@ class ImportUserJob implements ShouldQueue
                 })
                     ->toArray();
 
-                dd($missingData, $oldData);
+                // dd($missingData, $oldData);
                 $dataDiff = $this->getDifferenceData($oldData, $newData, $processedUsers);
                 $filePathExportData =  $this->exportData($missingData, $dataDiff);
                 Cache::put($this->cacheKey, $filePathExportData, now()->addMinutes(10));
@@ -330,7 +328,15 @@ class ImportUserJob implements ShouldQueue
 
         foreach ($newData as $new) {
             $identityCard = $new['identity_card'];
-            if (!isset($oldData[$identityCard])) {
+            $employee_number = $new['employee_number'];
+            $oldDataCheck = $oldData[$identityCard] ?? null;
+
+            // check if fallback by employee_number
+            if (!isset($oldDataCheck)) {
+                $oldDataCheck = collect($oldData)->firstWhere('employee_number', $employee_number);
+            }
+
+            if (!$oldDataCheck) {
                 $newArray = array_diff_key($new, array_flip(['employee_number', 'join_date', 'leave_date']));
 
                 $newArray['uuid'] = Str::uuid();
@@ -358,15 +364,15 @@ class ImportUserJob implements ShouldQueue
                     'service'  => $dataArrayUserService
                 ];
 
-                if (count($currentChunk) == $dataChunk) {
-                    $this->insertChunk($currentChunk, $processedUsers);
-                }
+                // if (count($currentChunk) == $dataChunk) {
+                //     $this->insertChunk($currentChunk, $processedUsers);
+                // }
             } else {
-                $old = $oldData[$identityCard];
+                $old = $oldDataCheck;
                 foreach ($new as $key => $value) {
                     if (strtolower($value ?? '') != strtolower($old[$key] ?? '')) {
                         $differences[] = [
-                            'identity_card' => $identityCard,
+                            'identity_card' => $old['identity_card'],
                             'name'          => $old['name'],
                             'column'        => $mappingColumns[$key],
                             'old_data'      => $old[$key],
@@ -377,9 +383,9 @@ class ImportUserJob implements ShouldQueue
             }
         }
 
-        if (count($currentChunk) != 0) {
-            $this->insertChunk($currentChunk, $processedUsers);
-        }
+        // if (count($currentChunk) != 0) {
+        //     $this->insertChunk($currentChunk, $processedUsers);
+        // }
 
         return $differences;
     }

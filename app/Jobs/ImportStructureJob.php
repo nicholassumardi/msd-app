@@ -9,9 +9,7 @@ use App\Models\UserEmployeeNumber;
 use App\Models\UserJobCode;
 use App\Models\UserStructureMapping;
 use App\Models\UserStructureMappingHistories;
-use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -51,36 +49,68 @@ class ImportStructureJob implements ShouldQueue
             $dataStructure = [];
             $dataUserJobCode = [];
             $dataUserNotFound = [];
-            $dataChunk = 200;
 
             foreach ($reader->getSheetIterator() as $i => $sheet) {
-                if ($i == 1) {
+                $sheetCollections[$i] = LazyCollection::make(function () use ($sheet) {
                     foreach ($sheet->getRowIterator() as $key => $row) {
                         if ($key != 1) {
-
-                            $dataUser = $this->saveDataUserJobCode($dataUserJobCode, $dataUserNotFound, $row);
-
-                            $dataStructure = $this->saveDataStructureMapping($dataStructure, $row);
-                            $dataUserJobCode =  $dataUser['dataUserJobCode'];
-                            $dataUserNotFound = $dataUser['dataUserNotFound'];
-
-
-                            if (count($dataStructure) == $dataChunk) {
-                                $this->insertChunkStructure($dataStructure, $dataUserJobCode);
-                                $dataStructure = [];
-                            }
+                            yield $row->toArray();
                         }
                     }
+                });
+            }
 
+            if (isset($sheetCollections[1])) {
+                $sheetCollections[1]->chunk(200)->each(function ($rows) use (&$dataStructure, &$dataUserJobCode, &$dataUserNotFound) {
 
-                    if (count($dataStructure) != 0) {
-                        $this->insertChunkStructure($dataStructure, $dataUserJobCode);
+                    foreach ($rows as $row) {
+                        $dataUser = $this->saveDataUserJobCode($dataUserJobCode, $dataUserNotFound, $row);
+
+                        $dataStructure = $this->saveDataStructureMapping($dataStructure, $row);
+                        $dataUserJobCode =  $dataUser['dataUserJobCode'];
+                        $dataUserNotFound = $dataUser['dataUserNotFound'];
                     }
 
-                    $filePathExportData =  $this->exportData($dataUserNotFound);
-                    Cache::put($this->cacheKey, $filePathExportData, now()->addMinutes(10));
+                    // clean data so duplicate data will be rejected
+                    $dataDuplicate = $this->removeDuplicate($dataUserJobCode, $dataUserNotFound);
+                    $dataUserJobCode = $dataDuplicate['dataUserJobCode'];
+
+                    $this->insertChunkStructure($dataStructure, $dataUserJobCode);
+                    $dataStructure = [];
+                    $dataUserJobCode = [];
+                });
+
+                if (count($dataStructure) != 0) {
+                    $dataDuplicate = $this->removeDuplicate($dataUserJobCode, $dataUserNotFound);
+                    $dataUserJobCode = $dataDuplicate['dataUserJobCode'];
+
+                    $this->insertChunkStructure($dataStructure, $dataUserJobCode);
+                    $dataStructure = [];
+                    $dataUserJobCode = [];
                 }
+
+                $dataDuplicate = $this->removeDuplicate($dataUserJobCode, $dataUserNotFound);
+                $dataUserNotFound = $dataDuplicate['dataUserNotFound'];
+                $filePathExportData =  $this->exportData($dataUserNotFound);
+                Cache::put($this->cacheKey, $filePathExportData, now()->addMinutes(10));
             }
+
+
+            if (!isset($sheetCollections[1])) {
+                Cache::put(
+                    $this->cacheKey,
+                    [
+                        'status' => 500,
+                        'message' => 'Sheet not found please make sure you have the correct format!',
+                    ],
+                    now()->addMinutes(3)
+                );
+                Storage::delete($this->filepath);
+                DB::rollBack();
+
+                return false;
+            }
+
 
             $reader->close();
             Storage::delete($this->filepath);
@@ -96,75 +126,15 @@ class ImportStructureJob implements ShouldQueue
         }
     }
 
-    // public function handle()
-    // {
-    //     try {
-    //         DB::beginTransaction();
-
-    //         $reader = new Reader();
-    //         $reader->open(storage_path('app/public/' . $this->filepath));
-    //         $dataStructure = [];
-    //         $dataUserJobCode = [];
-    //         $dataUserNotFound = [];
-    //         $dataChunk = 200;
-
-    //         foreach ($reader->getSheetIterator() as $i => $sheet) {
-    //             if ($i == 1) {
-
-    //                 LazyCollection::make(function () use ($sheet) {
-    //                     foreach ($sheet->getRowIterator() as $key => $row) {
-    //                         if ($key != 1) {
-    //                             yield $row->toArray();
-    //                         }
-    //                     }
-    //                 })->chunk($dataChunk)->each(function ($row) use ($dataUserJobCode, $dataUserNotFound, $dataStructure, $dataChunk) {
-    //                     dd($row);
-    //                     $dataUSer = $this->saveDataUserJobCode($dataUserJobCode, $dataUserNotFound, $row);
-
-    //                     $dataStructure = $this->saveDataStructureMapping($dataStructure, $row);
-    //                     $dataUserJobCode =  $dataUSer['dataUserJobCode'];
-    //                     $dataUserNotFound = $dataUSer['dataUserNotFound'];
-
-
-    //                     if (count($dataStructure) == $dataChunk) {
-    //                         $this->insertChunkStructure($dataStructure, $dataUserJobCode);
-    //                         $dataStructure = [];
-    //                     }
-    //                 });
-
-
-    //                 if (count($dataStructure) != 0) {
-    //                     $this->insertChunkStructure($dataStructure, $dataUserJobCode);
-    //                 }
-
-    //                 $filePathExportData =  $this->exportData($dataUserNotFound);
-    //                 Cache::put($this->cacheKey, $filePathExportData, now()->addMinutes(10));
-    //             }
-    //         }
-
-    //         $reader->close();
-    //         Storage::delete($this->filepath);
-
-
-    //         DB::commit();
-
-    //         return true;
-    //     } catch (\Exception $e) {
-    //         echo $e->getMessage();
-    //         DB::rollBack();
-    //         return false;
-    //     }
-    // }
-
 
     private function saveDataStructureMapping($dataStructure, $row)
     {
-        $companyName = $row->getCells()[0]->getValue();
-        $departmentName = $row->getCells()[1]->getValue();
-        $name = $row->getCells()[15]->getValue();
-        $parentName = $row->getCells()[8]->getValue();
-        $jobCode = $row->getCells()[10]->getValue();
-        $structureType = $row->getCells()[22]->getValue();
+        $companyName = $row[0];
+        $departmentName = $row[1];
+        $name = $row[15];
+        $parentName = $row[8];
+        $jobCode = $row[10];
+        $structureType = $row[22];
 
         $parentId = 0;
         if ($parentName) {
@@ -174,14 +144,14 @@ class ImportStructureJob implements ShouldQueue
             }
         }
 
-        if (isset($dataStructure[$row->getCells()[15]->getValue()])) {
-            $dataStructure[$row->getCells()[15]->getValue()]['quota'] = $dataStructure[$row->getCells()[15]->getValue()]['quota'] + 1;
+        if (isset($dataStructure[$row[15]])) {
+            $dataStructure[$row[15]]['quota'] = $dataStructure[$row[15]]['quota'] + 1;
         } else {
-            $dataStructure[$row->getCells()[15]->getValue()] = [
+            $dataStructure[$row[15]] = [
                 'department_id'            => $this->findDataDepartment($companyName, $departmentName)->id ?? null,
                 'parent_name'              => $parentName ?? null,
                 'parent_id'                => $parentId,
-                'position_code_structure'  => $row->getCells()[11]->getValue(),
+                'position_code_structure'  => $row[11],
                 'job_code_id'              => $this->jobCode->firstWhere('full_code', $jobCode)->id ?? null,
                 'name'                     => $name,
                 'quota'                    => 1,
@@ -194,12 +164,12 @@ class ImportStructureJob implements ShouldQueue
 
     private function saveDataUserJobCode($dataUserJobCode, $dataUserNotFound, $row)
     {
-        $userEmployeeNumber = $this->findDataByEmployeeNumber($row->getCells()[18]->getValue());
-        $identity_card = $this->findDataByEmployeeNIK($row->getCells()[19]->getValue());
-        $user = $this->findDataUser($row->getCells()[20]->getValue());
-        $jobCode = $this->jobCode->firstWhere('full_code', $row->getCells()[10]->getValue()) ? $this->jobCode->firstWhere('full_code', $row->getCells()[10]->getValue())->id : NULL;
-        $jobCodeParent =  $this->jobCode->firstWhere('full_code', $row->getCells()[3]->getValue()) ? $this->jobCode->firstWhere('full_code', $row->getCells()[3]->getValue())->id : NULL;
-        $parentName = $jobCodeParent . "-" . $row->getCells()[4]->getValue() . "-" . $row->getCells()[5]->getValue();
+        $userEmployeeNumber = $this->findDataByEmployeeNumber($row[18]);
+        $identity_card = $this->findDataByEmployeeNIK($row[19]);
+        $user = $this->findDataUser($row[20]);
+        $jobCode = $this->jobCode->firstWhere('full_code', $row[10]) ? $this->jobCode->firstWhere('full_code', $row[10])->id : NULL;
+        $jobCodeParent =  $this->jobCode->firstWhere('full_code', $row[3]) ? $this->jobCode->firstWhere('full_code', $row[3])->id : NULL;
+        $parentName = $jobCodeParent . "-" . $row[4] . "-" . $row[5];
 
         $parentId = 0;
         if ($parentName) {
@@ -211,39 +181,48 @@ class ImportStructureJob implements ShouldQueue
 
         if (!$identity_card) {
             if (!$userEmployeeNumber) {
-                $dataUserNotFound[] = $row->toArray();
+                $dataUserNotFound[] = $row;
             } elseif (!$user) {
-                $dataUserNotFound[] = $row->toArray();
-            }
-        } else {
-            // Example: track duplicates by a unique key
-            $rowKey = $row->getCells()[19]->getValue() . '|' . $row->getCells()[18]->getValue();
-            static $seenRows = [];
-            if (isset($seenRows[$rowKey])) {
-                $dataUserNotFound[] = $row->toArray(); // add duplicate to not found
-            } else {
-                $seenRows[$rowKey] = true;
+                $dataUserNotFound[] = $row;
             }
         }
 
 
         if ($userEmployeeNumber || $user) {
             $dataUserJobCode[] = [
+                'pt'                            => $row[0],
+                'dept'                          => $row[1],
+                'id_structure_parent'           => $row[2],
+                'job_code_parent'               => $row[3],
+                'position_code_structure'       => $row[4],
+                'group_parent'                  => $row[5],
+                'parent_suffix'                 => $row[6],
+                'code_ip_parent'                => $row[7],
+                'sub_position_parent'           => $row[8],
+                'id_structure'                  => $row[9],
+                'parent_suffix'                 => $row[10],
+                'position_code_structure'       => $row[11],
+                'group'                         => $row[12],
+                'suffix'                        => $row[13],
+                'code_ip'                       => $row[14],
+                'user_structure_mapping_name'   => $row[15],
+                'id_staff'                      => $row[16],
+                'employee_number'               => $row[17],
+                'employee_number_new'           => $row[18],
+                'identity_card'                 => $row[19],
+                'name'                          => $row[20],
+                'non_active_date'               => $row[21],
+                'employee_type'                 => $row[22],
                 'user_id'                       => $userEmployeeNumber ? $userEmployeeNumber->user_id : ($user ? $user->id : NULL),
                 'job_code_id'                   => $jobCode,
                 'parent_name'                   => $parentName,
                 'parent_id'                     => $parentId,
-                'user_structure_mapping_name'   => $row->getCells()[15]->getValue(),
-                'id_structure'                  => $row->getCells()[9]->getValue(),
-                'id_staff'                      => $row->getCells()[16]->getValue(),
-                'position_code_structure'       => $row->getCells()[11]->getValue(),
-                'group'                         => $row->getCells()[12]->getValue(),
-                'employee_type'                 => $row->getCells()[20]->getValue(),
                 'assign_date'                   => NULL,
                 'reassign_date'                 => NULL,
                 'status'                        => 1,
             ];
         }
+
 
         return [
             'dataUserJobCode'  => $dataUserJobCode,
@@ -457,8 +436,61 @@ class ImportStructureJob implements ShouldQueue
     private function findDataUser($search)
     {
         return User::whereFuzzy('name', $search)->first();
-        // return User::where(DB::raw('LOWER(name)'), '=', strtolower($search))
-        //     ->first();
+    }
+
+    private function removeDuplicate(&$dataUserJobCode, &$dataUserNotFound)
+    {
+        // clean data so duplicate data will be rejected
+        $duplicates = collect($dataUserJobCode)
+            ->groupBy(function ($item) {
+                return $item['user_id'];
+            })
+            ->filter(function ($group) {
+                return $group->count() > 1;
+            })
+            ->flatten(1)
+            ->values()->map(function ($item) {
+                return [
+                    $item['pt'] ?? '',
+                    $item['dept'] ?? '',
+                    $item['id_structure_parent'] ?? '',
+                    $item['job_code_parent'] ?? '',
+                    $item['position_code_structure'] ?? '',
+                    $item['group_parent'] ?? '',
+                    $item['parent_suffix'] ?? '',
+                    $item['code_ip_parent'] ?? '',
+                    $item['sub_position_parent'] ?? '',
+                    $item['id_structure'] ?? '',
+                    $item['parent_suffix'] ?? '',
+                    $item['position_code_structure'] ?? '',
+                    $item['parent_suffix'] ?? '',
+                    $item['group'] ?? '',
+                    $item['code_ip'] ?? '',
+                    $item['user_structure_mapping_name'] ?? '',
+                    $item['id_staff'] ?? '',
+                    $item['employee_number'] ?? '',
+                    $item['employee_number_new'] ?? '',
+                    $item['identity_card'] ?? '',
+                    $item['name'] ?? '',
+                    $item['non_active_date'] ?? '',
+                    $item['employee_type'] ?? '',
+                ];
+            })->toArray();
+
+
+        $dataUserNotFound = array_merge($dataUserNotFound, $duplicates);
+
+        $dataUserJobCode = collect($dataUserJobCode)
+            ->groupBy('user_id')
+            ->filter(fn($group) => $group->count() === 1)
+            ->flatten(1)
+            ->values()
+            ->all();
+
+        return  [
+            'dataUserJobCode'  => $dataUserJobCode,
+            'dataUserNotFound' => $dataUserNotFound,
+        ];
     }
 
     public function findDataByEmployeeNumber($search)

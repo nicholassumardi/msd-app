@@ -31,10 +31,16 @@ class StructureController extends Controller
 
     public function importStructureExcel(Request $request)
     {
-
         $cacheKey = uniqid();
         $query = $this->userMappingService->importStructureExcel($request, $cacheKey);
         $filepath = Cache::get($cacheKey);
+
+        if (is_array($filepath) && isset($filepath['status']) && $filepath['status'] === 500) {
+            return response()->json([
+                'status'  => $filepath['status'],
+                'message' => $filepath['message'],
+            ]);
+        }
 
         if (file_exists($filepath)) {
             return response()->download($filepath);
