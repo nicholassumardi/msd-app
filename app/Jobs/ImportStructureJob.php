@@ -126,7 +126,6 @@ class ImportStructureJob implements ShouldQueue
         }
     }
 
-
     private function saveDataStructureMapping($dataStructure, $row)
     {
         $companyName = $row[0];
