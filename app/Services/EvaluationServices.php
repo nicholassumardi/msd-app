@@ -460,13 +460,13 @@ class EvaluationServices extends BaseServices
     }
 
 
-    protected function businessDaysAgo(int $businessDays): Carbon
+    protected function skipWeekend(int $businessDays): Carbon
     {
         $d = Carbon::now()->startOfDay();
         $daysToGo = $businessDays;
         while ($daysToGo > 0) {
             $d = $d->subDay();
-            // skip weekend (Sat=6 Sun=0)
+
             if (! in_array($d->dayOfWeek, [Carbon::SATURDAY, Carbon::SUNDAY])) {
                 $daysToGo--;
             }
@@ -493,7 +493,7 @@ class EvaluationServices extends BaseServices
             });
 
         // 3) compute business-days threshold for "more than 7 business days ago"
-        $thresholdDate = $this->businessDaysAgo(7); // returns Carbon instance (date)
+        $thresholdDate = $this->skipWeekend(7); // returns Carbon instance (date)
 
         // 4) counts (cloning builder to avoid modifying base)
         $totalTraining     = (clone $base)->count();
@@ -623,9 +623,10 @@ class EvaluationServices extends BaseServices
     public function getEligibleIKWByTrainer($request)
     {
         $trainer = $this->user->firstWhere('uuid', $request->trainer_id);
-        $usm_id =  $trainer->userJobCode() ?  $trainer->userJobCode()->where('status', 1)->first()?->user_structure_mapping_id : null;
+        $usm_id =  $trainer?->userJobCode() ?  $trainer->userJobCode()->where('status', 1)->first()?->user_structure_mapping_id : null;
 
         $rki = $this->rki->where('user_structure_mapping_id',  $usm_id)->pluck('ikw_id');
+
 
         $ikwRevision = $this->ikwRevision->whereIn('ikw_id', $rki)
             ->orderBy('ikw_id')
@@ -643,7 +644,6 @@ class EvaluationServices extends BaseServices
                     });
             })->whereIn('id', $ikwRevision);
         })
-            ->where('status_document', 'IKW FINISH')
             ->get();
 
 
@@ -654,13 +654,15 @@ class EvaluationServices extends BaseServices
             })
             ->get();
 
+
         $data = $data->map(function ($data) {
             return [
                 'id'                           => $data->id,
-                'job_task_id'                  => $data->job_task_id,
                 'department_id'                => $data->department_id,
+                'department_name'              => $data->department->name ?? '',
                 'code'                         => $data->code,
                 'name'                         => $data->name,
+                'revision_no'                  => $data->ikwRevision->max('revision_no') ?? '',
                 'total_page'                   => $data->total_page,
                 'registration_date'            => $data->registration_date,
                 'print_by_back_office_date'    => $data->print_by_back_office_date,
