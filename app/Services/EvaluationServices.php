@@ -460,20 +460,6 @@ class EvaluationServices extends BaseServices
     }
 
 
-    protected function skipWeekend(int $businessDays): Carbon
-    {
-        $d = Carbon::now()->startOfDay();
-        $daysToGo = $businessDays;
-        while ($daysToGo > 0) {
-            $d = $d->subDay();
-
-            if (! in_array($d->dayOfWeek, [Carbon::SATURDAY, Carbon::SUNDAY])) {
-                $daysToGo--;
-            }
-        }
-        return $d;
-    }
-
     // get IKW Data Competent by trainer
     public function getEmployeeTrainingHistory($request)
     {
@@ -617,7 +603,6 @@ class EvaluationServices extends BaseServices
             'totalCount' => count($result),
         ];
     }
-
 
     // get IKW Data Competent by trainer
     public function getEligibleIKWByTrainer($request)
@@ -863,5 +848,26 @@ class EvaluationServices extends BaseServices
             'totalCount'  => $totalCount,
             'data'        => $result
         ];
+    }
+
+    // get Trainer's Subordinate
+    public function getTrainerSubordinate($request)
+    {
+        $result = [];
+        $trainer = $this->user->firstWhere('uuid', $request->trainer_id);
+        $trainer_structure =  $trainer?->userJobCode() ?  $trainer->userJobCode()->where('status', 1)->first() : null;
+
+        // dd($trainer_structure->children()->get());
+        if ($trainer_structure) {
+            foreach ($trainer_structure->children as $child) {
+                $result[] = [
+                    'uuid'  => $child->user->uuid ?? '',
+                    'name'  => $child->user->name ?? '',
+                    'department' => $child->user->department->code ?? '',
+                ];
+            }
+        }
+
+        return $result;
     }
 }

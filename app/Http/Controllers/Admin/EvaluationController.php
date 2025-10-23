@@ -243,4 +243,24 @@ class EvaluationController extends Controller
 
         return response()->json($response);
     }
+
+    public function showTrainerSubordinate(Request $request)
+    {
+        $data = $this->service->getTrainerSubordinate($request);
+
+        if ($data) {
+            $response = [
+                'status'        => 200,
+                'data'          => $data,
+                'message'       => "Successfully fetched"
+            ];
+        } else {
+            $response = [
+                'status'  => 404,
+                'message' => 'No Data found'
+            ];
+        }
+
+        return response()->json($response);
+    }
 }

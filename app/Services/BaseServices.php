@@ -155,6 +155,20 @@ class BaseServices
         return $date;
     }
 
+    public function skipWeekend(int $businessDays): Carbon
+    {
+        $d = Carbon::now()->startOfDay();
+        $daysToGo = $businessDays;
+        while ($daysToGo > 0) {
+            $d = $d->subDay();
+
+            if (! in_array($d->dayOfWeek, [Carbon::SATURDAY, Carbon::SUNDAY])) {
+                $daysToGo--;
+            }
+        }
+        return $d;
+    }
+
     public function getColor($arg)
     {
         if (!$arg) return "#8FC9A4";
