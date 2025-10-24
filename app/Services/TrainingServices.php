@@ -150,6 +150,51 @@ class TrainingServices extends BaseServices
         }
     }
 
+    public function storeTrainingByTrainer(Request $request)
+    {
+        try {
+            $this->setLog('info', 'Request store data Training ' . json_encode($request->all()));
+            $this->setLog('info', 'Start');
+            DB::beginTransaction();
+
+
+            if (!$request->ikw_id) {
+                $this->setLog('info', 'store failed data not found');
+                return false;
+            }
+
+            $ikwRevisionID  = $this->ikwRevision->where('ikw_id', $request->ikw_id)->orderByDesc('revision_no')->first()->id ?? null;
+
+            if (!$ikwRevisionID) {
+                $this->setLog('info', 'store failed data not found');
+                return false;
+            }
+
+            if (!empty($request->training) && is_array($request->training)) {
+                foreach ($request->training as $trainingData) {
+                    Training::create([
+                        'trainer_id'                     => $this->getUserByUUID($request->trainer_id) ?? NULL,
+                        'ikw_revision_id'                => $ikwRevisionID,
+                        'trainer_id'                     => $this->getUserByUUID($trainingData['trainer_id']) ?? NULL,
+                        'training_plan_date'             => $request['training_plan_date'] ? date('Y-m-d', strtotime($request['training_plan_date'])) : null,
+                    ]);
+                }
+            }
+
+
+            $this->setLog('info', 'New data Training' . json_encode($request->all()));
+            DB::commit();
+            $this->setLog('info', 'End');
+            return true;
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            $this->setLog('error', 'Error store data Training = ' . $exception->getMessage());
+            $this->setLog('error', 'Error store data Training = ' . $exception->getLine());
+            $this->setLog('error', 'Error store data Training = ' . $exception->getFile());
+            $this->setLog('error', 'Error store data Training = ' . $exception->getTraceAsString());
+            return null;
+        }
+    }
     public function updateTraining(Request $request, $id_training)
     {
         try {
