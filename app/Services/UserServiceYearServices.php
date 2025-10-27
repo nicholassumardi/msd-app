@@ -19,8 +19,8 @@ class UserServiceYearServices extends BaseServices
 
             UserServiceYear::create([
                 'user_id'    => $request->user_id,
-                'join_date'  => date('Y-m-d', strtotime($request->join_date)),
-                'leave_date' => date('Y-m-d', strtotime($request->leave_date)),
+                'join_date'  =>  $this->parseDateUTC($request->join_date),
+                'leave_date' =>  $this->parseDateUTC($request->leave_date),
             ]);
 
 
@@ -51,8 +51,8 @@ class UserServiceYearServices extends BaseServices
 
             if ($userServiceYear) {
                 $userServiceYear->update([
-                    'join_date'  =>  date('Y-m-d', strtotime($request->join_date)),
-                    'leave_date' =>  date('Y-m-d', strtotime($request->leave_date)),
+                    'join_date'  =>  $this->parseDateUTC($request->join_date),
+                    'leave_date' =>  $this->parseDateUTC($request->leave_date),
                 ]);
             } else {
                 DB::rollBack();

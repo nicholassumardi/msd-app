@@ -123,7 +123,7 @@ class UserStructureMappingServices extends BaseServices
                 'id_staff'                   => null,
                 'position_code_structure'    => $this->userMapping->where('id', $request->user_structure_mapping_id)->first() ? $this->userMapping->where('id', $request->user_structure_mapping_id)->first()->position_code_structure : null,
                 'group'                      => $request->group ?? null,
-                'assign_date'                => date('Y-m-d', strtotime($request->assign_date)),
+                'assign_date'                => $this->parseDateUTC($request->assign_date),
                 'status'                     => 0,
             ]);
 
@@ -132,7 +132,7 @@ class UserStructureMappingServices extends BaseServices
                     'user_job_code_id' => $userJobCode->id,
                     'group'            => $request->group,
                     'description'      => $request->description,
-                    'request_date'     => date('Y-m-d', strtotime($request->assign_date)),
+                    'request_date'     => $this->parseDateUTC($request->assign_date),
                     'status_slot'      => 0,
                 ]);
             } else {
@@ -217,15 +217,15 @@ class UserStructureMappingServices extends BaseServices
                 if ($hasChanges) {
                     UserStructureMappingHistories::create([
                         'user_structure_mapping_id' => $userMapping->id,
-                        'revision_no'               =>  $this->userStructureMappingHistories->where('user_structure_mapping_id', $userMapping->id)->max('revision_no') + 1,
-                        'valid_date'                => $request->valid_date ? date('Y-m-d', strtotime($request->valid_date)) : $now,
-                        'updated_date'              => $request->updated_date ? date('Y-m-d', strtotime($request->updated_date)) : $now,
-                        'authorized_date'           => $request->authorized_date ? date('Y-m-d', strtotime($request->authorized_date)) : $now,
-                        'approval_date'             => $request->approval_date ? date('Y-m-d', strtotime($request->approval_date)) : $now,
-                        'acknowledged_date'         => $request->acknowledged_date ?  date('Y-m-d', strtotime($request->acknowledged_date)) : $now,
-                        'created_date'              => $request->created_date ? date('Y-m-d', strtotime($request->created_date)) : $now,
-                        'distribution_date'         => $request->distribution_date ? date('Y-m-d', strtotime($request->distribution_date)) : $now,
-                        'withdrawal_date'           => $request->withdrawal_date ? date('Y-m-d', strtotime($request->withdrawal_date)) : $now,
+                        'revision_no'               => $this->userStructureMappingHistories->where('user_structure_mapping_id', $userMapping->id)->max('revision_no') + 1,
+                        'valid_date'                => $request->valid_date ? $this->parseDateUTC($request->valid_date) : $now,
+                        'updated_date'              => $request->updated_date ? $this->parseDateUTC($request->updated_date) : $now,
+                        'authorized_date'           => $request->authorized_date ? $this->parseDateUTC($request->authorized_date) : $now,
+                        'approval_date'             => $request->approval_date ? $this->parseDateUTC($request->approval_date) : $now,
+                        'acknowledged_date'         => $request->acknowledged_date ?  $this->parseDateUTC($request->acknowledged_date) : $now,
+                        'created_date'              => $request->created_date ? $this->parseDateUTC($request->created_date) : $now,
+                        'distribution_date'         => $request->distribution_date ? $this->parseDateUTC($request->distribution_date) : $now,
+                        'withdrawal_date'           => $request->withdrawal_date ? $this->parseDateUTC($request->withdrawal_date) : $now,
                         'logs'                      => $logMessage,
                     ]);
                 }
@@ -287,14 +287,14 @@ class UserStructureMappingServices extends BaseServices
                         UserStructureMappingHistories::create([
                             'user_structure_mapping_id' => (int) $userMapping->id ?? null,
                             'revision_no'               => $this->userStructureMappingHistories->where('user_structure_mapping_id', $userMapping->id)->max('revision_no') + 1 ?? 0,
-                            'valid_date'                => $request->valid_date ? date('Y-m-d', strtotime($request->valid_date)) : null,
-                            'updated_date'              => $request->updated_date ? date('Y-m-d', strtotime($request->updated_date)) : null,
-                            'authorized_date'           => $request->authorized_date ? date('Y-m-d', strtotime($request->authorized_date)) : null,
-                            'approval_date'             => $request->approval_date ? date('Y-m-d', strtotime($request->approval_date)) : null,
-                            'acknowledged_date'         => $request->acknowledged_date ? date('Y-m-d', strtotime($request->acknowledged_date)) : null,
-                            'created_date'              => $request->created_date ? date('Y-m-d', strtotime($request->created_date)) : null,
-                            'distribution_date'         => $request->distribution_date ? date('Y-m-d', strtotime($request->distribution_date)) : null,
-                            'withdrawal_date'           => $request->withdrawal_date ? date('Y-m-d', strtotime($request->withdrawal_date)) : null,
+                            'valid_date'                => $request->valid_date ? $this->parseDateUTC($request->valid_date) : null,
+                            'updated_date'              => $request->updated_date ? $this->parseDateUTC($request->updated_date) : null,
+                            'authorized_date'           => $request->authorized_date ? $this->parseDateUTC($request->authorized_date) : null,
+                            'approval_date'             => $request->approval_date ? $this->parseDateUTC($request->approval_date) : null,
+                            'acknowledged_date'         => $request->acknowledged_date ?  $this->parseDateUTC($request->acknowledged_date) : null,
+                            'created_date'              => $request->created_date ? $this->parseDateUTC($request->created_date) : null,
+                            'distribution_date'         => $request->distribution_date ? $this->parseDateUTC($request->distribution_date) : null,
+                            'withdrawal_date'           => $request->withdrawal_date ? $this->parseDateUTC($request->withdrawal_date) : null,
                             'logs'                      => $logMessage,
                         ]);
                     }
@@ -352,7 +352,7 @@ class UserStructureMappingServices extends BaseServices
                 'id_staff'                   => $request->id_staff ?? null,
                 'position_code_structure'    => $this->userMapping->where('id', $request->user_structure_mapping_id)->first() ? $this->userMapping->where('id', $request->user_structure_mapping_id)->first()->position_code_structure : null,
                 'group'                      => $request->group ?? null,
-                'assign_date'                => $request->assign_date ? date('Y-m-d', strtotime($request->assign_date)) : null,
+                'assign_date'                => $request->assign_date ? $this->parseDateUTC($request->assign_date) : null,
                 'employee_type'              => $mapping->structure_type == "Staff" ? "Staff" : "Non Staff",
                 'status'                     => 1,
             ]);

@@ -137,6 +137,13 @@ class BaseServices
         return (new DateTimeImmutable($arg))->setTimezone(new DateTimeZone("UTC"))->format('Y-m-d\TH:i:s');
     }
 
+    public function parseDateUTC($arg)
+    {
+        return $arg
+            ? Carbon::parse($arg)->setTimezone('Asia/Jakarta')->format('Y-m-d')
+            : null;
+    }
+
     protected function parseDateYMD($value)
     {
         if (empty($value)) return null;

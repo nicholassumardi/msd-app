@@ -74,7 +74,7 @@ class StructureServices extends BaseServices
                         'id_staff'                   => $request->id_staff ?? null,
                         'position_code_structure'    => $request->position_code_structure,
                         'group'                      => $request->group ?? null,
-                        'assign_date'                => date('Y-m-d', strtotime($request->assign_date)),
+                        'assign_date'                => $this->parseDateUTC($request->assign_date),
                         'status'                     => 1,
                         'status_slot'                => 1
                     ];
@@ -113,7 +113,7 @@ class StructureServices extends BaseServices
                 'id_structure'               => $request->id_structure ?? null,
                 'position_code_structure'    => $request->position_code_structure,
                 'group'                      => $request->group ?? null,
-                'assign_date'                => date('Y-m-d', strtotime($request->assign_date)),
+                'assign_date'                => $this->parseDateUTC($request->assign_date),
                 'status'                     => 0,
                 'status_slot'                => 0
 

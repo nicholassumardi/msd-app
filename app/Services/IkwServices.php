@@ -50,13 +50,13 @@ class IkwServices extends BaseServices
                 'code'                        => $request->code,
                 'name'                        => $request->name,
                 'total_page'                  => $request->total_page,
-                'registration_date'           => date('Y-m-d', strtotime($request->registration_date)),
-                'print_by_back_office_date'   => date('Y-m-d', strtotime($request->print_by_back_office_date)),
-                'submit_to_department_date'   => date('Y-m-d', strtotime($request->submit_to_department_date)),
-                'ikw_return_date'             => date('Y-m-d', strtotime($request->ikw_return_date)),
+                'registration_date'           => $this->parseDateUTC($request->registration_date),
+                'print_by_back_office_date'   => $this->parseDateUTC($request->print_by_back_office_date),
+                'submit_to_department_date'   => $this->parseDateUTC($request->submit_to_department_date),
+                'ikw_return_date'             => $this->parseDateUTC($request->ikw_return_date),
                 'ikw_creation_duration'       => $request->ikw_creation_duration,
                 'status_document'             => $request->status_document,
-                'last_update_date'            => date('Y-m-d', strtotime($request->last_update_date)),
+                'last_update_date'            => $this->parseDateUTC($request->last_update_date),
                 'description'                 => $request->description,
             ]);
 
@@ -101,7 +101,7 @@ class IkwServices extends BaseServices
                                     'revision_no'        => $ikw_revision->revision_no,
                                     'ikw_code'           => $ikw->code,
                                     'ikw_meeting_no'     => $key,
-                                    'meeting_date'       => $ikwMeeting['meeting_date'] ? date('Y-m-d', strtotime($ikwMeeting['meeting_date'])) : NULL,
+                                    'meeting_date'       => $ikwMeeting['meeting_date'] ? $this->parseDateUTC($ikwMeeting['meeting_date']) : NULL,
                                     'meeting_duration'   => $ikwMeeting['meeting_duration'],
                                     'revision_status'    => $ikwMeeting['revision_status'],
 

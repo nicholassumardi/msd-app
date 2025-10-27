@@ -8,6 +8,7 @@ use App\Models\UserEmployeeNumber;
 use App\Models\UserHistory;
 use App\Services\BaseServices;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class UserEmployeeNumberServices extends BaseServices
@@ -23,7 +24,7 @@ class UserEmployeeNumberServices extends BaseServices
                 return [
                     'user_id'          => $request->user_id,
                     'employee_number'  => $employeeNumber['employee_number'] ?? null,
-                    'registry_date'    => $employeeNumber['registry_date'] ? date('Y-m-d', strtotime($employeeNumber['registry_date'])) : now()->format('Y-m-d'),
+                    'registry_date'    => $employeeNumber['registry_date'] ? $this->parseDateUTC($employeeNumber['registry_date']) : now()->format('Y-m-d'),
                     'status'           => $index === 0 ? 1 : 0
                 ];
             }, $request->userEmployeeNumbers, array_keys($request->userEmployeeNumbers));
@@ -66,7 +67,7 @@ class UserEmployeeNumberServices extends BaseServices
                         'name'            => $user->name,
                         'company_id'      => $user->company_id,
                         'department_id'   => $user->department_id,
-                        'date_of_birth'   => date('Y-m-d', strtotime($request->date_of_birth)),
+                        'date_of_birth'   => $request->date_of_birth ? $this->parseDateUTC($request->date_of_birth) : null,
                         'identity_card'   => str_replace("-", "",  $user->identity_card),
                         'gender'          => $user->gender,
                         'religion'        => $user->religion,
@@ -99,7 +100,7 @@ class UserEmployeeNumberServices extends BaseServices
                         $data =   [
                             'user_id'          => $user->id,
                             'employee_number'  => $userEmployeeNumber["employee_number"],
-                            'registry_date'    =>  $userEmployeeNumber['registry_date'] ? date('Y-m-d', strtotime($userEmployeeNumber['registry_date'])) : null,
+                            'registry_date'    => $userEmployeeNumber['registry_date'] ? $this->parseDateUTC($userEmployeeNumber['registry_date']) : null,
                             'status'           => $key == 0 ? 1 : 0
                         ];
 

@@ -133,8 +133,8 @@ class UserServices extends BaseServices
                 'name'                => $request->name ?? null,
                 'company_id'          => $request->company_id,
                 'department_id'       => $request->department_id,
-                'date_of_birth'       => $request->date_of_birth ? date('Y-m-d', strtotime($request->date_of_birth)) : null,
-                'identity_card'       =>  $request->identity_card ? str_replace("-", "",  $request->identity_card) : null,
+                'date_of_birth'       => $request->date_of_birth ? $this->parseDateUTC($request->date_of_birth) : null,
+                'identity_card'       => $request->identity_card ? str_replace("-", "",  $request->identity_card) : null,
                 'gender'              => $request->gender ?? null,
                 'religion'            => $request->religion ?? null,
                 'email'               => $request->email ?? null,
@@ -150,9 +150,9 @@ class UserServices extends BaseServices
                 'status_twiji'        => $request->status_twiji ?? null,
                 'schedule_type'       => $request->schedule_type ?? null,
                 'status_account'      => 1,
-                'contract_start_date' => $request->contract_start_date ? date('Y-m-d', strtotime($request->contract_start_date)) : null,
-                'contract_end_date'   => $request->contract_end_date ? date('Y-m-d', strtotime($request->contract_end_date)) : null,
-                'resign_date'         => $request->resign_date ? date('Y-m-d', strtotime($request->resign_date)) : null,
+                'contract_start_date' => $request->contract_start_date ? $this->parseDateUTC($request->contract_start_date) : null,
+                'contract_end_date'   => $request->contract_end_date ? $this->parseDateUTC($request->contract_end_date) : null,
+                'resign_date'         => $request->resign_date ? $this->parseDateUTC($request->resign_date) : null,
                 'contract_status'     => $request->contract_status ?? null,
                 'password'            => Hash::make('abcd1234567'),
             ]);
@@ -199,7 +199,7 @@ class UserServices extends BaseServices
                     'name'            => $user->name,
                     'company_id'      => $user->company_id,
                     'department_id'   => $user->department_id,
-                    'date_of_birth'   => date('Y-m-d', strtotime($request->date_of_birth)),
+                    'date_of_birth'   => $this->parseDateUTC($user->date_of_birth),
                     'identity_card'   => str_replace("-", "",  $user->identity_card),
                     'gender'          => $user->gender,
                     'religion'        => $user->religion,
@@ -226,9 +226,9 @@ class UserServices extends BaseServices
                     'leave_date' => optional(
                         $user->userServiceYear()->latest('id')->first()
                     )->leave_date,
-                    'contract_start_date' => $user->contract_start_date ? date('Y-m-d', strtotime($user->contract_start_date)) : null,
-                    'contract_end_date'   => $user->contract_end_date ? date('Y-m-d', strtotime($user->contract_end_date)) : null,
-                    'resign_date'         => $user->resign_date ? date('Y-m-d', strtotime($user->resign_date)) : null,
+                    'contract_start_date' => $user->contract_start_date ? $this->parseDateUTC($user->contract_start_date) : null,
+                    'contract_end_date'   => $user->contract_end_date ? $this->parseDateUTC($user->contract_end_date) : null,
+                    'resign_date'         => $user->resign_date ? $this->parseDateUTC($user->resign_date) : null,
                     'contract_status'     => $user->contract_status ?? null,
                 ]);
 
@@ -269,9 +269,8 @@ class UserServices extends BaseServices
 
                 // Apply necessary transformations
                 if (isset($data['date_of_birth'])) {
-                    $data['date_of_birth'] = date('Y-m-d', strtotime($data['date_of_birth']));
+                    $data['date_of_birth'] =  $this->parseDateUTC($data['date_of_birth']);
                 }
-
                 if (isset($data['identity_card'])) {
                     $data['identity_card'] = str_replace("-", "", $data['identity_card']);
                 }
@@ -281,15 +280,15 @@ class UserServices extends BaseServices
                 }
 
                 if (isset($data['contract_start_date'])) {
-                    $data['contract_start_date'] = date('Y-m-d', strtotime($data['contract_start_date']));
+                    $data['contract_start_date'] = $this->parseDateUTC($data['contract_start_date']);
                 }
 
                 if (isset($data['contract_end_date'])) {
-                    $data['contract_end_date'] = date('Y-m-d', strtotime($data['contract_end_date']));
+                    $data['contract_end_date'] =  $this->parseDateUTC($data['contract_end_date']);
                 }
 
                 if (isset($data['resign_date'])) {
-                    $data['resign_date'] = date('Y-m-d', strtotime($data['resign_date']));
+                    $data['resign_date'] =  $this->parseDateUTC($data['resign_date']);
                 }
 
 
