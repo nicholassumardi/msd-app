@@ -68,7 +68,7 @@ class User extends Authenticatable
         return $this->hasOne(UserServiceYear::class);
     }
 
-    public function userJobCode()
+    public function userPlot()
     {
         return $this->hasMany(UserJobCode::class)->with('jobCode');
     }
@@ -85,7 +85,7 @@ class User extends Authenticatable
 
     public function getSuperiorName()
     {
-        $jobCode = $this->userJobCode()->where('status', 1)->first();
+        $jobCode = $this->userPlot()->where('status', 1)->first();
         if (!$jobCode) {
             return null;
         }
@@ -99,11 +99,11 @@ class User extends Authenticatable
     public function getTotalMemberStructure()
     {
 
-        if (!$this->userJobCode()->where('status', 1)->first()) {
+        if (!$this->userPlot()->where('status', 1)->first()) {
             return null;
         }
 
-        $query = UserJobCode::where('user_structure_mapping_id', $this->userJobCode()->where('status', 1)->first()->user_structure_mapping_id)->where('status', 1)->count();
+        $query = UserPlot::where('structure_plot_id', $this->userPlot()->where('status', 1)->first()->structure_plot_id)->where('status', 1)->count();
 
         return $query ?? 0;
     }
@@ -111,18 +111,18 @@ class User extends Authenticatable
     public function getTotalSubordinate()
     {
 
-        if (!$this->userJobCode()->where('status', 1)->first()) {
+        if (!$this->userPlot()->where('status', 1)->first()) {
             return null;
         }
 
-        $query = $this->userJobCode()->where('status', 1)->first()->children()->count();
+        $query = $this->userPlot()->where('status', 1)->first()->children()->count();
 
         return $query ?? 0;
     }
 
     public function getDetailIKWTrained()
     {
-        $jobCodeRecord = $this->userJobCode()->where('status', 1)->first();
+        $jobCodeRecord = $this->userPlot()->where('status', 1)->first();
         if (!$jobCodeRecord) {
             return [];
         }
@@ -164,7 +164,7 @@ class User extends Authenticatable
         $filterCompetent = filter_var($request->filter['competent'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $filterNonCompetent = filter_var($request->filter['nonCompetent'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $start = (int)$request->start ?  (int)$request->start : 0;
-        $jobCodeRecord = $this->userJobCode()->where('status', 1)->first();
+        $jobCodeRecord = $this->userPlot()->where('status', 1)->first();
 
         if (!$jobCodeRecord) {
             return [];
@@ -174,7 +174,7 @@ class User extends Authenticatable
             ->pluck('assessment_result', 'ikw_revision_id')
             ->all();
 
-        $rkiResults = RKI::where('user_structure_mapping_id', $jobCodeRecord->user_structure_mapping_id)
+        $rkiResults = RKI::where('structure_id', $jobCodeRecord->structure_id)
             ->get();
 
         if (!$rkiResults) {

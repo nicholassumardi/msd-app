@@ -14,7 +14,7 @@ class RKI extends Model
     protected $primaryKey = 'id';
     protected $dates      = ['deleted_at'];
     protected $fillable = [
-        'user_structure_mapping_id',
+        'structure_id',
         'ikw_id',
         'training_time',
     ];
@@ -25,8 +25,8 @@ class RKI extends Model
         return $this->belongsTo(IKW::class);
     }
 
-    public function userStructureMapping()
+    public function structure()
     {
-        return $this->belongsTo(UserStructureMapping::class, 'user_structure_mapping_id', 'id');
+        return $this->belongsTo(Structure::class, 'structure_id', 'id');
     }
 }

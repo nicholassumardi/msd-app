@@ -6,15 +6,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class UserStructureMappingHistories extends Model
+class StructureHistories extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table      = 'usm_histories';
+    protected $table      = 'structure_histories';
     protected $primaryKey = 'id';
     protected $dates      = ['deleted_at'];
     protected $fillable   = [
-        'user_structure_mapping_id',
+        'structure_id',
         'revision_no',
         'valid_date',
         'updated_date',
@@ -28,8 +28,8 @@ class UserStructureMappingHistories extends Model
 
     ];
 
-    public function userStructureMapping()
+    public function structure()
     {
-        return $this->belongsTo(UserStructureMapping::class);
+        return $this->belongsTo(Structure::class);
     }
 }

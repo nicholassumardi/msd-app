@@ -167,10 +167,10 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::get('/', [StructureController::class, 'index']);
         Route::post('import', [StructureController::class, 'importStructureExcel']);
         Route::post('import_user_job_code', [StructureController::class, 'importUserJobCodeExcel']);
-        Route::post('store_mapping', [StructureController::class, 'storeMapping']);
-        Route::post('store_mapping_request', [StructureController::class, 'storeMappingRequest']);
-        Route::post('store', [StructureController::class, 'store']);
-        Route::post('store_request_employee', [StructureController::class, 'storeRequestEmployee']);
+        // Route::post('store_structure', [StructureController::class, 'storeStructure']);
+        // Route::post('store_user_plot_request', [StructureController::class, 'storeUserPlotRequest']);
+        Route::post('store', [StructureController::class, 'storeUserPlot']);
+        // Route::post('store_request_employee', [StructureController::class, 'storeRequestEmployee']);
         Route::put('update_mapping/{id}', [StructureController::class, 'updateUserMapping']);
         Route::put('update_bulk_mapping', [StructureController::class, 'updateBulkUserMapping']);
         Route::put('update_mapping_request/{id}', [StructureController::class, 'updateUserMappingRequest']);

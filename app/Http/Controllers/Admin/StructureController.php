@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\UserStructureMappingRequest;
+use App\Http\Requests\StructureRequest;
 use App\Models\User;
 use App\Services\StructureServices;
+use App\Services\UserPlotServices;
 use App\Services\UserStructureMappingServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -15,6 +16,7 @@ class StructureController extends Controller
 
     protected $user;
     protected $service;
+    protected $userPlotService;
     protected $userMappingService;
 
     public function __construct()
@@ -22,6 +24,7 @@ class StructureController extends Controller
         $this->user = User::all();
         $this->service = new StructureServices();
         $this->userMappingService = new UserStructureMappingServices();
+        $this->userPlotService = new UserPlotServices();
     }
 
     public function index()
@@ -32,7 +35,7 @@ class StructureController extends Controller
     public function importStructureExcel(Request $request)
     {
         $cacheKey = uniqid();
-        $query = $this->userMappingService->importStructureExcel($request, $cacheKey);
+        $query = $this->service->importStructureExcel($request, $cacheKey);
         $filepath = Cache::get($cacheKey);
 
         if (is_array($filepath) && isset($filepath['status']) && $filepath['status'] === 500) {
@@ -64,7 +67,7 @@ class StructureController extends Controller
 
     public function importUserJobCodeExcel(Request $request)
     {
-        $query = $this->service->importUserJobCodeExcel($request);
+        $query = $this->userPlotService->importUserJobCodeExcel($request);
 
         if ($query) {
             $response = [
@@ -82,29 +85,11 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function store(Request $request)
-    {
-        $data = $this->service->storeStructure($request);
 
-        if ($data) {
-            $response = [
-                'status'  => 200,
-                'message' => 'Data successfully created'
-            ];
-        } else {
-            $response = [
-                'status'  => 500,
-                'message' => 'Data failed to create'
-            ];
-        }
-
-        return response()->json($response);
-    }
-
-    public function storeMapping(UserStructureMappingRequest $request)
+    public function storeStructure(StructureRequest $request)
     {
         $validatedRequest = $request->validated();
-        $data = $this->userMappingService->storeUserMapping(new Request($validatedRequest));
+        $data = $this->service->storeStructure(new Request($validatedRequest));
 
         if ($data) {
             $response = [
@@ -121,9 +106,9 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function storeRequestEmployee(Request $request)
+    public function storeUserPlot(Request $request)
     {
-        $data = $this->service->requestNewEmployee($request);
+        $data = $this->userPlotService->storeUserPlot($request);
 
         if ($data) {
             $response = [
@@ -140,9 +125,29 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function storeMappingRequest(Request $request)
+
+    // public function storeRequestEmployee(Request $request)
+    // {
+    //     $data = $this->service->requestNewEmployee($request);
+
+    //     if ($data) {
+    //         $response = [
+    //             'status'  => 200,
+    //             'message' => 'Data successfully created'
+    //         ];
+    //     } else {
+    //         $response = [
+    //             'status'  => 500,
+    //             'message' => 'Data failed to create'
+    //         ];
+    //     }
+
+    //     return response()->json($response);
+    // }
+
+    public function storeUserPlotRequest(Request $request)
     {
-        $data = $this->userMappingService->storeUserMappingRequest($request);
+        $data = $this->userPlotService->storeUserPlotRequest($request);
 
         if ($data) {
             $response = [

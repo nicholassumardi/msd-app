@@ -15,8 +15,8 @@ class RkiServices extends BaseServices
     {
         $this->rki = RKI::with([
             'ikw',
-            'userStructureMapping.department',
-            'userStructureMapping.jobCode'
+            'structure.department',
+            'structure.jobCode'
         ]);
     }
 
@@ -45,7 +45,7 @@ class RkiServices extends BaseServices
 
             foreach ($request->ikws as $ikw_id) {
                 RKI::create([
-                    'user_structure_mapping_id'   => $request->user_structure_mapping_id,
+                    'structure_id'                => $request->structure_id,
                     'ikw_id'                      => (int) $ikw_id,
                     'training_time'               => (int) $request->training_time,
                 ]);
@@ -78,7 +78,7 @@ class RkiServices extends BaseServices
 
             if ($rki) {
                 $rki->update([
-                    'user_structure_mapping_id'   => $request->user_structure_mapping_id,
+                    'structure_id'                => $request->structure_id,
                     'ikw_id'                      => $request->ikw_id,
                     'training_time'               => $request->training_time,
                 ]);
@@ -101,18 +101,18 @@ class RkiServices extends BaseServices
         }
     }
 
-    public function getDataRKIByUserStructureMapping($user_structure_mapping_id)
+    public function getDataRKIByStructure($structure_id)
     {
         $rki = collect();
-        if ($user_structure_mapping_id) {
-            $rki = $this->rki->where('user_structure_mapping_id', $user_structure_mapping_id)->get()?->map(function ($data) {
+        if ($structure_id) {
+            $rki = $this->rki->where('structure_id', $structure_id)->get()?->map(function ($data) {
                 return [
                     'id'                      => $data->id ?? null,
-                    'unique_code'             => $data->userStructureMapping
-                        ?  $data->userStructureMapping->position_code_structure . "/" .
+                    'unique_code'             => $data->structure
+                        ?  $data->structure->position_code_structure . "/" .
                         ($data->ikw ?  $data->ikw->code : "No Code") : null,
-                    'user_structure_mapping'  => $data->userStructureMapping ?? "",
-                    'ikws'                    => $data->userStructureMapping ?? "",
+                    'user_structure_mapping'  => $data->structure ?? "",
+                    'ikws'                    => $data->structure ?? "",
                     'ikw_id'                  => $data->ikw->id ?? "",
                     'ikw_code'                => $data->ikw->code ?? "",
                     'ikw_name'                => $data->ikw->name ?? "",
@@ -134,10 +134,10 @@ class RkiServices extends BaseServices
             $rki = $this->rki->where('ikw_id', $request->ikw_id)->get()->map(function ($data) {
                 return [
                     'id'                      => $data->id,
-                    'unique_code'             => $data->userStructureMapping
-                        ?  $data->userStructureMapping->position_code_structure . "/" .
+                    'unique_code'             => $data->structure
+                        ?  $data->structure->position_code_structure . "/" .
                         ($data->ikw->code ?  $data->ikw->code : "No Code") : null,
-                    'user_structure_mapping'  => $data->userStructureMapping ?? "",
+                    'user_structure_mapping'  => $data->structure ?? "",
                     'ikw_id'                  => $data->ikw->id ?? "",
                     'ikw_code'                => $data->ikw->code ?? "",
                     'ikw_name'                => $data->ikw->name ?? "",
@@ -185,11 +185,11 @@ class RkiServices extends BaseServices
         $globalFilter = $request->globalFilter ?? '';
 
         $queryData = $this->rki
-            ->with(['ikw', 'ikw.department', 'userStructureMapping'])
+            ->with(['ikw', 'ikw.department', 'structure'])
             ->where(function ($query) use ($filters, $globalFilter) {
                 if ($globalFilter) {
                     $query->where(function ($query) use ($globalFilter) {
-                        $query->orWhereHas('userStructureMapping', function ($q) use ($globalFilter) {
+                        $query->orWhereHas('structure', function ($q) use ($globalFilter) {
                             $q->where('name', 'LIKE', "%$globalFilter%");
                         });
                     });
@@ -208,8 +208,8 @@ class RkiServices extends BaseServices
 
         $allData = $queryData->get();
 
-        // Group by user_structure_mapping_id
-        $groupedData = $allData->groupBy('user_structure_mapping_id');
+        // Group by structure_id
+        $groupedData = $allData->groupBy('structure_id');
 
         $totalCount =  ceil($groupedData->count() / $size);
 
@@ -217,11 +217,11 @@ class RkiServices extends BaseServices
         // Paginate the grouped data
         $paginatedGroups = $groupedData->slice($start, $size);
 
-        $formattedData = $paginatedGroups->map(function ($group, $userStructureId) {
+        $formattedData = $paginatedGroups->map(function ($group, $structureId) {
             $firstRecord = $group->first();
             // Map each IKW in the group
             $ikwList = $group->map(function ($record) {
-                $position_job_code =  ($record->userStructureMapping->jobCode->full_code ?? "") . "-" . ($record->userStructureMapping->position_code_structure ?? "");
+                $position_job_code =  ($record->structure->jobCode->full_code ?? "") . "-" . ($record->structure->position_code_structure ?? "");
                 return [
                     'id'                => $record->id,
                     'ikw_id'            => $record->ikw->id ?? null,
@@ -235,10 +235,10 @@ class RkiServices extends BaseServices
             })->values();
 
             return [
-                'user_structure_mapping_id' => $userStructureId,
-                'structure_name'            => $firstRecord->userStructureMapping->name ?? "",
-                'structure_description'     => $firstRecord->userStructureMapping->description ?? "",
-                'structure_code'            => $firstRecord->userStructureMapping->code ?? "",
+                'structure_id'              => $structureId,
+                'structure_name'            => $firstRecord->structure->name ?? "",
+                'structure_description'     => $firstRecord->structure->description ?? "",
+                'structure_code'            => $firstRecord->structure->code ?? "",
                 'ikw_count'                 => $group->count(),
                 'total_training_hours'      => $group->sum('training_time'),
                 'ikwList'                   => $ikwList,
