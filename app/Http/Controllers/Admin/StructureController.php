@@ -7,7 +7,6 @@ use App\Http\Requests\StructureRequest;
 use App\Models\User;
 use App\Services\StructureServices;
 use App\Services\UserPlotServices;
-use App\Services\UserStructureMappingServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -17,13 +16,11 @@ class StructureController extends Controller
     protected $user;
     protected $service;
     protected $userPlotService;
-    protected $userMappingService;
 
     public function __construct()
     {
         $this->user = User::all();
         $this->service = new StructureServices();
-        $this->userMappingService = new UserStructureMappingServices();
         $this->userPlotService = new UserPlotServices();
     }
 
@@ -125,26 +122,6 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-
-    // public function storeRequestEmployee(Request $request)
-    // {
-    //     $data = $this->service->requestNewEmployee($request);
-
-    //     if ($data) {
-    //         $response = [
-    //             'status'  => 200,
-    //             'message' => 'Data successfully created'
-    //         ];
-    //     } else {
-    //         $response = [
-    //             'status'  => 500,
-    //             'message' => 'Data failed to create'
-    //         ];
-    //     }
-
-    //     return response()->json($response);
-    // }
-
     public function storeUserPlotRequest(Request $request)
     {
         $data = $this->userPlotService->storeUserPlotRequest($request);
@@ -164,31 +141,9 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function show($id)
+    public function showStructure($id)
     {
-
         $data = $this->service->getDataStructure($id);
-
-        if ($data) {
-            $response = [
-                'status'  => 200,
-                'data'    => $data,
-                'message' => 'Successfully fetched data structure'
-            ];
-        } else {
-            $response = [
-                'status'  => 404,
-                'message' => 'No Data found'
-            ];
-        }
-
-        return response()->json($response);
-    }
-
-    public function showUserMapping($id)
-    {
-
-        $data = $this->userMappingService->getDataUserMapping($id);
 
         if ($data) {
             $response = [
@@ -206,7 +161,27 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function showAll()
+    public function showUserPlot($id)
+    {
+        $data = $this->userPlotService->getDataUserPlot($id);
+
+        if ($data) {
+            $response = [
+                'status'  => 200,
+                'data'    => $data,
+                'message' => 'Successfully fetched data structure'
+            ];
+        } else {
+            $response = [
+                'status'  => 404,
+                'message' => 'No Data found'
+            ];
+        }
+
+        return response()->json($response);
+    }
+
+    public function showAllUserPlot()
     {
         $data = $this->service->getDataStructure();
 
@@ -226,9 +201,9 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function showStructurePagination(Request $request)
+    public function showUserPlotPagination(Request $request)
     {
-        $data = $this->service->getDataStructurePagination($request);
+        $data = $this->userPlotService->getDataUserPlotPagination($request);
 
         if ($data) {
             $response = [
@@ -247,9 +222,9 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function showAllUserMapping()
+    public function showAllStructure()
     {
-        $data = $this->userMappingService->getDataUserMapping();
+        $data = $this->service->getDataStructure();
 
         if ($data) {
             $response = [
@@ -267,9 +242,9 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function showAllMappingByDepartment(Request $request)
+    public function showAllStructureByDepartment(Request $request)
     {
-        $data = $this->userMappingService->getDataUserMappingByDepartment($request);
+        $data = $this->service->getDataStructureByDepartment($request);
 
         if ($data['data']) {
             $pagination = [
@@ -295,9 +270,29 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function showAllMappingHierarchy(Request $request, $id)
+    public function showAllStructureHierarchy(Request $request, $id)
     {
-        $data = $this->userMappingService->getDataAllMappingHierarchy($request, $id);
+        $data = $this->service->getDataAllStructureHierarchy($request, $id);
+
+        if ($data) {
+            $response = [
+                'status'  => 200,
+                'data'    => $data,
+                'message' => 'Successfully fetched data structure'
+            ];
+        } else {
+            $response = [
+                'status'  => 404,
+                'message' => 'No Data found'
+            ];
+        }
+
+        return response()->json($response);
+    }
+
+    public function showStructureHierarchyUser($id)
+    {
+        $data = $this->service->getStructureHierarchyUser($id);
 
         if ($data) {
             $response = [
@@ -315,15 +310,15 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function showMappingHierarchyUser($id)
+    public function showStructureHierarchyParent($parent_id)
     {
-        $data = $this->userMappingService->getMappingHierarchyUser($id);
+        $data = $this->service->getStructureHierarchyParent($parent_id);
 
         if ($data) {
             $response = [
                 'status'  => 200,
                 'data'    => $data,
-                'message' => 'Successfully fetched data mapping'
+                'message' => 'Successfully fetched data structure'
             ];
         } else {
             $response = [
@@ -335,15 +330,15 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function showMappingHierarchyParent($parent_id)
+    public function showStructureHierarchyChildren($id)
     {
-        $data = $this->userMappingService->getMappingHierarchyParent($parent_id);
+        $data = $this->service->getStructureHierarchyChildren($id);
 
         if ($data) {
             $response = [
                 'status'  => 200,
                 'data'    => $data,
-                'message' => 'Successfully fetched data mapping'
+                'message' => 'Successfully fetched data Structure'
             ];
         } else {
             $response = [
@@ -355,29 +350,9 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function showMappingHierarchyChildren($id)
+    public function showUserPlotPosition()
     {
-        $data = $this->userMappingService->getMappingHierarchyChildren($id);
-
-        if ($data) {
-            $response = [
-                'status'  => 200,
-                'data'    => $data,
-                'message' => 'Successfully fetched data mapping'
-            ];
-        } else {
-            $response = [
-                'status'  => 404,
-                'message' => 'No Data found'
-            ];
-        }
-
-        return response()->json($response);
-    }
-
-    public function showUserJobCode()
-    {
-        $data = $this->service->getDataUserJobCode();
+        $data = $this->userPlotService->getDataUserPlotPosition();
 
         if ($data) {
             $response = [
@@ -396,9 +371,9 @@ class StructureController extends Controller
     }
 
 
-    public function update(Request $request, $uuid)
+    public function updateUserPlot(Request $request, $uuid)
     {
-        $data = $this->service->updateStructure($request, $uuid);
+        $data = $this->userPlotService->updateUserPlot($request, $uuid);
 
         if ($data) {
             $response = [
@@ -415,9 +390,9 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function updateUserMapping(Request $request, $id)
+    public function updateStructure(Request $request, $id)
     {
-        $data = $this->userMappingService->updateUserMapping($request, $id);
+        $data = $this->service->updateStructure($request, $id);
 
         if ($data) {
             $response = [
@@ -434,9 +409,9 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function updateBulkUserMapping(Request $request)
+    public function updateBulkUserStructure(Request $request)
     {
-        $data = $this->userMappingService->updateBulkUserMapping($request);
+        $data = $this->service->updateBulkStructure($request);
 
         if ($data) {
             $response = [
@@ -453,9 +428,9 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function updateUserMappingRequest(Request $request, $id)
+    public function updateUserPlotRequest(Request $request, $id)
     {
-        $data = $this->userMappingService->updateUserMappingRequest($request, $id);
+        $data = $this->userPlotService->updateUserPlotRequest($request, $id);
 
         if ($data) {
             $response = [
@@ -472,28 +447,9 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function moveUserMappingRequest(Request $request, $id)
+    public function updateStatusUserPlot($id_user_plot)
     {
-        $data = $this->userMappingService->moveUserMappingRequest($request, $id);
-
-        if ($data) {
-            $response = [
-                'status' => 200,
-                'message' => 'Successfully updated data user mapping'
-            ];
-        } else {
-            $response = [
-                'status' => 500,
-                'message' => 'Failed to update data user mapping'
-            ];
-        }
-
-        return response()->json($response);
-    }
-
-    public function updateStatus($id_user_job_code)
-    {
-        $data = $this->service->updateStructureStatus($id_user_job_code);
+        $data = $this->userPlotService->updateUserPlotStatus($id_user_plot);
 
         if ($data) {
             $response = [
@@ -510,9 +466,47 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function destroy(Request $request, $id)
+    public function moveUserPlotRequest(Request $request, $id)
+    {
+        $data = $this->userPlotService->moveUserPlotRequest($request, $id);
+
+        if ($data) {
+            $response = [
+                'status' => 200,
+                'message' => 'Successfully updated data user plot'
+            ];
+        } else {
+            $response = [
+                'status' => 500,
+                'message' => 'Failed to update data user plot'
+            ];
+        }
+
+        return response()->json($response);
+    }
+
+    public function destroyStructure(Request $request, $id)
     {
         $data = $this->service->destroyStructure($request, $id);
+
+        if ($data) {
+            $response = [
+                'status'    => 200,
+                'message'   => "Data successfully deleted"
+            ];
+        } else {
+            $response = [
+                'status'    => 500,
+                'message'   => "Data failed to delete"
+            ];
+        }
+
+        return response()->json($response);
+    }
+
+    public function destroyUserPlot(Request $request, $id)
+    {
+        $data = $this->userPlotService->destroyUserPlot($request, $id);
 
         if ($data) {
             $response = [

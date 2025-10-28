@@ -21,7 +21,7 @@ class StructureServices extends BaseServices
     protected $userPlot;
     protected $structureHistories;
     protected $user;
-    
+
     public function __construct()
     {
         $this->structure =  Structure::with('department', 'jobCode', 'children', 'structureHistories')->with([
@@ -425,46 +425,6 @@ class StructureServices extends BaseServices
         }
     }
 
-
-    public function moveUserPlotRequest(Request $request, $id)
-    {
-        try {
-            $this->setLog('info', 'Request store data structure ' . json_encode($request->all()));
-            $this->setLog('info', 'Start');
-            DB::beginTransaction();
-
-            $structureRequest = UserPlotRequest::where('id', $id)->update([
-                'status_slot'      => 0,
-            ]);
-
-            if ($structureRequest) {
-                UserPlotRequest::create([
-                    'user_plot_id'     => $request->user_plot_id,
-                    'group'            => $request->group,
-                    'description'      => $request->description,
-                    'request_date'     => $request->request_date,
-                    'status_slot'      => $request->status_slot,
-                ]);
-            } else {
-                DB::rollBack();
-                return false;
-            }
-
-            $this->setLog('info', 'updated data structure ' . json_encode($request->all()));
-            DB::commit();
-            $this->setLog('info', 'End');
-
-            return true;
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            $this->setLog('error', 'Error store data structure = ' . $exception->getMessage());
-            $this->setLog('error', 'Error store data structure = ' . $exception->getLine());
-            $this->setLog('error', 'Error store data structure = ' . $exception->getFile());
-            $this->setLog('error', 'Error store data structure = ' . $exception->getTraceAsString());
-            return null;
-        }
-    }
-
     public function getDataStructure($id_structure = NULL)
     {
         if (!empty($id_structure)) {
@@ -528,7 +488,7 @@ class StructureServices extends BaseServices
     }
 
     // for hierarchy chart purpose (dormamu chart)
-    public function getDataAllMappingHierarchy(Request $request, $id)
+    public function getDataAllStructureHierarchy(Request $request, $id)
     {
         function mapChildren($data, $includeRelationship = false, $request)
         {
@@ -600,7 +560,7 @@ class StructureServices extends BaseServices
     }
 
     // hierarchy chart (unicef/ somkid)
-    public function getMappingHierarchyUser($id)
+    public function getStructureHierarchyUser($id)
     {
         $userPlot =  $this->userPlot
             ->where('user_id', $id)
@@ -641,7 +601,7 @@ class StructureServices extends BaseServices
         return  $userPlot;
     }
 
-    public function getMappingHierarchyParent($parent_id)
+    public function getStructureHierarchyParent($parent_id)
     {
         $result = [];
         $userPlot = $this->userPlot
@@ -704,7 +664,7 @@ class StructureServices extends BaseServices
         return $result;
     }
 
-    public function getMappingHierarchyChildren($id)
+    public function getStructureHierarchyChildren($id)
     {
         $userPlot =  $this->userPlot
             ->where('id', $id)

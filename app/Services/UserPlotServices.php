@@ -145,122 +145,6 @@ class UserPlotServices extends BaseServices
         }
     }
 
-    public function getDataUserPlot($uuid = NULL)
-    {
-        if (!empty($uuid)) {
-            $queryData =  $this->user->firstWhere('uuid', $uuid)->userPlot;
-        } else {
-            $queryData = $this->user->get();
-            $queryData = $queryData->map(function ($data) {
-                return [
-                    'uuid'               => $data->uuid,
-                    'name'               => $data->name,
-                    'company_name'       => $data->company ? $data->company->name : '',
-                    'company_id'         => $data->company_id,
-                    'department_name'    => $data->department ? $data->department->name : '',
-                    'employee_number'    => $data->userEmployeeNumber()->where('status', 1)->first()->employee_number ?? "",
-                    'department_id'      => $data->department_id,
-                    'jobCode'            => $data->userPlot()->where('status', 1)->first()->jobCode->full_code ?? "",
-                    'group'              => $data->userPlot()->where('status', 1)->first()->group ?? "",
-                ];
-            });
-        }
-
-        return $queryData;
-    }
-
-    public function getDataUserPlotPagination(Request $request)
-    {
-        $start = (int) $request->start;
-        $size = (int)$request->size;
-        $filters = json_decode($request->filters, true) ?? [];
-        $sorting = json_decode($request->sorting, true) ?? [];
-        $globalFilter = $request->globalFilter ?? '';
-
-        $queryData = $this->user->where(function ($query) use ($request, $filters, $globalFilter) {
-            if ($request->id_department) {
-                $query->where('department_id', $request->id_department);
-            }
-
-            if ($globalFilter) {
-                $query->where(function ($query) use ($globalFilter) {
-                    $query->where('name', 'LIKE',  "%$globalFilter%")
-                        ->orWhere('date_of_birth', 'LIKE',  "%$globalFilter%")
-                        ->orWhere('identity_card', 'LIKE',  "%$globalFilter%")
-                        ->orWhere('gender', 'LIKE',  "%$globalFilter%")
-                        ->orWhere('religion', 'LIKE',  "%$globalFilter%")
-                        ->orWhere('email', 'LIKE',  "%$globalFilter%")
-                        ->orWhere('address', 'LIKE',  "%$globalFilter%")
-                        ->orWhere('phone', 'LIKE',  "%$globalFilter%")
-                        ->orWhere('education', 'LIKE',  "%$globalFilter%")
-                        ->orWhere('position_code', 'LIKE',  "%$globalFilter%")
-                        ->orWhere('status_twiji', 'LIKE',  "%$globalFilter%")
-                        ->orWhere('schedule_type', 'LIKE',  "%$globalFilter%");
-                })->orWhereHas('department', function ($query) use ($globalFilter) {
-                    $query->where('name', 'LIKE',  "%$globalFilter%");
-                })->orWhereHas('company', function ($query) use ($globalFilter) {
-                    $query->where('name', 'LIKE',  "%$globalFilter%");
-                })->orWhereHas('userEmployeeNumber', function ($query) use ($globalFilter) {
-                    $query->where('employee_number', 'LIKE',  "%$globalFilter%");
-                })->orWhereHas('userPlot', function ($query) use ($globalFilter) {
-                    $query->whereHas('jobCode', function ($query) use ($globalFilter) {
-                        $query->where('position', 'LIKE',  "%$globalFilter%");
-                    });
-                });
-            }
-
-            foreach ($filters as $filter) {
-                $query->where($filter['id'], $filter['value']);
-            }
-        });
-
-        foreach ($sorting as $sort) {
-            if (isset($sort['id'])) {
-                $queryData->orderBy($sort['id'], $sort['desc'] ? 'DESC' : 'ASC');
-            }
-        }
-
-        $queryData = $queryData->skip($start)
-            ->take($size)
-            ->get();
-
-        $queryData = $queryData->map(function ($data) {
-            return [
-                'uuid'               => $data->uuid,
-                'name'               => $data->name,
-                'company_name'       => $data->company ? $data->company->name : 'NaN',
-                'company_id'         => $data->company_id,
-                'department_name'    => $data->department ? $data->department->name : 'NaN',
-                'employee_number'    => $data->userEmployeeNumber()->where('status', 1)->latest()->first()->employee_number ?? "",
-                'department_id'      => $data->department_id,
-                'roleCode'           => $data->userPlot()->where('status', 1)->latest()->first()->structurePlot->structure->jobCode->full_code ?? "",
-                'group'              => $data->userPlot()->where('status', 1)->latest()->first()->structurePlot->group ?? "",
-                'id_staff'           => $data->userPlot()->where('status', 1)->latest()->first()->id_staff ?? "",
-                'id_structure'       => $data->userPlot()->where('status', 1)->latest()->first()->structurePlot->id_structure ?? "",
-                'position_code'      => $data->userPlot()->where('status', 1)->latest()->first()
-                    ->structurePlot->position_code_structure ?? "",
-                'sub_position'       => $data->userPlot()->where('status', 1)->latest()->first()->structurePlot->structure->name ?? "",
-            ];
-        });
-
-        return $queryData;
-    }
-
-    public function getDataUserPlotPosition()
-    {
-        $queryData = $this->userPlot
-            ->select(
-                'structure_plots.position_code_structure',
-                'job_codes.full_code'
-            )
-            ->join('structure_plots', 'user_plots.structure_id', '=', 'structure_plots.id')
-            ->join('job_codes', 'structure_plots.job_code_id', '=', 'job_codes.id')
-            ->groupBy('structure_plots.position_code_structure', 'job_codes.full_code')
-            ->orderBy('structure_plots.position_code_structure', 'ASC')
-            ->get();
-
-        return $queryData;
-    }
 
     public function updateUserPlot(Request $request, $uuid)
     {
@@ -410,6 +294,164 @@ class UserPlotServices extends BaseServices
             $this->setLog('error', 'Error update data employee number = ' . $exception->getTraceAsString());
             return null;
         }
+    }
+
+
+    public function moveUserPlotRequest(Request $request, $id)
+    {
+        try {
+            $this->setLog('info', 'Request store data structure ' . json_encode($request->all()));
+            $this->setLog('info', 'Start');
+            DB::beginTransaction();
+
+            $structureRequest = UserPlotRequest::where('id', $id)->update([
+                'status_slot'      => 0,
+            ]);
+
+            if ($structureRequest) {
+                UserPlotRequest::create([
+                    'user_plot_id'     => $request->user_plot_id,
+                    'group'            => $request->group,
+                    'description'      => $request->description,
+                    'request_date'     => $request->request_date,
+                    'status_slot'      => $request->status_slot,
+                ]);
+            } else {
+                DB::rollBack();
+                return false;
+            }
+
+            $this->setLog('info', 'updated data structure ' . json_encode($request->all()));
+            DB::commit();
+            $this->setLog('info', 'End');
+
+            return true;
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            $this->setLog('error', 'Error store data structure = ' . $exception->getMessage());
+            $this->setLog('error', 'Error store data structure = ' . $exception->getLine());
+            $this->setLog('error', 'Error store data structure = ' . $exception->getFile());
+            $this->setLog('error', 'Error store data structure = ' . $exception->getTraceAsString());
+            return null;
+        }
+    }
+
+
+    public function getDataUserPlot($uuid = NULL)
+    {
+        if (!empty($uuid)) {
+            $queryData =  $this->user->firstWhere('uuid', $uuid)->userPlot;
+        } else {
+            $queryData = $this->user->get();
+            $queryData = $queryData->map(function ($data) {
+                return [
+                    'uuid'               => $data->uuid,
+                    'name'               => $data->name,
+                    'company_name'       => $data->company ? $data->company->name : '',
+                    'company_id'         => $data->company_id,
+                    'department_name'    => $data->department ? $data->department->name : '',
+                    'employee_number'    => $data->userEmployeeNumber()->where('status', 1)->first()->employee_number ?? "",
+                    'department_id'      => $data->department_id,
+                    'jobCode'            => $data->userPlot()->where('status', 1)->first()->jobCode->full_code ?? "",
+                    'group'              => $data->userPlot()->where('status', 1)->first()->group ?? "",
+                ];
+            });
+        }
+
+        return $queryData;
+    }
+
+    public function getDataUserPlotPagination(Request $request)
+    {
+        $start = (int) $request->start;
+        $size = (int)$request->size;
+        $filters = json_decode($request->filters, true) ?? [];
+        $sorting = json_decode($request->sorting, true) ?? [];
+        $globalFilter = $request->globalFilter ?? '';
+
+        $queryData = $this->user->where(function ($query) use ($request, $filters, $globalFilter) {
+            if ($request->id_department) {
+                $query->where('department_id', $request->id_department);
+            }
+
+            if ($globalFilter) {
+                $query->where(function ($query) use ($globalFilter) {
+                    $query->where('name', 'LIKE',  "%$globalFilter%")
+                        ->orWhere('date_of_birth', 'LIKE',  "%$globalFilter%")
+                        ->orWhere('identity_card', 'LIKE',  "%$globalFilter%")
+                        ->orWhere('gender', 'LIKE',  "%$globalFilter%")
+                        ->orWhere('religion', 'LIKE',  "%$globalFilter%")
+                        ->orWhere('email', 'LIKE',  "%$globalFilter%")
+                        ->orWhere('address', 'LIKE',  "%$globalFilter%")
+                        ->orWhere('phone', 'LIKE',  "%$globalFilter%")
+                        ->orWhere('education', 'LIKE',  "%$globalFilter%")
+                        ->orWhere('position_code', 'LIKE',  "%$globalFilter%")
+                        ->orWhere('status_twiji', 'LIKE',  "%$globalFilter%")
+                        ->orWhere('schedule_type', 'LIKE',  "%$globalFilter%");
+                })->orWhereHas('department', function ($query) use ($globalFilter) {
+                    $query->where('name', 'LIKE',  "%$globalFilter%");
+                })->orWhereHas('company', function ($query) use ($globalFilter) {
+                    $query->where('name', 'LIKE',  "%$globalFilter%");
+                })->orWhereHas('userEmployeeNumber', function ($query) use ($globalFilter) {
+                    $query->where('employee_number', 'LIKE',  "%$globalFilter%");
+                })->orWhereHas('userPlot', function ($query) use ($globalFilter) {
+                    $query->whereHas('jobCode', function ($query) use ($globalFilter) {
+                        $query->where('position', 'LIKE',  "%$globalFilter%");
+                    });
+                });
+            }
+
+            foreach ($filters as $filter) {
+                $query->where($filter['id'], $filter['value']);
+            }
+        });
+
+        foreach ($sorting as $sort) {
+            if (isset($sort['id'])) {
+                $queryData->orderBy($sort['id'], $sort['desc'] ? 'DESC' : 'ASC');
+            }
+        }
+
+        $queryData = $queryData->skip($start)
+            ->take($size)
+            ->get();
+
+        $queryData = $queryData->map(function ($data) {
+            return [
+                'uuid'               => $data->uuid,
+                'name'               => $data->name,
+                'company_name'       => $data->company ? $data->company->name : 'NaN',
+                'company_id'         => $data->company_id,
+                'department_name'    => $data->department ? $data->department->name : 'NaN',
+                'employee_number'    => $data->userEmployeeNumber()->where('status', 1)->latest()->first()->employee_number ?? "",
+                'department_id'      => $data->department_id,
+                'roleCode'           => $data->userPlot()->where('status', 1)->latest()->first()->structurePlot->structure->jobCode->full_code ?? "",
+                'group'              => $data->userPlot()->where('status', 1)->latest()->first()->structurePlot->group ?? "",
+                'id_staff'           => $data->userPlot()->where('status', 1)->latest()->first()->id_staff ?? "",
+                'id_structure'       => $data->userPlot()->where('status', 1)->latest()->first()->structurePlot->id_structure ?? "",
+                'position_code'      => $data->userPlot()->where('status', 1)->latest()->first()
+                    ->structurePlot->position_code_structure ?? "",
+                'sub_position'       => $data->userPlot()->where('status', 1)->latest()->first()->structurePlot->structure->name ?? "",
+            ];
+        });
+
+        return $queryData;
+    }
+
+    public function getDataUserPlotPosition()
+    {
+        $queryData = $this->userPlot
+            ->select(
+                'structure_plots.position_code_structure',
+                'job_codes.full_code'
+            )
+            ->join('structure_plots', 'user_plots.structure_id', '=', 'structure_plots.id')
+            ->join('job_codes', 'structure_plots.job_code_id', '=', 'job_codes.id')
+            ->groupBy('structure_plots.position_code_structure', 'job_codes.full_code')
+            ->orderBy('structure_plots.position_code_structure', 'ASC')
+            ->get();
+
+        return $queryData;
     }
 
     public function destroyUserPlot(Request $request, $id)
