@@ -7,7 +7,7 @@ use App\Models\IKWRevision;
 use App\Models\RKI;
 use App\Models\Training;
 use App\Models\User;
-use App\Models\UserJobCode;
+use App\Models\UserPlot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -20,17 +20,17 @@ class EvaluationServices extends BaseServices
     protected $rki;
     protected $ikwRevision;
     protected $ikw;
-    protected $userJobCode;
+    protected $userPlot;
 
     public function __construct()
     {
 
         $this->training = Training::with('trainee.department', 'trainer', 'assessor', 'ikwRevision.ikw');
-        $this->user = User::with('company', 'department', 'userEmployeeNumber', 'userServiceYear', 'userJobCode', 'certificates', 'training');
+        $this->user = User::with('company', 'department', 'userEmployeeNumber', 'userServiceYear', 'userPlot', 'certificates', 'training');
         $this->rki = RKI::with('ikw');
         $this->ikwRevision = IKWRevision::with('ikw', 'ikwMeeting', 'ikwPosition');
         $this->ikw = IKW::with('department', 'jobTaskDetail', 'ikwRevision');
-        $this->userJobCode = UserJobCode::with('user', 'jobCode', 'userStructureMapping');
+        $this->userPlot = UserPlot::with('user', 'structurePlot.structure.jobCode', 'structurePlot.structure');
     }
 
     public function getDataEvaluation(Request $request)
@@ -71,9 +71,13 @@ class EvaluationServices extends BaseServices
                     $query->where('name', 'LIKE',  "%{$globalFilter}%");
                 })->orWhereHas('userEmployeeNumber', function ($query) use ($globalFilter) {
                     $query->where('employee_number', 'LIKE',  "%{$globalFilter}%");
-                })->orWhereHas('userJobCode', function ($query) use ($globalFilter) {
-                    $query->whereHas('jobCode', function ($query) use ($globalFilter) {
-                        $query->where('full_code', 'LIKE',  "%{$globalFilter}%");
+                })->orWhereHas('userPlot', function ($query) use ($globalFilter) {
+                    $query->whereHas('structurePlot', function ($query) use ($globalFilter) {
+                        $query->whereHas('structure', function ($query) use ($globalFilter) {
+                            $query->whereHas('jobCode', function ($query) use ($globalFilter) {
+                                $query->where('full_code', 'LIKE',  "%{$globalFilter}%");
+                            });
+                        });
                     });
                 });
             }
@@ -98,9 +102,9 @@ class EvaluationServices extends BaseServices
 
         $user = $user->map(function ($data) {
             $nip = $data->userEmployeeNumber()->where('status', 1)->first()->employee_number ?? '';
-            $role_position_code = $data->userJobCode->where('status', 1)->first() ? $data->userJobCode()->where('status', 1)->first()->jobCode->full_code ?? "" . ' - ' . $data->userJobCode()->where('status', 1)->first()->position_code_structure ?? "" : '';
-            $roleCode =  $data->userJobCode()->where('status', 1)->first()->jobCode->full_code ?? "";
-            $group = $data->userJobCode()->where('status', 1)->latest()->first()->group ?? "";
+            $role_position_code = $data->userPlot->where('status', 1)->first() ? $data->userPlot()->where('status', 1)->first()->structurePlot->structure->jobCode->full_code ?? "" . ' - ' . $data->userPlot()->where('status', 1)->first()->structurePlot->position_code_structure ?? "" : '';
+            $roleCode =  $data->userPlot()->where('status', 1)->first()->structurePlot->structure->jobCode->full_code ?? "";
+            $group = $data->userPlot()->where('status', 1)->latest()->first()->structurePlot->group ?? "";
             return [
                 'id'                  => $data->id,
                 'name'                => $data->name ?? '',
@@ -191,11 +195,11 @@ class EvaluationServices extends BaseServices
     public function getTrainingPlanningRKI($id)
     {
         $employee = $this->user->firstWhere('id', $id);
-        $structureCode =  $employee->userJobCode()->where('status', 1)->first()?->user_structure_mapping_id;
+        $structureCode =  $employee->userPlot()->where('status', 1)->first()?->structurePlot->structure_id;
 
 
         $revisionIDs = $this->rki
-            ->where('user_structure_mapping_id', $structureCode)
+            ->where('structure_id', $structureCode)
             ->whereHas('ikw.ikwRevision')
             ->with(['ikw.ikwRevision' => fn($q) => $q->orderByDesc('revision_no')])
             ->get()
@@ -274,14 +278,14 @@ class EvaluationServices extends BaseServices
     public function getDetailRKI($id)
     {
         $employee = $this->user->firstWhere('id', $id);
-        $jobCodeRecord = $employee->userJobCode()->where('status', 1)->first();
+        $jobCodeRecord = $employee->userPlot()->where('status', 1)->first();
         if (!$jobCodeRecord) {
             return [];
         }
 
-        $userStructureMappingID =  $employee->userJobCode()->where('status', 1)->first()?->user_structure_mapping_id;
+        $structureID =  $employee->userPlot()->where('status', 1)->first()?->structurePlot->structure_id;
 
-        $ikwIds =  $this->rki->where('user_structure_mapping_id', $userStructureMappingID)
+        $ikwIds =  $this->rki->where('structure_id', $structureID)
             ->pluck('ikw_id');
         if ($ikwIds->isEmpty()) {
             return [];
@@ -608,9 +612,9 @@ class EvaluationServices extends BaseServices
     public function getEligibleIKWByTrainer($request)
     {
         $trainer = $this->user->firstWhere('uuid', $request->trainer_id);
-        $usm_id =  $trainer?->userJobCode() ?  $trainer->userJobCode()->where('status', 1)->first()?->user_structure_mapping_id : null;
+        $structure_id =  $trainer?->userJobCode() ?  $trainer->userJobCode()->where('status', 1)->first()?->structure_id : null;
 
-        $rki = $this->rki->where('user_structure_mapping_id',  $usm_id)->pluck('ikw_id');
+        $rki = $this->rki->where('structure_id',  $structure_id)->pluck('ikw_id');
 
 
         $ikwRevision = $this->ikwRevision->whereIn('ikw_id', $rki)
@@ -759,7 +763,7 @@ class EvaluationServices extends BaseServices
                     ->get()
                     ->map(function ($rki) use ($userJobCode) {
                         return [
-                            'user_structure_mapping_id'   => $rki->user_structure_mapping_id,
+                            'structure_id'   => $rki->structure_id,
                             'ikw_id'              => $rki->ikw_id,
                             'employee_name'       => $userJobCode->user->name ?? '',
                             'employee_type'       => $userJobCode->user->employee_type ?? '',
@@ -825,7 +829,7 @@ class EvaluationServices extends BaseServices
                     });
 
                     return [
-                        'user_structure_mapping_id'   => $rki->user_structure_mapping_id,
+                        'structure_id'   => $rki->structure_id,
                         'ikw_id'              => $rki->ikw_id,
                         'employee_name'       => $userJobCode->user->name ?? '',
                         'employee_type'       => $userJobCode->user->employee_type ?? '',

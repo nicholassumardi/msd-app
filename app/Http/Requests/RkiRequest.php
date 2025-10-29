@@ -25,15 +25,15 @@ class RkiRequest extends FormRequest
     public function rules()
     {
         return [
-            'user_structure_mapping_id' => ['nullable'],
+            'structure_id' => ['nullable'],
             'ikw_id' => ['required', 'array', 'distinct'],
             'ikw_id.*' => [
                 'required',
                 function ($attribute, $value, $fail) {
-                    $usmId = $this->user_structure_mapping_id ?? 0;
+                    $structureID = $this->structure_id ?? 0;
 
                     $exists = DB::table('your_table_name')
-                        ->where('user_structure_mapping_id', $usmId)
+                        ->where('structure_id', $structureID)
                         ->where('ikw_id', $value ?? 0)
                         ->exists();
 

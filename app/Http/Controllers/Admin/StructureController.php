@@ -62,9 +62,9 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function importUserJobCodeExcel(Request $request)
+    public function ImportUserPlotExcel(Request $request)
     {
-        $query = $this->userPlotService->importUserJobCodeExcel($request);
+        $query = $this->userPlotService->ImportUserPlotExcel($request);
 
         if ($query) {
             $response = [

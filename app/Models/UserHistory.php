@@ -54,8 +54,8 @@ class UserHistory extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function userJobCode()
+    public function userPlot()
     {
-        return $this->hasMany(UserJobCode::class)->with('jobCode');
+        return $this->hasMany(UserPlot::class)->with('structurePlot.structure.jobCode');
     }
 }

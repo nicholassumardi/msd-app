@@ -7,7 +7,7 @@ use App\Models\JobDescDetail;
 use App\Models\JobDescription;
 use App\Models\JobTask;
 use App\Models\JobTaskDetail;
-use App\Models\UserStructureMapping;
+use App\Models\structure;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -121,7 +121,7 @@ class ImportJobTaskDescJob implements ShouldQueue
         $unique        = sprintf("%s-%s", $userStructure, $jobDescCode);
 
         // Common identifier lookups
-        $userStructureMapping = $this->findUserStructureMapping($userStructure);
+        $structure = $this->findstructure($userStructure);
 
         $ikwId = $this->findIKW($row[6] ?? null)->id ?? null;
         $taskDescription = $row[5] ?? null;
@@ -145,7 +145,7 @@ class ImportJobTaskDescJob implements ShouldQueue
 
         if ($taskDescription) {
             $dataJobTask[$taskDescription] = [
-                'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
+                'structure_id'               => $structure->id ?? null,
                 'description'                => $taskDescription,
                 'code'                       => $jobDescCode,
             ];
@@ -154,13 +154,13 @@ class ImportJobTaskDescJob implements ShouldQueue
         // GET IKW & Job Task & Job Desc Relationship
         if ($ikwId) {
             $dataJobDescDetail[] = [
-                'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
+                'structure_id'               => $structure->id ?? null,
                 'ikw_id'                     => $ikwId,
                 'code'                       => $jobDescCode,
             ];
 
             $dataJobTaskDetail[] = [
-                'user_structure_mapping_id'  => $userStructureMapping->id ?? null,
+                'structure_id'               => $structure->id ?? null,
                 'ikw_id'                     => $ikwId,
                 'description'                => $taskDescription,
             ];
@@ -214,7 +214,7 @@ class ImportJobTaskDescJob implements ShouldQueue
             $job_description = $this->findJobDescription($data['code']);
             $unique = sprintf("%s-%s", $job_description->id ?? "None", $data['ikw_id']);
             $insertedData[$unique] = [
-                'user_structure_mapping_id' => $data['user_structure_mapping_id'],
+                'structure_id'              => $data['structure_id'],
                 'job_description_id'        => $job_description->id ?? null,
                 'ikw_id'                    => $data['ikw_id'],
             ];
@@ -251,9 +251,9 @@ class ImportJobTaskDescJob implements ShouldQueue
             ->first();
     }
 
-    private function findUserStructureMapping($arg1)
+    private function findstructure($arg1)
     {
-        return UserStructureMapping::whereFuzzy('name', $arg1)
+        return structure::whereFuzzy('name', $arg1)
             ->first();
     }
 

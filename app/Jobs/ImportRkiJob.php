@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Models\IKW;
 use App\Models\RKI;
-use App\Models\UserStructureMapping;
+use App\Models\Structure;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -40,11 +40,11 @@ class ImportRkiJob implements ShouldQueue
                 if ($i == 1) {
                     foreach ($sheet->getRowIterator() as $key => $row) {
                         if ($key != 1) {
-                            $usm = $this->findUserStructureMapping($row->getCells()[1]->getValue());
+                            $structure = $this->findStructure($row->getCells()[1]->getValue());
                             $ikw = $this->findIkw($row->getCells()[3]->getValue(), $row->getCells()[4]->getValue(), $row->getCells()[8]->getComputedValue());
 
                             $data = [
-                                'user_structure_mapping_id'  => $usm->id ?? NULL,
+                                'structure_id'               => $structure->id ?? NULL,
                                 'ikw_id'                     => $ikw->id ?? NULL,
                                 'training_time'              => (int) $row->getCells()[6]->getValue() ?? NULL,
                             ];
@@ -78,11 +78,11 @@ class ImportRkiJob implements ShouldQueue
         }
     }
 
-    public function findUserStructureMapping($arg)
+    public function findStructure($arg)
     {
         [$jobCode, $positionCode] = explode('-', $arg, 2);
 
-        return UserStructureMapping::whereHas('jobCode', function ($query) use ($jobCode) {
+        return Structure::whereHas('jobCode', function ($query) use ($jobCode) {
             $query->where('full_code', $jobCode);
         })
             ->whereFuzzy('position_code_structure', $positionCode)
@@ -100,6 +100,6 @@ class ImportRkiJob implements ShouldQueue
 
     public function insertChunk($dataArrayRKI)
     {
-        RKI::upsert($dataArrayRKI, ['usm_id_non_null', 'ikw_id_non_null'], ['user_structure_mapping_id', 'ikw_id', 'training_time']);
+        RKI::upsert($dataArrayRKI, ['structure_id_non_null', 'ikw_id_non_null'], ['structure_id', 'ikw_id', 'training_time']);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\ImportUserJobCodeJob;
+use App\Jobs\ImportUserPlotJob;
 use App\Models\Structure;
 use App\Models\StructurePlot;
 use App\Models\User;
@@ -27,11 +28,11 @@ class UserPlotServices extends BaseServices
         $this->structure = Structure::with('department', 'jobCode', 'structurePlot', 'structureHistories');
     }
 
-    public function importUserJobCodeExcel(Request $request)
+    public function ImportUserPlotExcel(Request $request)
     {
         $file = $request->file;
         $filepath = $file->storeAs('temp', $request->file->getClientOriginalName(), 'public');
-        $query =  ImportUserJobCodeJob::dispatch($filepath);
+        $query =  ImportUserPlotJob::dispatch($filepath);
 
         if ($query) {
             return true;

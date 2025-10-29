@@ -18,9 +18,9 @@ class JobTask extends Model
         'description',
     ];
 
-    public function userStructureMapping()
+    public function structure()
     {
-        return $this->belongsTo(UserStructureMapping::class);
+        return $this->belongsTo(Structure::class);
     }
 
     public function jobTaskDetail()

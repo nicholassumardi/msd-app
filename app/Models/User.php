@@ -70,7 +70,7 @@ class User extends Authenticatable
 
     public function userPlot()
     {
-        return $this->hasMany(UserJobCode::class)->with('jobCode');
+        return $this->hasMany(UserPlot::class)->with('structurePlot.structure.jobCode');
     }
 
     public function certificates()
@@ -85,14 +85,14 @@ class User extends Authenticatable
 
     public function getSuperiorName()
     {
-        $jobCode = $this->userPlot()->where('status', 1)->first();
-        if (!$jobCode) {
+        $plot = $this->userPlot()->where('status', 1)->first();
+        if (!$plot) {
             return null;
         }
 
-        $parentJobCode = $jobCode->parent->user->name ?? "-";
+        $parentPlot = $plot->parent->user->name ?? "-";
 
-        return $parentJobCode;
+        return $parentPlot;
     }
 
 

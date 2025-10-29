@@ -15,7 +15,7 @@ class CreateUsmHistoriesTable extends Migration
     {
         Schema::create('usm_histories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_structure_mapping_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('structure_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('revision_no')->nullable();
             $table->date('valid_date')->nullable();
             $table->date('updated_date')->nullable();
@@ -26,7 +26,7 @@ class CreateUsmHistoriesTable extends Migration
             $table->date('distribution_date')->nullable();
             $table->date('withdrawal_date')->nullable();
             $table->text('logs')->nullable();
-            $table->unique(['revision_no', 'user_structure_mapping_id']);
+            $table->unique(['revision_no', 'structure_id']);
             $table->timestamps();
             $table->softDeletes();
         });

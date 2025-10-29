@@ -53,7 +53,7 @@ class TrainingServices extends BaseServices
                 $nip_assessor = $training->assessor ? $training->assessor->userEmployeeNumber()->where('status', 1)->first()->employee_number : '';
                 $ikw_name =  $training->ikwRevision->ikw->code ?? '';
                 $nip_ikw_trainee = $nip_trainee . '/' . $ikw_name;
-                $role_position_code_trainee =  $training->assessor ? $training->assessor->userJobCode()->where('status', 1)->first()->jobCode->full_code . ' - ' . $training->assessor->userJobCode()->where('status', 1)->first()->position_code_structure : '';
+                $role_position_code_trainee =  $training->assessor ? $training->assessor->userPlot()->where('status', 1)->first()->structurePlot->structure->jobCode->full_code . ' - ' . $training->assessor->userPlot()->where('status', 1)->first()->structurePlot->position_code_structure : '';
                 return [
                     'no'   => $key + 1,
                     'no_training'                    => $training->no_training,
@@ -428,7 +428,7 @@ class TrainingServices extends BaseServices
             $nip_assessor = $data->assessor ? $data->assessor->userEmployeeNumber()->where('status', 1)->first()->employee_number : '';
             $ikw_name =  $data->ikwRevision->ikw->code ?? '';
             $nip_ikw_trainee = $nip_trainee . '/' . $ikw_name;
-            $role_position_code_trainee =  $data->assessor ? $data->assessor->userJobCode()->where('status', 1)->first()->jobCode->full_code . ' - ' . $data->assessor->userJobCode()->where('status', 1)->first()->position_code_structure : '';
+            $role_position_code_trainee =  $data->assessor ? $data->assessor->userPlot()->where('status', 1)->first()->structurePlot->structure->jobCode->full_code . ' - ' . $data->assessor->userPlot()->where('status', 1)->first()->structurePlot->position_code_structure : '';
 
             return [
                 'id'                             => $data->id,

@@ -111,7 +111,7 @@ class RkiServices extends BaseServices
                     'unique_code'             => $data->structure
                         ?  $data->structure->position_code_structure . "/" .
                         ($data->ikw ?  $data->ikw->code : "No Code") : null,
-                    'user_structure_mapping'  => $data->structure ?? "",
+                    'structure'               => $data->structure ?? "",
                     'ikws'                    => $data->structure ?? "",
                     'ikw_id'                  => $data->ikw->id ?? "",
                     'ikw_code'                => $data->ikw->code ?? "",
@@ -137,7 +137,7 @@ class RkiServices extends BaseServices
                     'unique_code'             => $data->structure
                         ?  $data->structure->position_code_structure . "/" .
                         ($data->ikw->code ?  $data->ikw->code : "No Code") : null,
-                    'user_structure_mapping'  => $data->structure ?? "",
+                    'structure'               => $data->structure ?? "",
                     'ikw_id'                  => $data->ikw->id ?? "",
                     'ikw_code'                => $data->ikw->code ?? "",
                     'ikw_name'                => $data->ikw->name ?? "",

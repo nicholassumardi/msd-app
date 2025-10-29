@@ -39,12 +39,12 @@ class Structure extends Model
 
     public function parent()
     {
-        return $this->belongsTo(UserStructureMapping::class, 'parent_id');
+        return $this->belongsTo(Structure::class, 'parent_id');
     }
 
     public function children()
     {
-        return $this->hasMany(UserStructureMapping::class, 'parent_id');
+        return $this->hasMany(Structure::class, 'parent_id');
     }
 
     public function structureHistories()

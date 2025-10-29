@@ -116,9 +116,9 @@ class RkiController extends Controller
         return response()->json($response);
     }
 
-    public function showByUserStructureMapping($user_structure_mapping_id)
+    public function showByStructure($structure_id)
     {
-        $data = $this->service->getDataRKIByUserStructureMapping($user_structure_mapping_id);
+        $data = $this->service->getDataRKIByStructure($structure_id);
 
         if ($data) {
             $response = [

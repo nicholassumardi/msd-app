@@ -3,10 +3,10 @@
 namespace App\Jobs;
 
 use App\Models\JobCode;
+use App\Models\Structure;
 use App\Models\User;
 use App\Models\UserEmployeeNumber;
-use App\Models\UserJobCode;
-use App\Models\UserStructureMapping;
+use App\Models\UserPlot;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,7 +23,7 @@ use OpenSpout\Common\Entity\Style\Style;
 use OpenSpout\Reader\XLSX\Reader;
 use OpenSpout\Writer\XLSX\Writer;
 
-class ImportUserJobCodeJob implements ShouldQueue
+class ImportUserPlotJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -31,7 +31,7 @@ class ImportUserJobCodeJob implements ShouldQueue
     protected $cacheKey;
     protected $user;
     protected $jobCode;
-    protected $userStructureMapping;
+    protected $structure;
 
     public function __construct($filepath, $cacheKey)
     {
@@ -39,7 +39,7 @@ class ImportUserJobCodeJob implements ShouldQueue
         $this->cacheKey = $cacheKey;
         $this->user = User::all();
         $this->jobCode = JobCode::all();
-        $this->userStructureMapping = UserStructureMapping::all();
+        $this->structure = Structure::all();
     }
 
     public function handle()
@@ -49,7 +49,7 @@ class ImportUserJobCodeJob implements ShouldQueue
 
             $reader = new Reader();
             $reader->open(storage_path('app/public/' . $this->filepath));
-            $dataUserJobCode = [];
+            $dataUserPlot = [];
             $dataUserNotFound = [];
             $dataChunk = 200;
 
@@ -65,12 +65,12 @@ class ImportUserJobCodeJob implements ShouldQueue
                             }
 
                             $jobCode = $this->jobCode->firstWhere('code', $row->getCells()[5]->getValue()) ? $this->jobCode->firstWhere('code', $row->getCells()[5]->getValue())->id : NULL;
-                            $userStructureMapping = $this->userStructureMapping->firstWhere('name', $row->getCells()[8]->getValue()) ? $this->userStructureMapping->firstWhere('name', $row->getCells()[8]->getValue())->id : NULL;
+                            $structure = $this->structure->firstWhere('name', $row->getCells()[8]->getValue()) ? $this->structure->firstWhere('name', $row->getCells()[8]->getValue())->id : NULL;
 
-                            $dataUserJobCode[] = [
+                            $dataUserPlot[] = [
                                 'user_id'                       => $userEmployeeNumber || $user ? $user->id : NULL,
                                 'job_code_id'                   => $jobCode,
-                                'user_structure_mapping_id'     => $userStructureMapping,
+                                'user_structure_mapping_id'     => $structure,
                                 'id_structure'                  => $row->getCells()[9]->getValue(),
                                 'id_staff'                      => $row->getCells()[10]->getValue(),
                                 'position_code_structure'       => $row->getCells()[6]->getValue(),
@@ -80,15 +80,15 @@ class ImportUserJobCodeJob implements ShouldQueue
                                 'status'                        => 1,
                             ];
 
-                            if (count($dataUserJobCode) == $dataChunk) {
-                                $this->insertChunk($dataUserJobCode);
-                                $dataUserJobCode = [];
+                            if (count($dataUserPlot) == $dataChunk) {
+                                $this->insertChunk($dataUserPlot);
+                                $dataUserPlot = [];
                             }
                         }
                     }
 
-                    if (count($dataUserJobCode) != 0) {
-                        $this->insertChunk($dataUserJobCode);
+                    if (count($dataUserPlot) != 0) {
+                        $this->insertChunk($dataUserPlot);
                     }
                 }
             }
@@ -107,9 +107,9 @@ class ImportUserJobCodeJob implements ShouldQueue
     }
 
 
-    public function insertChunk($dataUserJobCode)
+    public function insertChunk($dataUserPlot)
     {
-        UserJobCode::insert($dataUserJobCode);
+        UserPlot::insert($dataUserPlot);
     }
 
     public function findDataByEmployeeNumber($search)

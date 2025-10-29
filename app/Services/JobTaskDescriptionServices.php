@@ -345,14 +345,14 @@ class JobTaskDescriptionServices extends BaseServices
                 foreach ($structure->ikw as $ikw) {
                     foreach ($structure->jobDesc as $desc) {
                         $dataJobDesc[] = [
-                            'user_structure_mapping_id'  => $structure->user_structure_mapping_id,
+                            'structure_id'               => $structure->structure_id,
                             'ikw_id'                     => $ikw->id,
                             'job_description_id'         => $desc->id,
                         ];
 
                         foreach ($desc->jobTask as $task) {
                             $dataJobTask[] = [
-                                'user_structure_mapping_id'  => $structure->user_structure_mapping_id,
+                                'structure_id'               => $structure->structure_id,
                                 'ikw_id'                     => $ikw->id,
                                 'job_task_id'                => $task->id,
                             ];

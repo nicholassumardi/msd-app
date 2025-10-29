@@ -166,7 +166,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
     Route::prefix('structure')->group(function () {
         Route::get('/', [StructureController::class, 'index']);
         Route::post('import', [StructureController::class, 'importStructureExcel']);
-        Route::post('import_user_job_code', [StructureController::class, 'importUserJobCodeExcel']);
+        Route::post('import_user_plot', [StructureController::class, 'ImportUserPlotExcel']);
         Route::post('store_structure', [StructureController::class, 'storeStructure']);
         Route::post('store_user_plot', [StructureController::class, 'storeUserPlot']);
         Route::post('store_user_plot_request', [StructureController::class, 'storeUserPlotRequest']);
@@ -197,7 +197,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::post('store', [RkiController::class, 'store']);
         Route::get('show/{id}', [RkiController::class, 'show']);
         Route::get('show', [RkiController::class, 'showAll']);
-        Route::get('show_by_user_structure_mapping/{id}', [RkiController::class, 'showByUserStructureMapping']);
+        Route::get('show_by_structure/{id}', [RkiController::class, 'showByStructure']);
         Route::get('show_by_ikw', [RkiController::class, 'showByIKW']);
         Route::get('show_rki_pagination', [RkiController::class, 'showRkiPagination']);
         Route::put('update/{id}', [RkiController::class, 'update']);
