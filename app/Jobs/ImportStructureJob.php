@@ -9,9 +9,7 @@ use App\Models\StructureHistories;
 use App\Models\StructurePlot;
 use App\Models\User;
 use App\Models\UserEmployeeNumber;
-use App\Models\UserJobCode;
-use App\Models\UserStructureMapping;
-use App\Models\UserStructureMappingHistories;
+use App\Models\UserPlot;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -51,49 +49,60 @@ class ImportStructureJob implements ShouldQueue
             $reader->open(storage_path('app/public/' . $this->filepath));
             $dataStructure = [];
             $dataStructurePlot = [];
-            $dataUserJobCode = [];
+            $dataUserPlot = [];
             $dataUserNotFound = [];
 
             foreach ($reader->getSheetIterator() as $i => $sheet) {
                 $sheetCollections[$i] = LazyCollection::make(function () use ($sheet) {
                     foreach ($sheet->getRowIterator() as $key => $row) {
                         if ($key != 1) {
-                            yield $row->toArray();
+                            $cells = [];
+                            foreach ($row->getCells() as $index => $cell) {
+                                $value = $cell->getValue(); // will be cached value or formula string
+                                $cells[$index] = $value;
+                                if ($index == 23) {
+                                    $cells[$index] = $cell->getComputedValue(); // cached result if available
+                                }
+                            }
+
+                            yield $cells;
                         }
                     }
                 });
             }
 
             if (isset($sheetCollections[1])) {
-                $sheetCollections[1]->chunk(200)->each(function ($rows) use (&$dataStructure, &$dataStructurePlot, &$dataUserJobCode, &$dataUserNotFound) {
-
+                $sheetCollections[1]->chunk(200)->each(function ($rows) use (&$dataStructure, &$dataStructurePlot, &$dataUserPlot, &$dataUserNotFound) {
                     foreach ($rows as $row) {
-                        $dataUser = $this->saveDataUserJobCode($dataUserJobCode, $dataUserNotFound, $row);
+                        $dataStructure = $this->saveDataStructure($dataStructure, $row);
                         $dataStructurePlot = $this->saveDataStructurePlot($dataStructurePlot, $row);
-                        $dataStructure = $this->saveDataStructureMapping($dataStructure, $row);
-                        $dataUserJobCode =  $dataUser['dataUserJobCode'];
+                        $dataUser = $this->savedataUserPlot($dataUserPlot, $dataUserNotFound, $row);
+                        $dataUserPlot =  $dataUser['dataUserPlot'];
                         $dataUserNotFound = $dataUser['dataUserNotFound'];
                     }
 
+                    // dd($dataStructure);
                     // clean data so duplicate data will be rejected
-                    $dataDuplicate = $this->removeDuplicate($dataUserJobCode, $dataUserNotFound);
-                    $dataUserJobCode = $dataDuplicate['dataUserJobCode'];
+                    $dataDuplicate = $this->removeDuplicate($dataUserPlot, $dataUserNotFound);
+                    $dataUserPlot = $dataDuplicate['dataUserPlot'];
 
-                    $this->insertChunkStructure($dataStructure, $dataStructurePlot, $dataUserJobCode);
+                    $this->insertChunkStructure($dataStructure, $dataStructurePlot, $dataUserPlot);
                     $dataStructure = [];
-                    $dataUserJobCode = [];
+                    $dataStructurePlot = [];
+                    $dataUserPlot = [];
                 });
 
                 if (count($dataStructure) != 0) {
-                    $dataDuplicate = $this->removeDuplicate($dataUserJobCode, $dataUserNotFound);
-                    $dataUserJobCode = $dataDuplicate['dataUserJobCode'];
+                    $dataDuplicate = $this->removeDuplicate($dataUserPlot, $dataUserNotFound);
+                    $dataUserPlot = $dataDuplicate['dataUserPlot'];
 
-                    $this->insertChunkStructure($dataStructure, $dataStructurePlot, $dataUserJobCode);
+                    $this->insertChunkStructure($dataStructure, $dataStructurePlot, $dataUserPlot);
                     $dataStructure = [];
-                    $dataUserJobCode = [];
+                    $dataStructurePlot = [];
+                    $dataUserPlot = [];
                 }
 
-                $dataDuplicate = $this->removeDuplicate($dataUserJobCode, $dataUserNotFound);
+                $dataDuplicate = $this->removeDuplicate($dataUserPlot, $dataUserNotFound);
                 $dataUserNotFound = $dataDuplicate['dataUserNotFound'];
                 $filePathExportData =  $this->exportData($dataUserNotFound);
                 Cache::put($this->cacheKey, $filePathExportData, now()->addMinutes(10));
@@ -130,7 +139,7 @@ class ImportStructureJob implements ShouldQueue
         }
     }
 
-    private function saveDataStructureMapping($dataStructure, $row)
+    private function saveDataStructure($dataStructure, $row)
     {
         $companyName = $row[0];
         $departmentName = $row[1];
@@ -141,16 +150,16 @@ class ImportStructureJob implements ShouldQueue
 
         $parentId = 0;
         if ($parentName) {
-            $parent = $this->findUserStructureByName($parentName);
+            $parent = $this->findStructureByName($parentName);
             if ($parent) {
                 $parentId = $parent->id;
             }
         }
 
-        if (isset($dataStructure[$row[15]])) {
-            $dataStructure[$row[15]]['quota'] = $dataStructure[$row[15]]['quota'] + 1;
+        if (isset($dataStructure[$name])) {
+            $dataStructure[$name]['quota'] = $dataStructure[$name]['quota'] + 1;
         } else {
-            $dataStructure[$row[15]] = [
+            $dataStructure[$name] = [
                 'department_id'            => $this->findDataDepartment($companyName, $departmentName)->id ?? null,
                 'parent_name'              => $parentName ?? null,
                 'parent_id'                => $parentId,
@@ -175,7 +184,7 @@ class ImportStructureJob implements ShouldQueue
         $structureId = 0;
         $parentId = 0;
         if ($name) {
-            $structure = $this->findUserStructureByName($name);
+            $structure = $this->findStructureByName($name);
             if ($structure) {
                 $structureId = $structure->id;
             }
@@ -203,7 +212,7 @@ class ImportStructureJob implements ShouldQueue
         return $dataStructurePlot;
     }
 
-    private function saveDataUserJobCode($dataUserJobCode, $dataUserNotFound, $row)
+    private function savedataUserPlot($dataUserPlot, $dataUserNotFound, $row)
     {
         $userEmployeeNumber = $this->findDataByEmployeeNumber($row[18]);
         $identity_card = $this->findDataByEmployeeNIK($row[19]);
@@ -230,7 +239,7 @@ class ImportStructureJob implements ShouldQueue
 
 
         if ($userEmployeeNumber || $user) {
-            $dataUserJobCode[] = [
+            $dataUserPlot[] = [
                 'pt'                            => $row[0],
                 'dept'                          => $row[1],
                 'id_structure_parent'           => $row[2],
@@ -266,13 +275,14 @@ class ImportStructureJob implements ShouldQueue
 
 
         return [
-            'dataUserJobCode'  => $dataUserJobCode,
+            'dataUserPlot'  => $dataUserPlot,
             'dataUserNotFound' => $dataUserNotFound,
         ];
     }
 
-    public function insertChunkStructure($dataStructure, $dataStructurePlot, $dataUserJobCode)
+    public function insertChunkStructure($dataStructure, $dataStructurePlot, $dataUserPlot)
     {
+
         $insertedData =  array_values(array_map(function ($item) {
             unset($item['parent_name']);
             return $item;
@@ -286,8 +296,8 @@ class ImportStructureJob implements ShouldQueue
 
         $updates = [];
         foreach ($dataStructure as $name => $data) {
-            $childRecord = $this->findUserStructureByName($name);
-            $parentRecord = $this->findUserStructureByName($data['parent_name']);
+            $childRecord = $this->findStructureByName($name);
+            $parentRecord = $this->findStructureByName($data['parent_name']);
             if ($childRecord && $parentRecord && $data['parent_id'] == 0) {
                 $updates[] = [
                     'id'        => $childRecord->id,
@@ -318,7 +328,7 @@ class ImportStructureJob implements ShouldQueue
             ]);
 
 
-        $usmRecords = Structure::query()
+        $structureRecords = Structure::query()
             ->where(function ($q) use ($keys) {
                 foreach ($keys as $key) {
                     $q->orWhere(function ($q2) use ($key) {
@@ -332,7 +342,7 @@ class ImportStructureJob implements ShouldQueue
         $now = Carbon::now()->format('Y-m-d');
 
         // TO RECORD HISTORIES OF STRUCTURE REVISION
-        $histories = $usmRecords->map(function ($usm) use ($now) {
+        $histories = $structureRecords->map(function ($usm) use ($now) {
             return [
                 'structure_id'              => $usm->id,
                 'revision_no'               => 0,
@@ -361,10 +371,21 @@ class ImportStructureJob implements ShouldQueue
             'logs',
         ]);
 
-        $this->insertChunkStructurePlot($dataStructurePlot, $dataUserJobCode);
+
+        $structureMap = Structure::whereIn('name', array_keys($dataStructure))
+            ->pluck('id', 'name')
+            ->toArray();
+
+        // Replace structure_name references with real structure_id
+        foreach ($dataStructurePlot as &$plot) {
+            $plot['structure_id'] = $structureMap[$plot['structure_name']] ?? null;
+        }
+        unset($plot);
+
+        $this->insertChunkStructurePlot($dataStructurePlot, $dataUserPlot);
     }
 
-    public function insertChunkStructurePlot($dataStructurePlot, $dataUserJobCode)
+    public function insertChunkStructurePlot($dataStructurePlot, $dataUserPlot)
     {
         $insertedData =  array_values(array_map(function ($item) {
             unset($item['parent_name']);
@@ -384,6 +405,7 @@ class ImportStructureJob implements ShouldQueue
             ]
         );
 
+        // find structure ID
         $updatesStructure = [];
         foreach ($dataStructurePlot as $data) {
             $childRecord = $this->findStructurePlot($data['id_structure']);
@@ -396,6 +418,7 @@ class ImportStructureJob implements ShouldQueue
             }
         }
 
+        // find parent id
         $updatesParent = [];
         foreach ($dataStructurePlot as $data) {
             $childRecord = $this->findStructurePlot($data['id_structure']);
@@ -419,7 +442,7 @@ class ImportStructureJob implements ShouldQueue
                     implode(' ', array_map(function ($update) {
                         return 'WHEN id = ' . $update['id'] . ' THEN ' . $update['structure_id'];
                     }, $updatesStructure)) .
-                    ' ELSE parent_id END')
+                    ' ELSE structure_id END')
             ]);
         }
 
@@ -439,10 +462,10 @@ class ImportStructureJob implements ShouldQueue
             ]);
         }
 
-        $this->insertChunkUser($dataUserJobCode);
+        // $this->insertChunkUser($dataUserPlot);
     }
 
-    // public function insertChunkUser($dataUserJobCode)
+    // public function insertChunkUser($dataUserPlot)
     // {
     //     $existingPairs = UserJobCode::orderBy('id', 'ASC')
     //         ->get()
@@ -450,14 +473,14 @@ class ImportStructureJob implements ShouldQueue
     //             return $item->user_id . '_' . $item->structure_id . '_' . $item->group;
     //         })->toArray();
     //     $updatedUserJobCode = [];
-    //     foreach ($dataUserJobCode as $data) {
-    //         $userStructureMapping = $this->findUserStructureByName($data['structure_name']);
-    //         if ($userStructureMapping) {
+    //     foreach ($dataUserPlot as $data) {
+    //         $structure = $this->findStructureByName($data['structure_name']);
+    //         if ($structure) {
     //             $updatedUserJobCode[] = [
     //                 'user_id'                       => $data['user_id'],
     //                 'job_code_id'                   => $data['job_code_id'],
     //                 'parent_id'                     => $data['parent_id'],
-    //                 'structure_id'                  => $userStructureMapping->id,
+    //                 'structure_id'                  => $structure->id,
     //                 'id_structure'                  => $data['id_structure'],
     //                 'id_staff'                      => $data['id_staff'],
     //                 'position_code_structure'       => $data['position_code_structure'],
@@ -481,19 +504,19 @@ class ImportStructureJob implements ShouldQueue
     //             ]);
     //     }
 
-    //     $insertedDataUserJobCode = $newDataIn
+    //     $inserteddataUserPlot = $newDataIn
     //         ->filter(function ($item) use ($existingPairs) {
     //             $pair = $item['user_id'] . '_' . $item['structure_id'] .  '_' . $item['group'];
     //             return !in_array($pair, $existingPairs);
     //         })
     //         ->all();
 
-    //     UserJobCode::insert($insertedDataUserJobCode);
+    //     UserJobCode::insert($inserteddataUserPlot);
 
 
 
     //     $updates = [];
-    //     foreach ($dataUserJobCode as $data) {
+    //     foreach ($dataUserPlot as $data) {
     //         $name =  $data['job_code_id'] . '-' . $data['position_code_structure'] . '-' . $data['group'];
 
     //         $childRecord = $this->findUserSuperior($name);
@@ -524,9 +547,9 @@ class ImportStructureJob implements ShouldQueue
     //     }
     // }
 
-    private function findUserStructureByName($name)
+    private function findStructureByName($name)
     {
-        return UserStructureMapping::where('name', "$name")->first();
+        return Structure::where('name', "$name")->first();
     }
 
     private function findStructurePlotRelation($arg1, $arg2)
@@ -549,11 +572,15 @@ class ImportStructureJob implements ShouldQueue
         $arg2 = $data[1]; // position code
         $arg3 = $data[2]; // group
 
-        return UserJobCode::whereHas('jobCode', function ($query) use ($arg1) {
-            $query->where('id', $arg1);
+        return UserPlot::whereHas('structurePlot', function ($query) use ($arg1, $arg2, $arg3) {
+            $query->whereHas('structure', function ($query) use ($arg1) {
+                $query->whereHas('jobCode', function ($query) use ($arg1) {
+                    $query->where('id', $arg1);
+                });
+            })->where('position_code_structure', $arg2)
+                ->where('group', $arg3);
         })
-            ->where('position_code_structure', $arg2)
-            ->where('group', $arg3)->first();
+            ->first();
     }
 
     private function findDataDepartment($arg1, $arg2)
@@ -570,10 +597,10 @@ class ImportStructureJob implements ShouldQueue
         return User::whereFuzzy('name', $search)->first();
     }
 
-    private function removeDuplicate(&$dataUserJobCode, &$dataUserNotFound)
+    private function removeDuplicate(&$dataUserPlot, &$dataUserNotFound)
     {
         // clean data so duplicate data will be rejected
-        $duplicates = collect($dataUserJobCode)
+        $duplicates = collect($dataUserPlot)
             ->groupBy(function ($item) {
                 return $item['user_id'];
             })
@@ -598,7 +625,7 @@ class ImportStructureJob implements ShouldQueue
                     $item['parent_suffix'] ?? '',
                     $item['group'] ?? '',
                     $item['code_ip'] ?? '',
-                    $item['structure_name'           ] ?? '',
+                    $item['structure_name'] ?? '',
                     $item['id_staff'] ?? '',
                     $item['employee_number'] ?? '',
                     $item['employee_number_new'] ?? '',
@@ -612,7 +639,7 @@ class ImportStructureJob implements ShouldQueue
 
         $dataUserNotFound = array_merge($dataUserNotFound, $duplicates);
 
-        $dataUserJobCode = collect($dataUserJobCode)
+        $dataUserPlot = collect($dataUserPlot)
             ->groupBy('user_id')
             ->filter(fn($group) => $group->count() === 1)
             ->flatten(1)
@@ -620,7 +647,7 @@ class ImportStructureJob implements ShouldQueue
             ->all();
 
         return  [
-            'dataUserJobCode'  => $dataUserJobCode,
+            'dataUserPlot'  => $dataUserPlot,
             'dataUserNotFound' => $dataUserNotFound,
         ];
     }

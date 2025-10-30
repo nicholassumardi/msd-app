@@ -714,7 +714,7 @@ class StructureServices extends BaseServices
 
             $structure = Structure::find($id_structure);
 
-            // Check if structure exists & has children, move childrent to usermapping parent_id
+            // Check if structure exists & has children, move children to structure parent_id
             if ($structure->children()->exist()) {
                 foreach ($structure->children as $user) {
                     $user->update([

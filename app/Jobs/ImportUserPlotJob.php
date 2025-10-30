@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\LazyCollection;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Common\Entity\Style\Color;
 use OpenSpout\Common\Entity\Style\Style;
@@ -51,47 +52,61 @@ class ImportUserPlotJob implements ShouldQueue
             $reader->open(storage_path('app/public/' . $this->filepath));
             $dataUserPlot = [];
             $dataUserNotFound = [];
-            $dataChunk = 200;
 
             foreach ($reader->getSheetIterator() as $i => $sheet) {
-                if ($sheet->getName() == 'Database Struktur') {
+                $sheetCollections[$i] = LazyCollection::make(function () use ($sheet) {
                     foreach ($sheet->getRowIterator() as $key => $row) {
-                        if ($key != 1 && $key != 2) {
-                            $user = $this->findDataUser($row->getCells()[12]->getValue());
-                            $userEmployeeNumber = $this->findDataByEmployeeNumber($row->getCells()[11]->getValue());
-
-                            if (!$userEmployeeNumber || !$user) {
-                                $dataUserNotFound[] = $row;
+                        if ($key != 1) {
+                            $cells = [];
+                            foreach ($row->getCells() as $index => $cell) {
+                                $value = $cell->getValue(); // will be cached value or formula string
+                                $cells[$index] = $value;
+                                if ($index == 23) {
+                                    $cells[$index] = $cell->getComputedValue(); // cached result if available
+                                }
                             }
 
-                            $jobCode = $this->jobCode->firstWhere('code', $row->getCells()[5]->getValue()) ? $this->jobCode->firstWhere('code', $row->getCells()[5]->getValue())->id : NULL;
-                            $structure = $this->structure->firstWhere('name', $row->getCells()[8]->getValue()) ? $this->structure->firstWhere('name', $row->getCells()[8]->getValue())->id : NULL;
-
-                            $dataUserPlot[] = [
-                                'user_id'                       => $userEmployeeNumber || $user ? $user->id : NULL,
-                                'job_code_id'                   => $jobCode,
-                                'user_structure_mapping_id'     => $structure,
-                                'id_structure'                  => $row->getCells()[9]->getValue(),
-                                'id_staff'                      => $row->getCells()[10]->getValue(),
-                                'position_code_structure'       => $row->getCells()[6]->getValue(),
-                                'group'                         => $row->getCells()[7]->getValue(),
-                                'assign_date'                   => Carbon::today()->format('Y-m-d'),
-                                'reassign_date'                 => NULL,
-                                'status'                        => 1,
-                            ];
-
-                            if (count($dataUserPlot) == $dataChunk) {
-                                $this->insertChunk($dataUserPlot);
-                                $dataUserPlot = [];
-                            }
+                            yield $cells;
                         }
                     }
+                });
+            }
 
-                    if (count($dataUserPlot) != 0) {
-                        $this->insertChunk($dataUserPlot);
+            if (isset($sheetCollections[1])) {
+                $sheetCollections[1]->chunk(200)->each(function ($rows) use (&$dataStructure, &$dataStructurePlot, &$dataUserPlot, &$dataUserNotFound) {
+                    foreach ($rows as $row) {
+                        $dataUser = $this->savedataUserPlot($dataUserPlot, $dataUserNotFound, $row);
+                        $dataUserPlot =  $dataUser['dataUserPlot'];
+                        $dataUserNotFound = $dataUser['dataUserNotFound'];
                     }
+
+                    $this->insertChunkUser($dataStructure, $dataStructurePlot, $dataUserPlot);
+                    $dataUserPlot = [];
+                });
+
+                if (count($dataStructure) != 0) {
+
+                    $this->insertChunkUser($dataStructure, $dataStructurePlot, $dataUserPlot);
+                    $dataUserPlot = [];
                 }
             }
+
+
+            if (!isset($sheetCollections[1])) {
+                Cache::put(
+                    $this->cacheKey,
+                    [
+                        'status' => 500,
+                        'message' => 'Sheet not found please make sure you have the correct format!',
+                    ],
+                    now()->addMinutes(3)
+                );
+                Storage::delete($this->filepath);
+                DB::rollBack();
+
+                return false;
+            }
+
 
             $reader->close();
             Storage::delete($this->filepath);
@@ -100,16 +115,177 @@ class ImportUserPlotJob implements ShouldQueue
             DB::commit();
 
             return true;
-        } catch (\Exception $ex) {
+        } catch (\Exception $e) {
+            echo $e->getMessage();
             DB::rollBack();
             return false;
         }
     }
 
-
-    public function insertChunk($dataUserPlot)
+    private function savedataUserPlot($dataUserPlot, $dataUserNotFound, $row)
     {
-        UserPlot::insert($dataUserPlot);
+        $userEmployeeNumber = $this->findDataByEmployeeNumber($row[18]);
+        $identity_card = $this->findDataByEmployeeNIK($row[19]);
+        $user = $this->findDataUser($row[20]);
+        $jobCode = $this->jobCode->firstWhere('full_code', $row[10]) ? $this->jobCode->firstWhere('full_code', $row[10])->id : NULL;
+        $jobCodeParent =  $this->jobCode->firstWhere('full_code', $row[3]) ? $this->jobCode->firstWhere('full_code', $row[3])->id : NULL;
+        $parentName = $jobCodeParent . "-" . $row[4] . "-" . $row[5];
+
+        $parentId = 0;
+        if ($parentName) {
+            $parent = $this->findUserSuperior($parentName);
+            if ($parent) {
+                $parentId = $parent->id;
+            }
+        }
+
+        if (!$identity_card) {
+            if (!$userEmployeeNumber) {
+                $dataUserNotFound[] = $row;
+            } elseif (!$user) {
+                $dataUserNotFound[] = $row;
+            }
+        }
+
+
+        if ($userEmployeeNumber || $user) {
+            $dataUserPlot[] = [
+                'pt'                            => $row[0],
+                'dept'                          => $row[1],
+                'id_structure_parent'           => $row[2],
+                'job_code_parent'               => $row[3],
+                'position_code_structure'       => $row[4],
+                'group_parent'                  => $row[5],
+                'parent_suffix'                 => $row[6],
+                'code_ip_parent'                => $row[7],
+                'sub_position_parent'           => $row[8],
+                'id_structure'                  => $row[9],
+                'parent_suffix'                 => $row[10],
+                'position_code_structure'       => $row[11],
+                'group'                         => $row[12],
+                'suffix'                        => $row[13],
+                'code_ip'                       => $row[14],
+                'structure_name'                => $row[15],
+                'id_staff'                      => $row[16],
+                'employee_number'               => $row[17],
+                'employee_number_new'           => $row[18],
+                'identity_card'                 => $row[19],
+                'name'                          => $row[20],
+                'non_active_date'               => $row[21],
+                'employee_type'                 => $row[22],
+                'user_id'                       => $userEmployeeNumber ? $userEmployeeNumber->user_id : ($user ? $user->id : NULL),
+                'job_code_id'                   => $jobCode,
+                'parent_name'                   => $parentName,
+                'parent_id'                     => $parentId,
+                'assign_date'                   => NULL,
+                'reassign_date'                 => NULL,
+                'status'                        => 1,
+            ];
+        }
+
+
+        return [
+            'dataUserPlot'  => $dataUserPlot,
+            'dataUserNotFound' => $dataUserNotFound,
+        ];
+    }
+
+    public function insertChunkUser($dataUserPlot)
+    {
+        $existingPairs = UserPlot::orderBy('id', 'ASC')
+            ->get()
+            ->map(function ($item) {
+                return $item->user_id . '_' . $item->structure_plot_id . '_' . $item->group;
+            })->toArray();
+        $updatedUserPlot = [];
+        foreach ($dataUserPlot as $data) {
+            $structure = $this->findStructureByName($data['structure_name']);
+            if ($structure) {
+                $updatedUserPlot[] = [
+                    'user_id'                       => $data['user_id'],
+                    'parent_id'                     => $data['parent_id'],
+                    'structure_plot_id'             => $structure->id,
+                    'employee_type'                 => $data['employee_type'],
+                    'assign_date'                   => $data['assign_date'],
+                    'reassign_date'                 => $data['reassign_date'],
+                    'status'                        => $data['status'],
+                ];
+            }
+        }
+
+        $newDataIn = collect($updatedUserPlot);
+
+        if ($newDataIn->isNotEmpty()) {
+            UserPlot::whereNotIn('user_id', $newDataIn->pluck('user_id'))
+                ->whereIn('structure_id', $newDataIn->pluck('structure_id'))
+                ->update([
+                    'status'  => 0,
+                ]);
+        }
+
+        $inserteddataUserPlot = $newDataIn
+            ->filter(function ($item) use ($existingPairs) {
+                $pair = $item['user_id'] . '_' . $item['structure_id'] .  '_' . $item['group'];
+                return !in_array($pair, $existingPairs);
+            })
+            ->all();
+
+        UserPlot::insert($inserteddataUserPlot);
+
+
+        $updates = [];
+        foreach ($dataUserPlot as $data) {
+            $name =  $data['job_code_id'] . '-' . $data['position_code_structure'] . '-' . $data['group'];
+
+            $childRecord = $this->findUserSuperior($name);
+            $parentRecord = $this->findUserSuperior($data['parent_name']);
+
+
+            if ($childRecord && $parentRecord && $data['parent_id'] == 0) {
+                $updates[] = [
+                    'id'        => $childRecord->id,
+                    'parent_id' => $parentRecord->id,
+                ];
+            }
+        }
+
+        if (!empty($updates)) {
+            $updateQuery = UserPlot::query();
+            foreach ($updates as $update) {
+                $updateQuery->orWhere('id', $update['id']);
+            }
+
+            $updateQuery->update([
+                'parent_id' => DB::raw('CASE ' .
+                    implode(' ', array_map(function ($update) {
+                        return 'WHEN id = ' . $update['id'] . ' THEN ' . $update['parent_id'];
+                    }, $updates)) .
+                    ' ELSE parent_id END')
+            ]);
+        }
+    }
+
+    private function findDataUser($search)
+    {
+        return User::whereFuzzy('name', $search)->first();
+    }
+
+    private function findUserSuperior($parentName)
+    {
+        $data = explode('-', $parentName);
+        $arg1 = $data[0]; //job code
+        $arg2 = $data[1]; // position code
+        $arg3 = $data[2]; // group
+
+        return UserPlot::whereHas('structurePlot', function ($query) use ($arg1, $arg2, $arg3) {
+            $query->whereHas('structure', function ($query) use ($arg1) {
+                $query->whereHas('jobCode', function ($query) use ($arg1) {
+                    $query->where('id', $arg1);
+                });
+            })->where('position_code_structure', $arg2)
+                ->where('group', $arg3);
+        })
+            ->first();
     }
 
     public function findDataByEmployeeNumber($search)
@@ -119,64 +295,15 @@ class ImportUserPlotJob implements ShouldQueue
             ->first();
     }
 
-    public function findDataUser($search)
+    private function findStructureByName($name)
     {
-        return User::where('employee')->orWhere(DB::raw('LOWER(name)'), '=', strtolower($search))
-            ->first();
+        return Structure::where('name', "$name")->first();
     }
 
-    // public function exportData($dataUserNotFound)
-    // {
-    //     $filepath = storage_path('app/public/temp/msd-data-lo.xlsx');
-    //     $writer  = new Writer();
-    //     $writer->setCreator("MSD TEAM");
-    //     $writer->openToFile($filepath);
 
-    //     // 1st SHEET
-    //     $style = new Style();
-    //     $style->setBackgroundColor(Color::DARK_BLUE);
-    //     $styleHeader = new Style();
-    //     $styleHeader->setBackgroundColor(Color::DARK_BLUE);
-    //     $styleHeader->setFontBold();
-
-    //     $sheet = $writer->getCurrentSheet();
-    //     $sheet->setName('Missing Data Karyawan');
-    //     $sheet->setColumnWidthForRange(23, 1, 25);
-    //     $sheet->setColumnWidth(60, 13);
-
-    //     $row = Row::fromValues([
-    //         'PT',
-    //         'DEPT',
-    //         'ID STRUKTUR ATASAN',
-    //         'KODE JABATAN ATASAN',
-    //         'KODE POSISI ATASAN',
-    //         'KODE GROUP ATASAN',
-    //         'KODE SUFFIX',
-    //         'KODE IP ATASAN',
-    //         'SUB POSISI ATASAN',
-    //         'ID STRUKTUR',
-    //         'KODE JABATAN',
-    //         'KODE POSISI',
-    //         'KODE GROUP',
-    //         'KODE SUFFIX',
-    //         'KODE IP',
-    //         'SUB POSISI',
-    //         'ID STAFF',
-    //         'NIP',
-    //         'NAMA',
-    //         'TGL NON AKTIF',
-    //         'LEVEL'
-    //     ], $styleHeader);
-
-    //     $writer->addRow($row);
-
-    //     foreach ($dataUserNotFound as $data) {
-    //         $row = Row::fromValues($data, $style);
-    //         $writer->addRow($row);
-    //     }
-
-    //     $writer->close();
-
-    //     return $filepath;
-    // }
+    public function findDataByEmployeeNIK($search)
+    {
+        return User::where('identity_card', $search)
+            ->first();
+    }
 }

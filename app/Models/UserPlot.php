@@ -13,9 +13,9 @@ class UserPlot extends Model
     protected $primaryKey = 'id';
     protected $dates      = ['deleted_at'];
     protected $fillable   = [
+        'structure_plot_id',
         'user_id',
         'parent_id',
-        'user_plot_id',
         'id_staff',
         'employee_type',
         'assign_date',

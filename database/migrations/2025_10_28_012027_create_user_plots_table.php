@@ -16,7 +16,7 @@ class CreateUserPlotsTable extends Migration
         Schema::create('user_plots', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignId('user_plot_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('structure_plot_id')->nullable()->constrained()->cascadeOnDelete();
             $table->bigInteger('parent_id')->unsigned()->default(0);
             $table->string('id_staff')->nullable();
             $table->string('employee_type')->nullable();

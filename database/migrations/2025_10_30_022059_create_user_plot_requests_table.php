@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateUserStructureMappingRequestsTable extends Migration
+class CreateUserPlotRequestsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,9 @@ class CreateUserStructureMappingRequestsTable extends Migration
      */
     public function up()
     {
-        Schema::create('user_structure_mapping_requests', function (Blueprint $table) {
+        Schema::create('user_plot_requests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_job_code_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('user_plot_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('group')->nullable();
             $table->text('description')->nullable();
             $table->date('request_date')->nullable();
@@ -32,6 +32,6 @@ class CreateUserStructureMappingRequestsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_structure_mapping_requests');
+        Schema::dropIfExists('user_plot_requests');
     }
 }

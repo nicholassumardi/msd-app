@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Jobs\ImportUserJobCodeJob;
 use App\Jobs\ImportUserPlotJob;
 use App\Models\Structure;
 use App\Models\StructurePlot;
@@ -210,11 +209,11 @@ class UserPlotServices extends BaseServices
                 'reassign_date' => $now,
             ]);
 
-            $mapping = $this->structure->where('id', $request->structure_id)->first();
+            $structure = $this->structure->where('id', $request->structure_id)->first();
             $parentId = 0;
 
-            if ($mapping && $mapping->parent && $mapping->parent->userJobCode) {
-                $match = $mapping->parent->userJobCode->firstWhere('group', 'LIKE', "%{$request->group}%");
+            if ($structure && $structure->parent && $structure->parent->structurePlot) {
+                $match = $structure->parent->structurePlot->firstWhere('group', 'LIKE', "%{$request->group}%");
                 $parentId = $match ? $match->id : 0;
             }
 
@@ -228,7 +227,7 @@ class UserPlotServices extends BaseServices
                 'position_code_structure'    => $this->structure->where('id', $request->structure_id)->first() ? $this->structure->where('id', $request->structure_id)->first()->position_code_structure : null,
                 'group'                      => $request->group ?? null,
                 'assign_date'                => $request->assign_date ? $this->parseDateUTC($request->assign_date) : null,
-                'employee_type'              => $mapping->structure_type == "Staff" ? "Staff" : "Non Staff",
+                'employee_type'              => $structure->structure_type == "Staff" ? "Staff" : "Non Staff",
                 'status'                     => 1,
             ]);
 
@@ -269,10 +268,10 @@ class UserPlotServices extends BaseServices
 
             DB::beginTransaction();
 
-            $userJobCode = UserPlot::find($id_user_plot);
+            $userPlot = UserPlot::find($id_user_plot);
             $now = Carbon::now()->format('Y-m-d');
-            if ($userJobCode) {
-                $userJobCode->update([
+            if ($userPlot) {
+                $userPlot->update([
                     'status'        => 0,
                     'reassign_date' => $now
 
@@ -461,10 +460,10 @@ class UserPlotServices extends BaseServices
             $this->setLog('info', 'Request delete data User job code ' . json_encode($request->all()));
             $this->setLog('info', 'Start');
             DB::beginTransaction();
-            $userJobCode = UserPlot::find($id);
+            $userPlot = UserPlot::find($id);
 
-            if ($userJobCode) {
-                $userJobCode->update([
+            if ($userPlot) {
+                $userPlot->update([
                     'status' => 0
                 ]);
             } else {

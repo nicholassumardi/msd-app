@@ -612,7 +612,7 @@ class EvaluationServices extends BaseServices
     public function getEligibleIKWByTrainer($request)
     {
         $trainer = $this->user->firstWhere('uuid', $request->trainer_id);
-        $structure_id =  $trainer?->userJobCode() ?  $trainer->userJobCode()->where('status', 1)->first()?->structure_id : null;
+        $structure_id =  $trainer?->userPlot() ?  $trainer->userPlot()->where('status', 1)->first()?->structurePlot->structure_id : null;
 
         $rki = $this->rki->where('structure_id',  $structure_id)->pluck('ikw_id');
 
@@ -723,7 +723,7 @@ class EvaluationServices extends BaseServices
         $sorting = json_decode($request->sorting, true) ?? [];
         $globalFilter = $request->globalFilter ?? '';
 
-        $query = $this->userJobCode
+        $query = $this->userPlot
             ->whereHas('user', function ($query) use ($request) {
                 if ($request->department_id) {
                     $query->where('department_id', $request->department_id);
@@ -757,17 +757,17 @@ class EvaluationServices extends BaseServices
             })
             ->orderBy('position_code_structure', 'ASC')
             ->get()
-            ->flatMap(function ($userJobCode) use ($request) {
-                return $userJobCode->rki()
+            ->flatMap(function ($userPlot) use ($request) {
+                return $userPlot->rki()
                     ->where('ikw_id', $request->ikw_id)
                     ->get()
-                    ->map(function ($rki) use ($userJobCode) {
+                    ->map(function ($rki) use ($userPlot) {
                         return [
-                            'structure_id'   => $rki->structure_id,
+                            'structure_id'        => $rki->structure_id,
                             'ikw_id'              => $rki->ikw_id,
-                            'employee_name'       => $userJobCode->user->name ?? '',
-                            'employee_type'       => $userJobCode->user->employee_type ?? '',
-                            'employee_department' => $userJobCode->user->department->code ?? '',
+                            'employee_name'       => $userPlot->user->name ?? '',
+                            'employee_type'       => $userPlot->user->employee_type ?? '',
+                            'employee_department' => $userPlot->user->department->code ?? '',
                             'ikw_name'            => $rki->ikw->name ?? '',
                             'ikw_code'            => $rki->ikw->code ?? '',
                             'training_time'       => $rki->training_time,
@@ -794,7 +794,7 @@ class EvaluationServices extends BaseServices
         $sorting = json_decode($request->sorting, true) ?? [];
         $globalFilter = $request->globalFilter ?? '';
 
-        $query = $this->userJobCode
+        $query = $this->userPlot
             ->whereHas('user', function ($query) use ($request) {
                 if ($request->department_id) {
                     $query->where('department_id', $request->department_id);
@@ -821,19 +821,19 @@ class EvaluationServices extends BaseServices
             })
             ->orderBy('position_code_structure', 'ASC')
             ->get()
-            ->flatMap(function ($userJobCode) {
-                return $userJobCode->rki()->get()->map(function ($rki) use ($userJobCode) {
+            ->flatMap(function ($userPlot) {
+                return $userPlot->rki()->get()->map(function ($rki) use ($userPlot) {
 
-                    $training = $userJobCode->user->training->first(function ($training) use ($rki) {
+                    $training = $userPlot->user->training->first(function ($training) use ($rki) {
                         return $training->ikwRevision && $training->ikwRevision->ikw_id == $rki->ikw_id;
                     });
 
                     return [
                         'structure_id'   => $rki->structure_id,
                         'ikw_id'              => $rki->ikw_id,
-                        'employee_name'       => $userJobCode->user->name ?? '',
-                        'employee_type'       => $userJobCode->user->employee_type ?? '',
-                        'employee_department' => $userJobCode->user->department->code ?? '',
+                        'employee_name'       => $userPlot->user->name ?? '',
+                        'employee_type'       => $userPlot->user->employee_type ?? '',
+                        'employee_department' => $userPlot->user->department->code ?? '',
                         'ikw_name'            => $rki->ikw->name ?? '',
                         'ikw_code'            => $rki->ikw->code ?? '',
                         'training_time'       => $rki->training_time,
@@ -859,9 +859,8 @@ class EvaluationServices extends BaseServices
     {
         $result = [];
         $trainer = $this->user->firstWhere('uuid', $request->trainer_id);
-        $trainer_structure =  $trainer?->userJobCode() ?  $trainer->userJobCode()->where('status', 1)->first() : null;
+        $trainer_structure =  $trainer?->userPlot() ?  $trainer->userPlot()->where('status', 1)->with('structurePlot.structure')->first() : null;
 
-        // dd($trainer_structure->children()->get());
         if ($trainer_structure) {
             foreach ($trainer_structure->children as $child) {
                 $result[] = [
