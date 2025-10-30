@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\JobCode;
 use App\Models\Structure;
+use App\Models\StructurePlot;
 use App\Models\User;
 use App\Models\UserEmployeeNumber;
 use App\Models\UserPlot;
@@ -80,15 +81,25 @@ class ImportUserPlotJob implements ShouldQueue
                         $dataUserNotFound = $dataUser['dataUserNotFound'];
                     }
 
+                    $dataDuplicate = $this->removeDuplicate($dataUserPlot, $dataUserNotFound);
+                    $dataUserPlot = $dataDuplicate['dataUserPlot'];
+
                     $this->insertChunkUser($dataStructure, $dataStructurePlot, $dataUserPlot);
                     $dataUserPlot = [];
                 });
 
                 if (count($dataStructure) != 0) {
+                    $dataDuplicate = $this->removeDuplicate($dataUserPlot, $dataUserNotFound);
+                    $dataUserPlot = $dataDuplicate['dataUserPlot'];
 
                     $this->insertChunkUser($dataStructure, $dataStructurePlot, $dataUserPlot);
                     $dataUserPlot = [];
                 }
+
+                $dataDuplicate = $this->removeDuplicate($dataUserPlot, $dataUserNotFound);
+                $dataUserNotFound = $dataDuplicate['dataUserNotFound'];
+                $filePathExportData =  $this->exportData($dataUserNotFound);
+                Cache::put($this->cacheKey, $filePathExportData, now()->addMinutes(10));
             }
 
 
@@ -158,14 +169,14 @@ class ImportUserPlotJob implements ShouldQueue
                 'group_parent'                  => $row[5],
                 'parent_suffix'                 => $row[6],
                 'code_ip_parent'                => $row[7],
-                'sub_position_parent'           => $row[8],
-                'id_structure'                  => $row[9],
-                'parent_suffix'                 => $row[10],
+                'structur_name_parent'          => $row[8],
+                'id_structure'                  => $row[23],
+                'job_code'                      => $row[10],
                 'position_code_structure'       => $row[11],
                 'group'                         => $row[12],
                 'suffix'                        => $row[13],
                 'code_ip'                       => $row[14],
-                'structure_name'                => $row[15],
+                'sub_position'                  => $row[15],
                 'id_staff'                      => $row[16],
                 'employee_number'               => $row[17],
                 'employee_number_new'           => $row[18],
@@ -185,7 +196,7 @@ class ImportUserPlotJob implements ShouldQueue
 
 
         return [
-            'dataUserPlot'  => $dataUserPlot,
+            'dataUserPlot'     => $dataUserPlot,
             'dataUserNotFound' => $dataUserNotFound,
         ];
     }
@@ -195,16 +206,17 @@ class ImportUserPlotJob implements ShouldQueue
         $existingPairs = UserPlot::orderBy('id', 'ASC')
             ->get()
             ->map(function ($item) {
-                return $item->user_id . '_' . $item->structure_plot_id . '_' . $item->group;
+                return $item->user_id . '_' . $item->structure_plot_id . '_' . $item->id_staff;
             })->toArray();
         $updatedUserPlot = [];
         foreach ($dataUserPlot as $data) {
-            $structure = $this->findStructureByName($data['structure_name']);
-            if ($structure) {
+            $structurePlot = $this->findStructurePlot($data['id_structure']);
+            if ($structurePlot) {
                 $updatedUserPlot[] = [
+                    'structure_plot_id'             => $structurePlot->id,
                     'user_id'                       => $data['user_id'],
                     'parent_id'                     => $data['parent_id'],
-                    'structure_plot_id'             => $structure->id,
+                    'id_staff'                      => $data['id_staff'],
                     'employee_type'                 => $data['employee_type'],
                     'assign_date'                   => $data['assign_date'],
                     'reassign_date'                 => $data['reassign_date'],
@@ -217,7 +229,7 @@ class ImportUserPlotJob implements ShouldQueue
 
         if ($newDataIn->isNotEmpty()) {
             UserPlot::whereNotIn('user_id', $newDataIn->pluck('user_id'))
-                ->whereIn('structure_id', $newDataIn->pluck('structure_id'))
+                ->whereIn('structure_plot_id', $newDataIn->pluck('structure_plot_id'))
                 ->update([
                     'status'  => 0,
                 ]);
@@ -225,7 +237,7 @@ class ImportUserPlotJob implements ShouldQueue
 
         $inserteddataUserPlot = $newDataIn
             ->filter(function ($item) use ($existingPairs) {
-                $pair = $item['user_id'] . '_' . $item['structure_id'] .  '_' . $item['group'];
+                $pair = $item['user_id'] . '_' . $item['structure_plot_id'] .  '_' . $item['id_staff'];
                 return !in_array($pair, $existingPairs);
             })
             ->all();
@@ -295,9 +307,9 @@ class ImportUserPlotJob implements ShouldQueue
             ->first();
     }
 
-    private function findStructureByName($name)
+    private function findStructurePlot($arg)
     {
-        return Structure::where('name', "$name")->first();
+        return StructurePlot::where('id_structure', "$arg")->first();
     }
 
 
@@ -305,5 +317,119 @@ class ImportUserPlotJob implements ShouldQueue
     {
         return User::where('identity_card', $search)
             ->first();
+    }
+
+    private function removeDuplicate(&$dataUserPlot, &$dataUserNotFound)
+    {
+        // clean data so duplicate data will be rejected
+        $duplicates = collect($dataUserPlot)
+            ->groupBy(function ($item) {
+                return $item['user_id'];
+            })
+            ->filter(function ($group) {
+                return $group->count() > 1;
+            })
+            ->flatten(1)
+            ->values()->map(function ($item) {
+                return [
+                    $item['pt'] ?? '',
+                    $item['dept'] ?? '',
+                    $item['id_structure_parent'] ?? '',
+                    $item['job_code_parent'] ?? '',
+                    $item['position_code_structure'] ?? '',
+                    $item['group_parent'] ?? '',
+                    $item['parent_suffix'] ?? '',
+                    $item['code_ip_parent'] ?? '',
+                    $item['structur_name_parent'] ?? '', //sub_position_parent
+                    $item['id_structure'] ?? '',
+                    $item['job_code'] ?? '',
+                    $item['position_code_structure'] ?? '',
+                    $item['group'] ?? '',
+                    $item['suffix'] ?? '',
+                    $item['code_ip'] ?? '',
+                    $item['structure_name'] ?? '', //sub_position_parent
+                    $item['id_staff'] ?? '',
+                    $item['employee_number'] ?? '',
+                    $item['employee_number_new'] ?? '',
+                    $item['identity_card'] ?? '',
+                    $item['name'] ?? '',
+                    $item['non_active_date'] ?? '',
+                    $item['employee_type'] ?? '',
+                ];
+            })->toArray();
+
+
+        $dataUserNotFound = array_merge($dataUserNotFound, $duplicates);
+
+        $dataUserPlot = collect($dataUserPlot)
+            ->groupBy('user_id')
+            ->filter(fn($group) => $group->count() === 1)
+            ->flatten(1)
+            ->values()
+            ->all();
+
+        return  [
+            'dataUserPlot'  => $dataUserPlot,
+            'dataUserNotFound' => $dataUserNotFound,
+        ];
+    }
+
+
+    public function exportData($dataUserNotFound)
+    {
+        $filepath = storage_path('app/public/temp/msd-data-lo.xlsx');
+        $writer  = new Writer();
+        $writer->setCreator("MSD TEAM");
+        $writer->openToFile($filepath);
+
+        // 1st SHEET
+        $style = new Style();
+        $styleHeader = new Style();
+        $styleHeader->setBackgroundColor(Color::DARK_BLUE);
+        $styleHeader->setFontBold();
+
+        $sheet = $writer->getCurrentSheet();
+        $sheet->setName('Missing Data Karyawan');
+        $sheet->setColumnWidthForRange(23, 1, 25);
+        $sheet->setColumnWidth(60, 13);
+
+        $row = Row::fromValues([
+            'PT',
+            'DEPT',
+            'ID STRUKTUR ATASAN',
+            'KODE JABATAN ATASAN',
+            'KODE POSISI ATASAN',
+            'KODE GROUP ATASAN',
+            'KODE SUFFIX',
+            'KODE IP ATASAN',
+            'SUB POSISI ATASAN',
+            'ID STRUKTUR',
+            'KODE JABATAN',
+            'KODE POSISI',
+            'KODE GROUP',
+            'KODE SUFFIX',
+            'KODE IP',
+            'SUB POSISI',
+            'ID STAFF',
+            'NIP',
+            'NIP BARU',
+            'No KTP',
+            'NAMA',
+            'TGL NON AKTIF',
+            'LEVEL'
+        ], $styleHeader);
+
+        $writer->addRow($row);
+
+        foreach ($dataUserNotFound as $data) {
+            $row = Row::fromValues($data, $style);
+            $writer->addRow($row);
+        }
+
+        $writer->close();
+
+        if (count($dataUserNotFound) > 0) {
+            return $filepath;
+        }
     }
 }

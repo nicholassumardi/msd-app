@@ -101,11 +101,6 @@ class ImportStructureJob implements ShouldQueue
                     $dataStructurePlot = [];
                     $dataUserPlot = [];
                 }
-
-                $dataDuplicate = $this->removeDuplicate($dataUserPlot, $dataUserNotFound);
-                $dataUserNotFound = $dataDuplicate['dataUserNotFound'];
-                $filePathExportData =  $this->exportData($dataUserNotFound);
-                Cache::put($this->cacheKey, $filePathExportData, now()->addMinutes(10));
             }
 
 
@@ -663,63 +658,5 @@ class ImportStructureJob implements ShouldQueue
     {
         return User::where('identity_card', $search)
             ->first();
-    }
-
-    public function exportData($dataUserNotFound)
-    {
-        $filepath = storage_path('app/public/temp/msd-data-lo.xlsx');
-        $writer  = new Writer();
-        $writer->setCreator("MSD TEAM");
-        $writer->openToFile($filepath);
-
-        // 1st SHEET
-        $style = new Style();
-        $styleHeader = new Style();
-        $styleHeader->setBackgroundColor(Color::DARK_BLUE);
-        $styleHeader->setFontBold();
-
-        $sheet = $writer->getCurrentSheet();
-        $sheet->setName('Missing Data Karyawan');
-        $sheet->setColumnWidthForRange(23, 1, 25);
-        $sheet->setColumnWidth(60, 13);
-
-        $row = Row::fromValues([
-            'PT',
-            'DEPT',
-            'ID STRUKTUR ATASAN',
-            'KODE JABATAN ATASAN',
-            'KODE POSISI ATASAN',
-            'KODE GROUP ATASAN',
-            'KODE SUFFIX',
-            'KODE IP ATASAN',
-            'SUB POSISI ATASAN',
-            'ID STRUKTUR',
-            'KODE JABATAN',
-            'KODE POSISI',
-            'KODE GROUP',
-            'KODE SUFFIX',
-            'KODE IP',
-            'SUB POSISI',
-            'ID STAFF',
-            'NIP',
-            'NIP BARU',
-            'No KTP',
-            'NAMA',
-            'TGL NON AKTIF',
-            'LEVEL'
-        ], $styleHeader);
-
-        $writer->addRow($row);
-
-        foreach ($dataUserNotFound as $data) {
-            $row = Row::fromValues($data, $style);
-            $writer->addRow($row);
-        }
-
-        $writer->close();
-
-        if (count($dataUserNotFound) > 0) {
-            return $filepath;
-        }
     }
 }
