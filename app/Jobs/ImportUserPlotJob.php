@@ -9,12 +9,10 @@ use App\Models\User;
 use App\Models\UserEmployeeNumber;
 use App\Models\UserPlot;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -74,9 +72,9 @@ class ImportUserPlotJob implements ShouldQueue
             }
 
             if (isset($sheetCollections[1])) {
-                $sheetCollections[1]->chunk(200)->each(function ($rows) use (&$dataStructure, &$dataStructurePlot, &$dataUserPlot, &$dataUserNotFound) {
+                $sheetCollections[1]->chunk(200)->each(function ($rows) use (&$dataUserPlot, &$dataUserNotFound) {
                     foreach ($rows as $row) {
-                        $dataUser = $this->savedataUserPlot($dataUserPlot, $dataUserNotFound, $row);
+                        $dataUser = $this->saveDataUserPlot($dataUserPlot, $dataUserNotFound, $row);
                         $dataUserPlot =  $dataUser['dataUserPlot'];
                         $dataUserNotFound = $dataUser['dataUserNotFound'];
                     }
@@ -84,15 +82,15 @@ class ImportUserPlotJob implements ShouldQueue
                     $dataDuplicate = $this->removeDuplicate($dataUserPlot, $dataUserNotFound);
                     $dataUserPlot = $dataDuplicate['dataUserPlot'];
 
-                    $this->insertChunkUser($dataStructure, $dataStructurePlot, $dataUserPlot);
+                    $this->insertChunkUser($dataUserPlot);
                     $dataUserPlot = [];
                 });
 
-                if (count($dataStructure) != 0) {
+                if (count($dataUserPlot) != 0) {
                     $dataDuplicate = $this->removeDuplicate($dataUserPlot, $dataUserNotFound);
                     $dataUserPlot = $dataDuplicate['dataUserPlot'];
 
-                    $this->insertChunkUser($dataStructure, $dataStructurePlot, $dataUserPlot);
+                    $this->insertChunkUser($dataUserPlot);
                     $dataUserPlot = [];
                 }
 
@@ -133,7 +131,7 @@ class ImportUserPlotJob implements ShouldQueue
         }
     }
 
-    private function savedataUserPlot($dataUserPlot, $dataUserNotFound, $row)
+    private function saveDataUserPlot($dataUserPlot, $dataUserNotFound, $row)
     {
         $userEmployeeNumber = $this->findDataByEmployeeNumber($row[18]);
         $identity_card = $this->findDataByEmployeeNIK($row[19]);
@@ -242,6 +240,7 @@ class ImportUserPlotJob implements ShouldQueue
             })
             ->all();
 
+
         UserPlot::insert($inserteddataUserPlot);
 
 
@@ -252,7 +251,6 @@ class ImportUserPlotJob implements ShouldQueue
             $childRecord = $this->findUserSuperior($name);
             $parentRecord = $this->findUserSuperior($data['parent_name']);
 
-
             if ($childRecord && $parentRecord && $data['parent_id'] == 0) {
                 $updates[] = [
                     'id'        => $childRecord->id,
@@ -260,6 +258,7 @@ class ImportUserPlotJob implements ShouldQueue
                 ];
             }
         }
+
 
         if (!empty($updates)) {
             $updateQuery = UserPlot::query();
@@ -292,7 +291,7 @@ class ImportUserPlotJob implements ShouldQueue
         return UserPlot::whereHas('structurePlot', function ($query) use ($arg1, $arg2, $arg3) {
             $query->whereHas('structure', function ($query) use ($arg1) {
                 $query->whereHas('jobCode', function ($query) use ($arg1) {
-                    $query->where('id', $arg1);
+                    $query->where('full_code', $arg1);
                 });
             })->where('position_code_structure', $arg2)
                 ->where('group', $arg3);

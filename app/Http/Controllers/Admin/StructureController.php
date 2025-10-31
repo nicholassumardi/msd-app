@@ -33,17 +33,13 @@ class StructureController extends Controller
     {
         $cacheKey = uniqid();
         $query = $this->service->importStructureExcel($request, $cacheKey);
-        $filepath = Cache::get($cacheKey);
+        $response = Cache::get($cacheKey);
 
-        if (is_array($filepath) && isset($filepath['status']) && $filepath['status'] === 500) {
+        if (is_array($response) && isset($response['status']) && $response['status'] === 500) {
             return response()->json([
-                'status'  => $filepath['status'],
-                'message' => $filepath['message'],
+                'status'  => $response['status'],
+                'message' => $response['message'],
             ]);
-        }
-
-        if (file_exists($filepath)) {
-            return response()->download($filepath);
         }
 
         if ($query) {
@@ -64,8 +60,20 @@ class StructureController extends Controller
 
     public function ImportUserPlotExcel(Request $request)
     {
-        $query = $this->userPlotService->ImportUserPlotExcel($request);
+        $cacheKey = uniqid();
+        $query = $this->userPlotService->ImportUserPlotExcel($request, $cacheKey);
+        $filepath = Cache::get($cacheKey);
 
+        if (is_array($filepath) && isset($filepath['status']) && $filepath['status'] === 500) {
+            return response()->json([
+                'status'  => $filepath['status'],
+                'message' => $filepath['message'],
+            ]);
+        }
+
+        if (file_exists($filepath)) {
+            return response()->download($filepath);
+        }
         if ($query) {
             $response = [
                 'status' => 201,

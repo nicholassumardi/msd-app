@@ -110,10 +110,14 @@ class ImportUserJob implements ShouldQueue
                                     'employee_type'     => $row->getCells()[17]->getValue(),
                                     'section'           => $row->getCells()[18]->getValue(),
                                     'position_code'     => $row->getCells()[19]->getValue(),
-                                    'schedule_type'     => $row->getCells()[22]->getValue(),
-                                    'status_twiji'      => $row->getCells()[23]->getValue(),
-                                    'join_date'         => $row->getCells()[28]->getValue() ? CarbonImmutable::instance($row->getCells()[28]->getValue())->format('Y-m-d') : null,
-                                    'leave_date'        => $row->getCells()[29]->getValue() ? CarbonImmutable::instance($row->getCells()[29]->getValue())->format('Y-m-d') : null,
+                                    'schedule_type'     => $row->getCells()[23]->getValue(),
+                                    'status_twiji'      => $row->getCells()[25]->getValue(),
+                                    'join_date'         => $row->getCells()[30]->getValue() ? CarbonImmutable::instance($row->getCells()[30]->getValue())->format('Y-m-d') : null,
+                                    'leave_date'        => $row->getCells()[31]->getValue() ? CarbonImmutable::instance($row->getCells()[31]->getValue())->format('Y-m-d') : null,
+                                    // 'schedule_type'     => $row->getCells()[22]->getValue(),
+                                    // 'status_twiji'      => $row->getCells()[23]->getValue(),
+                                    // 'join_date'         => $row->getCells()[28]->getValue() ? CarbonImmutable::instance($row->getCells()[28]->getValue())->format('Y-m-d') : null,
+                                    // 'leave_date'        => $row->getCells()[29]->getValue() ? CarbonImmutable::instance($row->getCells()[29]->getValue())->format('Y-m-d') : null,
 
                                 ];
                             }
@@ -191,8 +195,14 @@ class ImportUserJob implements ShouldQueue
                         ->first(['employee_number'])
                         ->employee_number ?? "";
 
-                    $data['join_date']  = $user->userServiceYear->join_date ??  null;
-                    $data['leave_date']  = $user->userServiceYear->leave_date ??  null;
+                    $data['join_date'] = $user->userServiceYear->join_date
+                        ? Carbon::parse($user->userServiceYear->join_date)->format('Y-m-d')
+                        : null;
+
+                    $data['leave_date'] = $user->userServiceYear->leave_date
+                        ? Carbon::parse($user->userServiceYear->leave_date)->format('Y-m-d')
+                        : null;
+
 
 
                     return [$user->identity_card => $data];
@@ -364,9 +374,9 @@ class ImportUserJob implements ShouldQueue
                     'service'  => $dataArrayUserService
                 ];
 
-                // if (count($currentChunk) == $dataChunk) {
-                //     $this->insertChunk($currentChunk, $processedUsers);
-                // }
+                if (count($currentChunk) == $dataChunk) {
+                    $this->insertChunk($currentChunk, $processedUsers);
+                }
             } else {
                 $old = $oldDataCheck;
                 foreach ($new as $key => $value) {
@@ -383,9 +393,9 @@ class ImportUserJob implements ShouldQueue
             }
         }
 
-        // if (count($currentChunk) != 0) {
-        //     $this->insertChunk($currentChunk, $processedUsers);
-        // }
+        if (count($currentChunk) != 0) {
+            $this->insertChunk($currentChunk, $processedUsers);
+        }
 
         return $differences;
     }
@@ -500,8 +510,8 @@ class ImportUserJob implements ShouldQueue
     private function prepareServiceYearData($row)
     {
         return [
-            'join_date'  => $row->getCells()[28]->getValue() ? CarbonImmutable::instance($row->getCells()[28]->getValue())->format('Y-m-d') : null,
-            'leave_date' => $row->getCells()[29]->getValue() ? CarbonImmutable::instance($row->getCells()[29]->getValue())->format('Y-m-d') : null,
+            'join_date'  => $row->getCells()[30]->getValue() ? CarbonImmutable::instance($row->getCells()[30]->getValue())->format('Y-m-d') : null,
+            'leave_date' => $row->getCells()[31]->getValue() ? CarbonImmutable::instance($row->getCells()[31]->getValue())->format('Y-m-d') : null,
         ];
     }
 }

@@ -27,11 +27,11 @@ class UserPlotServices extends BaseServices
         $this->structure = Structure::with('department', 'jobCode', 'structurePlot', 'structureHistories');
     }
 
-    public function ImportUserPlotExcel(Request $request)
+    public function ImportUserPlotExcel(Request $request, $cacheKey)
     {
         $file = $request->file;
         $filepath = $file->storeAs('temp', $request->file->getClientOriginalName(), 'public');
-        $query =  ImportUserPlotJob::dispatch($filepath);
+        $query =  ImportUserPlotJob::dispatch($filepath, $cacheKey);
 
         if ($query) {
             return true;

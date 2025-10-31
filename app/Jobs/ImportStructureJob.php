@@ -20,11 +20,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\LazyCollection;
-use OpenSpout\Common\Entity\Row;
-use OpenSpout\Common\Entity\Style\Color;
-use OpenSpout\Common\Entity\Style\Style;
 use OpenSpout\Reader\XLSX\Reader;
-use OpenSpout\Writer\XLSX\Writer;
 
 class ImportStructureJob implements ShouldQueue
 {
@@ -231,7 +227,6 @@ class ImportStructureJob implements ShouldQueue
                 $dataUserNotFound[] = $row;
             }
         }
-
 
         if ($userEmployeeNumber || $user) {
             $dataUserPlot[] = [

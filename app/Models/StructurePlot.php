@@ -22,14 +22,14 @@ class StructurePlot extends Model
     ];
 
 
-    public function user()
-    {
-        return $this->hasMany(User::class);
-    }
-
     public function structure()
     {
         return $this->belongsTo(Structure::class);
+    }
+
+    public function userPlot()
+    {
+        return $this->hasMany(UserPlot::class);
     }
 
     public function userPlotRequest()

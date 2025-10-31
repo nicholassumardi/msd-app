@@ -24,10 +24,14 @@ class StructureServices extends BaseServices
 
     public function __construct()
     {
-        $this->structure =  Structure::with('department', 'jobCode', 'children', 'structureHistories')->with([
+        $this->structure =  Structure::with([
+            'department',
+            'jobCode',
+            'children',
+            'structureHistories',
             'structurePlot.userPlot.user.userEmployeeNumber' => function ($query) {
                 $query->where('status', 1);
-            }
+            },
         ]);
 
         $this->structurePlot = StructurePlot::with('structure', 'jobCode')->with([
@@ -429,18 +433,25 @@ class StructureServices extends BaseServices
     {
         if (!empty($id_structure)) {
             $structure = $this->structure
-                ->withCount([
-                    'structurePlot.userPlot as totalAssignedEmployee' => function ($query) {
-                        $query->where('status', 1);
-                    }
+                ->addSelect([
+                    'totalAssignedEmployee' => UserPlot::selectRaw('COUNT(*)')
+                        ->where('status', 1)
+                        ->whereIn('structure_plot_id', function ($sub) {
+                            $sub->select('id')
+                                ->from('structure_plots')
+                                ->whereColumn('structure_plots.structure_id', 'structures.id');
+                        })
                 ])
                 ->findOrFail($id_structure);
 
-            $structure->structurePlot->userPlot->transform(function ($item) {
+            $structure->structurePlot->flatMap(function ($plot) {
+                return $plot->userPlot;
+            })->transform(function ($item) {
                 $item->uuid = $item->user->uuid ?? null;
                 $item->employee_name = $item->user->name ?? null;
                 return $item;
             });
+
 
             $structure->employee_number = '';
             $structure->superior = $structure->parent->name ?? 'None';
@@ -464,9 +475,15 @@ class StructureServices extends BaseServices
         }
 
         $query = $query
-            ->withCount(['structurePlot.userPlot as totalAssignedEmployee' => function ($query) {
-                $query->where('status', 1);
-            }])->where(function ($query) use ($request) {
+            ->addSelect([
+                'totalAssignedEmployee' => UserPlot::selectRaw('COUNT(*)')
+                    ->where('status', 1)
+                    ->whereIn('structure_plot_id', function ($sub) {
+                        $sub->select('id')
+                            ->from('structure_plots')
+                            ->whereColumn('structure_plots.structure_id', 'structures.id');
+                    })
+            ])->where(function ($query) use ($request) {
                 if ($request->globalFilter) {
                     $query->where('name', 'LIKE', "%$request->globalFilter%");
                 }
