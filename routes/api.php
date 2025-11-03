@@ -175,7 +175,8 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::put('update_user_plot/{uuid}', [StructureController::class, 'updateUserPlot']);
         Route::put('update_user_plot_request/{id}', [StructureController::class, 'updateUserPlotRequest']);
         Route::put('update_status_user_plot/{id}', [StructureController::class, 'updateStatusUserPlot']);
-        Route::put('move_structure_request/{id}', [StructureController::class, 'moveStructureRequest']);
+        Route::put('move_user_plot_request/{id}', [StructureController::class, 'moveUserPlotRequest']);
+        Route::put('move_user_plot/{id}', [StructureController::class, 'moveUserPlot']);
         Route::get('show_structure/{id}', [StructureController::class, 'showStructure']);
         Route::get('show_structure', [StructureController::class, 'showAllStructure']);
         Route::get('structure_by_department', [StructureController::class, 'showAllStructureByDepartment']);

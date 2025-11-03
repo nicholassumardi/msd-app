@@ -86,10 +86,10 @@ class StructureServices extends BaseServices
             $now = Carbon::now()->format('Y-m-d');
 
             if ($structure) {
-                if ($request->structrePlots && is_array($request->structrePlots)) {
+                if ($request->structure_plot && is_array($request->structure_plot)) {
                     $groupSuffixCount = [];
 
-                    foreach ($request->structurePlots as $plot) {
+                    foreach ($request->structure_plot as $plot) {
                         $group = $plot['group'] ?? null;
                         $mainGroup = $group ? $group[0] : null;
 
@@ -191,7 +191,7 @@ class StructureServices extends BaseServices
                     'structure_type'           => $request->structure_type,
                 ]);
 
-                if ($request->structurePlots && is_array($request->structurePlots)) {
+                if ($request->structure_plot && is_array($request->structure_plot)) {
                     $groupSuffixCount = [];
 
                     $existingPlots = StructurePlot::where('structure_id', $id_structure)->get();
@@ -199,7 +199,7 @@ class StructureServices extends BaseServices
 
                     $seenIdStructures = [];
 
-                    foreach ($request->structurePlots as $plot) {
+                    foreach ($request->structure_plot as $plot) {
                         $group = $plot['group'] ?? null;
                         $mainGroup = $group ? $group[0] : null;
 

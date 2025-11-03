@@ -145,7 +145,6 @@ class UserPlotServices extends BaseServices
         }
     }
 
-
     public function updateUserPlot(Request $request, $uuid)
     {
         try {
@@ -335,6 +334,61 @@ class UserPlotServices extends BaseServices
             return null;
         }
     }
+
+    public function moveUserPlot(Request $request, $id)
+    {
+        try {
+            $this->setLog('info', 'Request store data structure ' . json_encode($request->all()));
+            $this->setLog('info', 'Start');
+            DB::beginTransaction();
+
+            $now = Carbon::now()->format('Y-m-d');
+
+            $userPlot = UserPlot::find($id);
+            $newStructurePlot = StructurePlot::find($request->new_structure_plot_id);
+
+            if ($userPlot && $newStructurePlot) {
+                UserPlot::where('structure_plot_id', $newStructurePlot->id)->update([
+                    'status'        => 0,
+                    'reassign_date' => $now,
+                ]);
+
+                $parent_id = $newStructurePlot->parent()->userPlot->where('status', 1)->latest()->first()->id;
+                UserPlot::create([
+                    'structure_plot_id'   => $newStructurePlot->id,
+                    'user_id'             => $userPlot->user_id,
+                    'parent_id'           => $parent_id ?? 0,
+                    'id_staff'            => $request->id_staff ?? NULL,
+                    'employee_type'       => $request->employee_type,
+                    'assign_date'         => $request->assign_date,
+                    'status'              => 1,
+                ]);
+
+
+                $userPlot->update([
+                    'status'        => 0,
+                    'reassign_date' => $now,
+                ]);
+            } else {
+                DB::rollBack();
+                return false;
+            }
+
+            $this->setLog('info', 'updated data structure ' . json_encode($request->all()));
+            DB::commit();
+            $this->setLog('info', 'End');
+
+            return true;
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            $this->setLog('error', 'Error store data structure = ' . $exception->getMessage());
+            $this->setLog('error', 'Error store data structure = ' . $exception->getLine());
+            $this->setLog('error', 'Error store data structure = ' . $exception->getFile());
+            $this->setLog('error', 'Error store data structure = ' . $exception->getTraceAsString());
+            return null;
+        }
+    }
+
 
 
     public function getDataUserPlot($uuid = NULL)
