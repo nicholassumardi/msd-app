@@ -179,6 +179,9 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::put('move_user_plot/{id}', [StructureController::class, 'moveUserPlot']);
         Route::get('show_structure/{id}', [StructureController::class, 'showStructure']);
         Route::get('show_structure', [StructureController::class, 'showAllStructure']);
+        Route::get('show_structure_plot/{id}', [StructureController::class, 'showStructurePlot']);
+        Route::get('show_structure_plot', [StructureController::class, 'showAllStructurePlot']);
+        Route::get('show_structure_plot_pagination', [StructureController::class, 'showStructurePlotPagination']);
         Route::get('structure_by_department', [StructureController::class, 'showAllStructureByDepartment']);
         Route::get('show_user_plot/{uuid}', [StructureController::class, 'showUserPlot']);
         Route::get('show_user_plot', [StructureController::class, 'showAllUserPlot']);

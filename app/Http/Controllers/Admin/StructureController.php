@@ -169,6 +169,26 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
+    public function showStructurePlot($id)
+    {
+        $data = $this->service->getDataStructurePlot($id);
+
+        if ($data) {
+            $response = [
+                'status'  => 200,
+                'data'    => $data,
+                'message' => 'Successfully fetched data mapping'
+            ];
+        } else {
+            $response = [
+                'status'  => 404,
+                'message' => 'No Data found'
+            ];
+        }
+
+        return response()->json($response);
+    }
+
     public function showUserPlot($id)
     {
         $data = $this->userPlotService->getDataUserPlot($id);
@@ -209,16 +229,15 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function showUserPlotPagination(Request $request)
+    public function showAllStructure()
     {
-        $data = $this->userPlotService->getDataUserPlotPagination($request);
+        $data = $this->service->getDataStructure();
 
         if ($data) {
             $response = [
-                'status'     => 200,
-                'data'       => $data,
-                'totalCount' => $this->user->count(),
-                'message'    => 'Successfully fetched data company'
+                'status'  => 200,
+                'data'    => $data,
+                'message' => 'Successfully fetched data mapping'
             ];
         } else {
             $response = [
@@ -230,15 +249,43 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
-    public function showAllStructure()
+    public function showAllStructurePlot()
     {
-        $data = $this->service->getDataStructure();
+        $data = $this->service->getDataStructurePlot();
 
         if ($data) {
             $response = [
                 'status'  => 200,
                 'data'    => $data,
                 'message' => 'Successfully fetched data mapping'
+            ];
+        } else {
+            $response = [
+                'status'  => 404,
+                'message' => 'No Data found'
+            ];
+        }
+
+        return response()->json($response);
+    }
+
+    public function showStructurePlotPagination(Request $request)
+    {
+        $data = $this->service->getDataStructurePlotPagination($request);
+
+        if ($data['data']) {
+            $pagination = [
+                'current_page'  => (int) $request->current_page ?? 1,
+                'last_page'     => ceil(($data['totalCount'] / 10)),
+                'per_page'      => 10,
+                'total'         => $data['totalCount'],
+            ];
+
+            $response = [
+                'status'      => 200,
+                'data'        => $data['data'],
+                'pagination'  => $pagination,
+                'message'     => 'Successfully fetched data mapping'
             ];
         } else {
             $response = [
@@ -378,6 +425,26 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
+    public function showUserPlotPagination(Request $request)
+    {
+        $data = $this->userPlotService->getDataUserPlotPagination($request);
+
+        if ($data) {
+            $response = [
+                'status'     => 200,
+                'data'       => $data,
+                'totalCount' => $this->user->count(),
+                'message'    => 'Successfully fetched data company'
+            ];
+        } else {
+            $response = [
+                'status'  => 404,
+                'message' => 'No Data found'
+            ];
+        }
+
+        return response()->json($response);
+    }
 
     public function updateUserPlot(Request $request, $uuid)
     {
@@ -477,6 +544,25 @@ class StructureController extends Controller
     public function moveUserPlotRequest(Request $request, $id)
     {
         $data = $this->userPlotService->moveUserPlotRequest($request, $id);
+
+        if ($data) {
+            $response = [
+                'status' => 200,
+                'message' => 'Successfully updated data user plot'
+            ];
+        } else {
+            $response = [
+                'status' => 500,
+                'message' => 'Failed to update data user plot'
+            ];
+        }
+
+        return response()->json($response);
+    }
+
+    public function moveUserPlot(Request $request, $id)
+    {
+        $data = $this->userPlotService->moveUserPlot($request, $id);
 
         if ($data) {
             $response = [

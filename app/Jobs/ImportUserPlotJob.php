@@ -163,7 +163,7 @@ class ImportUserPlotJob implements ShouldQueue
                 'dept'                          => $row[1],
                 'id_structure_parent'           => $row[2],
                 'job_code_parent'               => $row[3],
-                'position_code_structure'       => $row[4],
+                'position_code_parent'          => $row[4],
                 'group_parent'                  => $row[5],
                 'parent_suffix'                 => $row[6],
                 'code_ip_parent'                => $row[7],
@@ -251,14 +251,14 @@ class ImportUserPlotJob implements ShouldQueue
             $childRecord = $this->findUserSuperior($name);
             $parentRecord = $this->findUserSuperior($data['parent_name']);
 
-            if ($childRecord && $parentRecord && $data['parent_id'] == 0) {
+
+            if (($childRecord && $parentRecord && $data['parent_id'] == 0) || ($childRecord && $data['parent_id'] != 0)) {
                 $updates[] = [
                     'id'        => $childRecord->id,
                     'parent_id' => $parentRecord->id,
                 ];
             }
         }
-
 
         if (!empty($updates)) {
             $updateQuery = UserPlot::query();
@@ -291,7 +291,7 @@ class ImportUserPlotJob implements ShouldQueue
         return UserPlot::whereHas('structurePlot', function ($query) use ($arg1, $arg2, $arg3) {
             $query->whereHas('structure', function ($query) use ($arg1) {
                 $query->whereHas('jobCode', function ($query) use ($arg1) {
-                    $query->where('full_code', $arg1);
+                    $query->where('id', $arg1);
                 });
             })->where('position_code_structure', $arg2)
                 ->where('group', $arg3);
@@ -335,7 +335,7 @@ class ImportUserPlotJob implements ShouldQueue
                     $item['dept'] ?? '',
                     $item['id_structure_parent'] ?? '',
                     $item['job_code_parent'] ?? '',
-                    $item['position_code_structure'] ?? '',
+                    $item['position_code_parent'] ?? '',
                     $item['group_parent'] ?? '',
                     $item['parent_suffix'] ?? '',
                     $item['code_ip_parent'] ?? '',

@@ -8,7 +8,6 @@ use App\Models\StructureHistories;
 use App\Models\StructurePlot;
 use App\Models\User;
 use App\Models\UserPlot;
-use App\Models\UserPlotRequest;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -34,7 +33,7 @@ class StructureServices extends BaseServices
             },
         ]);
 
-        $this->structurePlot = StructurePlot::with('structure', 'jobCode')->with([
+        $this->structurePlot = StructurePlot::with('structure')->with([
             'userPlot.user.userEmployeeNumber' => function ($query) {
                 $query->where('status', 1);
             }
@@ -463,6 +462,44 @@ class StructureServices extends BaseServices
 
         return $structure;
     }
+
+    public function getDataStructurePlot($id_structure_plot = NULL)
+    {
+        if (!empty($id_structure_plot)) {
+            $structurePlot = $this->structurePlot->firstWhere('id', $id_structure_plot);
+        } else {
+            $structurePlot = $this->structurePlot->get();
+        }
+
+        return $structurePlot;
+    }
+
+    public function getDataStructurePlotPagination($request)
+    {
+        $currentPage = (int) $request->current_page ? $request->current_page : 1;
+        $perPage = (int) $request->per_page ? $request->per_page : 5;
+
+        $query = $this->structurePlot;
+
+        if ($request->globalFilter) {
+            $query = $query->where('name', 'LIKE', "%$request->globalFilter%");
+        }
+
+        $query = $query->orderBy('id');
+
+        $totalCount = $query->count();
+
+        $structurePlot = $query
+            ->skip(($currentPage - 1) * $perPage)
+            ->take($perPage)
+            ->get();
+
+        return [
+            'data'       => $structurePlot,
+            'totalCount' => $totalCount,
+        ];
+    }
+
 
     public function getDataStructureByDepartment($request)
     {

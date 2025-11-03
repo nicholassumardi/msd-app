@@ -364,7 +364,6 @@ class UserPlotServices extends BaseServices
                     'status'              => 1,
                 ]);
 
-
                 $userPlot->update([
                     'status'        => 0,
                     'reassign_date' => $now,
