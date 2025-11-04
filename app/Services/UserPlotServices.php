@@ -338,7 +338,7 @@ class UserPlotServices extends BaseServices
     public function moveUserPlot(Request $request, $id)
     {
         try {
-            $this->setLog('info', 'Request store data structure ' . json_encode($request->all()));
+            $this->setLog('info', 'Request store move user plot ' . json_encode($request->all()));
             $this->setLog('info', 'Start');
             DB::beginTransaction();
 
@@ -373,17 +373,17 @@ class UserPlotServices extends BaseServices
                 return false;
             }
 
-            $this->setLog('info', 'updated data structure ' . json_encode($request->all()));
+            $this->setLog('info', 'updated move user plot ' . json_encode($request->all()));
             DB::commit();
             $this->setLog('info', 'End');
 
             return true;
         } catch (\Exception $exception) {
             DB::rollBack();
-            $this->setLog('error', 'Error store data structure = ' . $exception->getMessage());
-            $this->setLog('error', 'Error store data structure = ' . $exception->getLine());
-            $this->setLog('error', 'Error store data structure = ' . $exception->getFile());
-            $this->setLog('error', 'Error store data structure = ' . $exception->getTraceAsString());
+            $this->setLog('error', 'Error store move user plot = ' . $exception->getMessage());
+            $this->setLog('error', 'Error store move user plot = ' . $exception->getLine());
+            $this->setLog('error', 'Error store move user plot = ' . $exception->getFile());
+            $this->setLog('error', 'Error store move user plot = ' . $exception->getTraceAsString());
             return null;
         }
     }

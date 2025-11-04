@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\RkiController;
 use App\Http\Controllers\Admin\StructureController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\TrainingController;
+use App\Http\Controllers\TemplateExcelController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -246,5 +247,16 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::get('show', [CalendarController::class, 'showAll']);
         Route::get('show_weekly', [CalendarController::class, 'showWeekly']);
         Route::delete('delete/{id}', [CalendarController::class, 'destroy']);
+    });
+
+    Route::prefix('template')->group(function () {
+        Route::get('structure', [TemplateExcelController::class, 'exportTemplateStructure']);
+        Route::get('employee', [TemplateExcelController::class, 'exportTemplateEmployee']);
+        Route::get('rki', [TemplateExcelController::class, 'exportTemplateRKI']);
+        Route::get('ikw', [TemplateExcelController::class, 'exportTemplateIKW']);
+        Route::get('ikw_revision', [TemplateExcelController::class, 'exportTemplateIKWRevision']);
+        Route::get('training', [TemplateExcelController::class, 'exportTemplateTraining']);
+        Route::get('corporate', [TemplateExcelController::class, 'exportTemplateCorporate']);
+        Route::get('job_code', [TemplateExcelController::class, 'exportTemplateJobCode']);
     });
 });

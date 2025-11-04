@@ -482,7 +482,9 @@ class StructureServices extends BaseServices
         $query = $this->structurePlot;
 
         if ($request->globalFilter) {
-            $query = $query->where('name', 'LIKE', "%$request->globalFilter%");
+            $query = $query->whereHas('structure', function ($query) use ($request) {
+                $query->where('name', 'LIKE', "%$request->globalFilter%");
+            })->orWhere('position_code_structure', 'LIKE', "%$request->globalFilter%");
         }
 
         $query = $query->orderBy('id');
