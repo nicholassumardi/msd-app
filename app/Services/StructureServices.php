@@ -335,7 +335,7 @@ class StructureServices extends BaseServices
                         'structure_type'  => $item['structure_type'],
                     ]);
 
-                    if ($item['structurePlots'] && is_array($item['structurePlots'])) {
+                    if ($item['structure_plot'] && is_array($item['structure_plot'])) {
                         $groupSuffixCount = [];
 
                         $existingPlots = StructurePlot::where('structure_id', $item->id)->get();
@@ -343,7 +343,7 @@ class StructureServices extends BaseServices
 
                         $seenIdStructures = [];
 
-                        foreach ($item['structurePlots'] as $plot) {
+                        foreach ($item['structure_plot'] as $plot) {
                             $group = $plot['group'] ?? null;
                             $mainGroup = $group ? $group[0] : null;
 
