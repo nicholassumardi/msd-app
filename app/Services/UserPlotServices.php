@@ -50,37 +50,17 @@ class UserPlotServices extends BaseServices
             $user = User::firstWhere('uuid', $request->uuid);
 
             if ($user) {
-                $structurePlot = $this->structurePlot->where('id', $request->structurePlot)->first();
+                $data = [
+                    'structure_plot_id' => $request->id,
+                    'user_id'           => $user->id,
+                    'parent_id'         => $request->parent_id,
+                    'id_staff'          => $request->id_staff,
+                    'employee_type'     => $user->employee_type,
+                    'assign_date'       => $request->assign_date,
+                    'status'            => 1,
+                ];
 
-                $parentId = 0;
-
-                if ($structurePlot && $structurePlot->parent && $structurePlot->parent->userPlot) {
-                    $match = $structurePlot->parent->userPlot->firstWhere('group', 'LIKE', "%{$request->group[0]}%");
-                    $parentId = $match ? $match->id : 0;
-                }
-
-                if ($request->employeeStructures) {
-                    $formattedRequest = array_map(function ($employeeStructure, $index) use ($user) {
-                        return [
-                            'user_id'       => $user->id,
-                            'job_code_id'   => $employeeStructure['job_code_id'],
-                            'group'         => $employeeStructure['group'] ?? null,
-                            'status'        => $index === 0 ? 1 : 0
-                        ];
-                    }, $request->employeeStructures, array_keys($request->employeeStructures));
-                } else {
-                    $formattedRequest = [
-                        'user_id'                    => $user->id,
-                        'parent_id'                  => $parentId,
-                        'job_code_id'                => $this->structure->where('id', $request->structure_id)->first() ? $this->structure->where('id', $request->structure_id)->first()->job_code_id : null,
-                        'structure_id'               => $request->structure_plot_id ?? null,
-                        'id_staff'                   => $request->id_staff ?? null,
-                        'assign_date'                => $this->parseDateUTC($request->assign_date),
-                        'status'                     => 1,
-                    ];
-                }
-
-                UserPlot::insert($formattedRequest);
+                UserPlot::insert($data);
 
                 $this->setLog('info', 'New data structure' . json_encode($request->all()));
                 DB::commit();
@@ -145,7 +125,7 @@ class UserPlotServices extends BaseServices
         }
     }
 
-    public function updateUserPlot(Request $request, $uuid)
+    public function updateUserPlot(Request $request, $id_user_plot)
     {
         try {
             $this->setLog('info', 'Request update data structure ' . json_encode($request->all()));
@@ -153,25 +133,19 @@ class UserPlotServices extends BaseServices
 
             DB::beginTransaction();
 
-            $user = User::firstWhere('uuid', $uuid);
+            $userPlot = UserPlot::firstWhere('id', $id_user_plot);
 
-            if ($user) {
-                foreach ($request->employeeStructures as $key => $structure) {
-                    $data = [
-                        'user_id'     => $user->id,
-                        'job_code_id' => $structure['job_code_id'],
-                        'group'       => $structure['group'],
-                        'status'      => $key == 0 ? 1 : 0
-                    ];
+            if ($userPlot) {
+                $user = User::firstWhere('uuid', $request->uuid);
 
-                    if (!isset($structure['id'])) {
-                        UserPlot::create($data);
-                    } else {
-                        UserPlot::where('user_id', $user->id)
-                            ->where('id', $structure['id'])
-                            ->update($data);
-                    }
-                }
+                $userPlot->update([
+                    'user_id'           => $user->id,
+                    'parent_id'         => $request->parent_id,
+                    'id_staff'          => $request->id_staff,
+                    'employee_type'     => $user->employee_type,
+                    'assign_date'       => $request->assign_date,
+                    'status'            => 1,
+                ]);
             } else {
                 DB::rollBack();
                 return false;
@@ -357,9 +331,9 @@ class UserPlotServices extends BaseServices
                 UserPlot::create([
                     'structure_plot_id'   => $newStructurePlot->id,
                     'user_id'             => $userPlot->user_id,
-                    'parent_id'           => $parent_id ?? 0,
+                    'parent_id'           => $request->parent_id ?? 0,
                     'id_staff'            => $request->id_staff ?? NULL,
-                    'employee_type'       => $request->employee_type,
+                    'employee_type'       => $userPlot->user->employee_type ?? NULL,
                     'assign_date'         => $request->assign_date,
                     'status'              => 1,
                 ]);
@@ -388,7 +362,14 @@ class UserPlotServices extends BaseServices
         }
     }
 
+    public function getDataUserPlotByStructurePlot($id_structure_plot)
+    {
+        $structurePlot =   $this->structurePlot->where('id', $id_structure_plot);
 
+        foreach ($structurePlot->parent()->get() as $parentPlot) {
+            # code...
+        }
+    }
 
     public function getDataUserPlot($uuid = NULL)
     {
@@ -405,8 +386,8 @@ class UserPlotServices extends BaseServices
                     'department_name'    => $data->department ? $data->department->name : '',
                     'employee_number'    => $data->userEmployeeNumber()->where('status', 1)->first()->employee_number ?? "",
                     'department_id'      => $data->department_id,
-                    'jobCode'            => $data->userPlot()->where('status', 1)->first()->jobCode->full_code ?? "",
-                    'group'              => $data->userPlot()->where('status', 1)->first()->group ?? "",
+                    'jobCode'            => $data->userPlot()->where('status', 1)->first()->structurePlot->structure->jobCode->full_code ?? "",
+                    'group'              => $data->userPlot()->where('status', 1)->first()->structurePlot->group ?? "",
                 ];
             });
         }
