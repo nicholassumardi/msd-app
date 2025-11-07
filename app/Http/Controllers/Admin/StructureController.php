@@ -446,6 +446,27 @@ class StructureController extends Controller
         return response()->json($response);
     }
 
+    public function showUserPlotByStructurePlot($id_structure_plot)
+    {
+        $data = $this->userPlotService->getDataUserPlotByStructurePlot($id_structure_plot);
+
+        if ($data) {
+            $response = [
+                'status'     => 200,
+                'data'       => $data,
+                'message'    => 'Successfully fetched data company'
+            ];
+        } else {
+            $response = [
+                'status'  => 404,
+                'message' => 'No Data found'
+            ];
+        }
+
+        return response()->json($response);
+    }
+
+
     public function updateUserPlot(Request $request, $uuid)
     {
         $data = $this->userPlotService->updateUserPlot($request, $uuid);

@@ -23,7 +23,7 @@ class UserPlotServices extends BaseServices
     {
         $this->user = User::with('company', 'department', 'userEmployeeNumber', 'userPlot');
         $this->userPlot = UserPlot::with('user', 'structurePlot');
-        $this->structurePlot = StructurePlot::with('user', 'structure');
+        $this->structurePlot = StructurePlot::with('structure', 'userPlot.user.userEmployeeNumber');
         $this->structure = Structure::with('department', 'jobCode', 'structurePlot', 'structureHistories');
     }
 
@@ -364,11 +364,20 @@ class UserPlotServices extends BaseServices
 
     public function getDataUserPlotByStructurePlot($id_structure_plot)
     {
-        $structurePlot =   $this->structurePlot->where('id', $id_structure_plot);
+        $structurePlot =  $this->structurePlot->firstWhere('id', $id_structure_plot);
+        $parent = $structurePlot->parent ? $structurePlot->parent->structure->structurePlot()->get() :  $structurePlot->structure->structurePlot()->get();
+        $data = [];
 
-        foreach ($structurePlot->parent()->get() as $parentPlot) {
-            # code...
-        }
+        $data = $parent->flatMap(function ($plot) {
+            return $plot->userPlot;
+        })->transform(function ($item) {
+            $item->group = $item->structurePlot->group;
+            $item->user = $item->user;
+            $item->employee_number = $item->user->userEmployeeNumber ?? null;
+            return $item;
+        })->values();
+
+        return $data;
     }
 
     public function getDataUserPlot($uuid = NULL)
