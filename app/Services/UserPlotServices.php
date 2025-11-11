@@ -192,15 +192,9 @@ class UserPlotServices extends BaseServices
 
             $userPlot =  UserPlot::where('id', $id_user_plot)->update([
                 'user_id'                    => $user->id ?? null,
-                'parent_id'                  => $parentId ?? 0,
-                'job_code_id'                => $this->structure->where('id', $request->structure_id)->first() ? $this->structure->where('id', $request->structure_id)->first()->job_code_id : null,
-                'structure_id'               => (int) $request->structure_id ?? null,
-                'id_structure'               => $request->id_structure ?? null,
                 'id_staff'                   => $request->id_staff ?? null,
-                'position_code_structure'    => $this->structure->where('id', $request->structure_id)->first() ? $this->structure->where('id', $request->structure_id)->first()->position_code_structure : null,
-                'group'                      => $request->group ?? null,
                 'assign_date'                => $request->assign_date ? $this->parseDateUTC($request->assign_date) : null,
-                'employee_type'              => $structure->structure_type == "Staff" ? "Staff" : "Non Staff",
+                'employee_type'              => $structure->structure_type ?? NULL,
                 'status'                     => 1,
             ]);
 
@@ -365,7 +359,7 @@ class UserPlotServices extends BaseServices
     public function getDataUserPlotByStructurePlot($id_structure_plot)
     {
         $structurePlot =  $this->structurePlot->firstWhere('id', $id_structure_plot);
-        $parent = $structurePlot->parent ? $structurePlot->parent->structure->structurePlot()->get() :  $structurePlot->structure->structurePlot()->get();
+        $parent = $structurePlot->parent ? $structurePlot->parent->structure->structurePlot()->get() : ($structurePlot->structure->parent->structurePlot() ? $structurePlot->structure->parent->structurePlot()->get() :  $structurePlot->structure->structurePlot()->get());
         $data = [];
 
         $data = $parent->flatMap(function ($plot) {

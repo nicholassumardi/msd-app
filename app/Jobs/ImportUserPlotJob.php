@@ -373,7 +373,19 @@ class ImportUserPlotJob implements ShouldQueue
         ];
     }
 
+    private function userNonPlot()
+    {
+        $data = User::whereDoesntHave('userPlot')->get()->map(function ($user) {
+            return [
+                'identity_card'    => $user->identity_card ?? "",
+                'name'             => $user->name,
+                'employee_number'  => $user->userEmployeeNumber()->where('status', 1)->first()->employee_number ?? "",
+            ];
+        });
 
+
+        return $data;
+    }
     public function exportData($dataUserNotFound)
     {
         $filepath = storage_path('app/public/temp/msd-data-lo.xlsx');
@@ -384,7 +396,7 @@ class ImportUserPlotJob implements ShouldQueue
         // 1st SHEET
         $style = new Style();
         $styleHeader = new Style();
-        $styleHeader->setBackgroundColor(Color::DARK_BLUE);
+        $styleHeader->setBackgroundColor(Color::GRAY);
         $styleHeader->setFontBold();
 
         $sheet = $writer->getCurrentSheet();
@@ -422,6 +434,24 @@ class ImportUserPlotJob implements ShouldQueue
 
         foreach ($dataUserNotFound as $data) {
             $row = Row::fromValues($data, $style);
+            $writer->addRow($row);
+        }
+
+
+        // 2nd SHEET
+        $styleHeaderNewSheet = new Style();
+        $styleHeaderNewSheet->setBackgroundColor(Color::GRAY);
+        $styleHeaderNewSheet->setFontBold();
+
+        $newSheet = $writer->addNewSheetAndMakeItCurrent();
+        $newSheet->setName('Data Karyawan Tanpa Plot');
+        $newSheet->setColumnWidthForRange(30, 1, 6);
+
+        $row = Row::fromValues(['NIK', 'NAMA', 'No Pegawai'], $styleHeaderNewSheet);
+        $writer->addRow($row);
+
+        foreach ($this->userNonPlot() as $val) {
+            $row = Row::fromValues($val);
             $writer->addRow($row);
         }
 

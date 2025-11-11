@@ -4,6 +4,7 @@
 namespace App\Services;
 
 use App\Jobs\Template\ExportTemplateCorporateJob;
+use App\Jobs\Template\ExportTemplateEmployeeJob;
 use App\Jobs\Template\ExportTemplateIKWJob;
 use App\Jobs\Template\ExportTemplateIKWRevisionJob;
 use App\Jobs\Template\ExportTemplateJobCodeJob;
@@ -28,7 +29,7 @@ class TemplateExcelServices extends BaseServices
 
     public function exportTemplateEmployee($cachekey)
     {
-        $query =  ExportTemplateCorporateJob::dispatch($cachekey);
+        $query =  ExportTemplateEmployeeJob::dispatch($cachekey);
 
         if ($query) {
             return true;

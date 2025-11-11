@@ -98,14 +98,14 @@ class StructureServices extends BaseServices
                             $groupSuffixCount[$mainGroup]++;
                         }
 
-                        $suffix = $groupSuffixCount[$mainGroup];
+                        $suffix = str_pad($groupSuffixCount[$mainGroup], 3, '0', STR_PAD_LEFT);
 
                         StructurePlot::create([
                             'structure_id'            => $structure->id,
                             'parent_id'               => $plot['parent_id'] ?? 0,
                             'id_structure'            => $plot['id_structure'] ?? null,
-                            'position_code_structure' => $plot['position_code_structure'] ?? null,
-                            'suffix'                  => $suffix,
+                            'position_code_structure' => $request->position_code_structure ?? null,
+                            'suffix'                  => $plot['suffix'],
                             'group'                   => $group,
                         ]);
                     }
@@ -216,6 +216,7 @@ class StructureServices extends BaseServices
                                 'parent_id'               => $plot['parent_id'] ?? 0,
                                 'id_structure'            => $plot['id_structure'] ?? null,
                                 'position_code_structure' => $plot['position_code_structure'] ?? null,
+                                'suffix'                  => $plot['suffix'] ?? null,
                                 'group'                   => $plot['group'] ?? null,
                             ];
 
@@ -405,6 +406,7 @@ class StructureServices extends BaseServices
                             'distribution_date'         => $request->distribution_date ? $this->parseDateUTC($request->distribution_date) : null,
                             'withdrawal_date'           => $request->withdrawal_date ? $this->parseDateUTC($request->withdrawal_date) : null,
                             'logs'                      => $logMessage,
+                            'reason'                    => $request->reason,
                         ]);
                     }
                 } else {
@@ -444,7 +446,7 @@ class StructureServices extends BaseServices
                 ->findOrFail($id_structure);
 
             $structure->structurePlot->flatMap(function ($plot) {
-                return $plot->userPlot;
+                return $plot->userPlot->where('status', 1);
             })->transform(function ($item) {
                 $item->uuid = $item->user->uuid ?? null;
                 $item->employee_name = $item->user->name ?? null;

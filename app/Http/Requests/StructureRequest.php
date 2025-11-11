@@ -31,6 +31,7 @@ class StructureRequest extends FormRequest
             'structure_type'            => 'nullable',
             'name'                      => 'required',
             'quota'                     => 'required',
+            'structure_plot'            => ['required', 'array'],
         ];
     }
 }

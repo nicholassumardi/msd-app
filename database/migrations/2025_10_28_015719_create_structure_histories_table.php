@@ -26,6 +26,7 @@ class CreateStructureHistoriesTable extends Migration
             $table->date('distribution_date')->nullable();
             $table->date('withdrawal_date')->nullable();
             $table->text('logs')->nullable();
+            $table->text('reason')->nullable();
             $table->unique(['revision_no', 'structure_id']);
             $table->timestamps();
             $table->softDeletes();

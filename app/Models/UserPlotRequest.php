@@ -10,7 +10,7 @@ class UserPlotRequest extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table      = 'structure_plot_requests';
+    protected $table      = 'user_plot_requests';
     protected $primaryKey = 'id';
     protected $dates      = ['deleted_at'];
     protected $fillable   = [

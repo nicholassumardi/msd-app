@@ -25,6 +25,7 @@ class StructureHistories extends Model
         'distribution_date',
         'withdrawal_date',
         'logs',
+        'reason',
 
     ];
 
