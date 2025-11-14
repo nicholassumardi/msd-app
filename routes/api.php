@@ -188,6 +188,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::get('show_user_plot', [StructureController::class, 'showAllUserPlot']);
         Route::get('show_user_plot_position', [StructureController::class, 'showUserPlotPosition']);
         Route::get('show_user_plot_pagination', [StructureController::class, 'showUserPlotPagination']);
+        Route::get('show_structure_history_pagination', [StructureController::class, 'showStructureHistoriesPagination']);
         Route::get('show_user_by_plot/{id}', [StructureController::class, 'showUserPlotByStructurePlot']);
         Route::get('show_all_structure_hierarchy/{id}', [StructureController::class, 'showAllStructureHierarchy']);
         Route::get('show_structure_hierarchy/{id}', [StructureController::class, 'showStructureHierarchyUser']);

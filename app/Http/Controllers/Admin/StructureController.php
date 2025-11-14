@@ -275,9 +275,37 @@ class StructureController extends Controller
 
         if ($data['data']) {
             $pagination = [
-                'current_page'  => (int) $request->current_page ?? 1,
+                'start'         => (int) $request->start ?? 1,
                 'last_page'     => ceil(($data['totalCount'] / 10)),
-                'per_page'      => 10,
+                'size'           => 10,
+                'total'         => $data['totalCount'],
+            ];
+
+            $response = [
+                'status'      => 200,
+                'data'        => $data['data'],
+                'pagination'  => $pagination,
+                'message'     => 'Successfully fetched data mapping'
+            ];
+        } else {
+            $response = [
+                'status'  => 404,
+                'message' => 'No Data found'
+            ];
+        }
+
+        return response()->json($response);
+    }
+
+    public function showStructureHistoriesPagination(Request $request)
+    {
+        $data = $this->service->getDataStructureHistoriesPagination($request);
+
+        if ($data['data']) {
+            $pagination = [
+                'start'         => (int) $request->start ?? 1,
+                'last_page'     => ceil(($data['totalCount'] / 10)),
+                'size'          => 10,
                 'total'         => $data['totalCount'],
             ];
 
@@ -303,9 +331,9 @@ class StructureController extends Controller
 
         if ($data['data']) {
             $pagination = [
-                'current_page'  => (int) $request->current_page ?? 1,
+                'start'  => (int) $request->start ?? 1,
                 'last_page'     => ceil(($data['totalCount'] / 10)),
-                'per_page'      => 10,
+                'size'      => 10,
                 'total'         => $data['totalCount'],
             ];
 

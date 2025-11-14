@@ -176,7 +176,7 @@ class StructureServices extends BaseServices
                     if ($newValue != $oldValue) {
                         $hasChanges = true;
 
-                        $logMessages[] = "$label has been changed from '$oldValue' to '$newValue'";
+                        $logMessages[] = "$label has been changed from '$oldValue' → '$newValue'";
                     }
                 }
 
@@ -321,7 +321,7 @@ class StructureServices extends BaseServices
                         if ($newValue != $oldValue) {
                             $hasChanges = true;
 
-                            $logMessages[] = "$label has been changed from '$oldValue' to '$newValue'";
+                            $logMessages[] = "$label has been changed from '$oldValue' → '$newValue'";
                         }
                     }
 
@@ -478,8 +478,8 @@ class StructureServices extends BaseServices
 
     public function getDataStructurePlotPagination($request)
     {
-        $currentPage = (int) $request->current_page ? $request->current_page : 1;
-        $perPage = (int) $request->per_page ? $request->per_page : 5;
+        $start = (int) $request->start ? $request->start : 1;
+        $size = (int) $request->size ? $request->size : 5;
 
         $query = $this->structurePlot;
 
@@ -494,8 +494,8 @@ class StructureServices extends BaseServices
         $totalCount = $query->count();
 
         $structurePlot = $query
-            ->skip(($currentPage - 1) * $perPage)
-            ->take($perPage)
+            ->skip(($start - 1) * $size)
+            ->take($size)
             ->get();
 
         return [
@@ -504,11 +504,45 @@ class StructureServices extends BaseServices
         ];
     }
 
+    public function getDataStructureHistoriesPagination($request)
+    {
+        $start = (int) $request->start ? $request->start : 1;
+        $size = (int) $request->size ? $request->size : 5;
+        $startDate = $request->start_date;
+        $endDate =  $request->end_date;
+
+        $query = $this->structureHistories;
+
+        if ($request->globalFilter) {
+            $query = $query->whereHas('structure', function ($query) use ($request) {
+                $query->where('name', 'LIKE', "%$request->globalFilter%");
+            })->orWhere('position_code_structure', 'LIKE', "%$request->globalFilter%");
+        }
+
+        if ($startDate || $endDate) {
+            $query = $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        $query = $query->orderBy('created_at');
+
+        $totalCount = $query->count();
+
+        $structureHistories = $query
+            ->skip(($start - 1) * $size)
+            ->take($size)
+            ->get();
+
+        return [
+            'data'       => $structureHistories,
+            'totalCount' => $totalCount,
+        ];
+    }
+
 
     public function getDataStructureByDepartment($request)
     {
-        $currentPage = (int) $request->current_page ? $request->current_page : 1;
-        $perPage = (int) $request->per_page ? $request->per_page : 5;
+        $start = (int) $request->start ? $request->start : 1;
+        $size = (int) $request->size ? $request->size : 5;
 
         $query = $this->structure;
         if ($request->id_department) {
@@ -535,8 +569,8 @@ class StructureServices extends BaseServices
 
 
         $structure = $query
-            ->skip(($currentPage - 1) * $perPage)
-            ->take($perPage)
+            ->skip(($start - 1) * $size)
+            ->take($size)
             ->get();
 
         return [
@@ -544,6 +578,8 @@ class StructureServices extends BaseServices
             'totalCount'  => $totalCount
         ];
     }
+
+
 
     // for hierarchy chart purpose (dormamu chart)
     public function getDataAllStructureHierarchy(Request $request, $id)
