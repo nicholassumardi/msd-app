@@ -173,6 +173,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::post('store_user_plot_request', [StructureController::class, 'storeUserPlotRequest']);
         Route::put('update_structure/{id}', [StructureController::class, 'updateStructure']);
         Route::put('update_bulk_structure', [StructureController::class, 'updateBulkUserStructure']);
+        Route::put('update_structure_history/{id}', [StructureController::class, 'updateStructureHistories']);
         Route::put('update_user_plot/{uuid}', [StructureController::class, 'updateUserPlot']);
         Route::put('update_user_plot_request/{id}', [StructureController::class, 'updateUserPlotRequest']);
         Route::put('update_status_user_plot/{id}', [StructureController::class, 'updateStatusUserPlot']);

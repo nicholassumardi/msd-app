@@ -430,6 +430,48 @@ class StructureServices extends BaseServices
         }
     }
 
+    public function updateStructureHistories(Request $request)
+    {
+        try {
+            $this->setLog('info', 'Request store data structure histories ' . json_encode($request->all()));
+            $this->setLog('info', 'Start');
+            DB::beginTransaction();
+
+            $structureHistory = $this->structureHistories->firstWhere('id', $request->id);
+
+            if ($structureHistory) {
+                $structureHistory->update([
+                    'valid_date'        => $request->valid_date ?? null,
+                    'updated_date'      => $request->updated_date ?? null,
+                    'authorized_date'   => $request->authorized_date ?? null,
+                    'approval_date'     => $request->approval_date ?? null,
+                    'acknowledged_date' => $request->acknowledged_date ?? null,
+                    'created_date'      => $request->created_date ?? null,
+                    'distribution_date' => $request->distribution_date ?? null,
+                    'withdrawal_date'   => $request->withdrawal_date ?? null,
+                    'reason'            => $request->reason ?? null,
+                ]);
+            } else {
+                DB::rollBack();
+                return false;
+            }
+
+
+            $this->setLog('info', 'updated data structure histories ' . json_encode($request->all()));
+            DB::commit();
+            $this->setLog('info', 'End');
+
+            return true;
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            $this->setLog('error', 'Error store data structure histories = ' . $exception->getMessage());
+            $this->setLog('error', 'Error store data structure histories = ' . $exception->getLine());
+            $this->setLog('error', 'Error store data structure histories = ' . $exception->getFile());
+            $this->setLog('error', 'Error store data structure histories = ' . $exception->getTraceAsString());
+            return null;
+        }
+    }
+
     public function getDataStructure($id_structure = NULL)
     {
         if (!empty($id_structure)) {
@@ -515,11 +557,12 @@ class StructureServices extends BaseServices
 
         if ($request->globalFilter) {
             $query = $query->whereHas('structure', function ($query) use ($request) {
-                $query->where('name', 'LIKE', "%$request->globalFilter%");
-            })->orWhere('position_code_structure', 'LIKE', "%$request->globalFilter%");
+                $query->where('name', 'LIKE', "%$request->globalFilter%")
+                    ->orWhere('position_code_structure', 'LIKE', "%$request->globalFilter%");
+            });
         }
 
-        if ($startDate || $endDate) {
+        if ($startDate && $endDate) {
             $query = $query->whereBetween('created_at', [$startDate, $endDate]);
         }
 

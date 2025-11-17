@@ -521,12 +521,12 @@ class StructureController extends Controller
         if ($data) {
             $response = [
                 'status' => 200,
-                'message' => 'Successfully updated data user mapping'
+                'message' => 'Successfully updated data structure'
             ];
         } else {
             $response = [
                 'status' => 500,
-                'message' => 'Failed to update data user mapping'
+                'message' => 'Failed to update data structure'
             ];
         }
 
@@ -540,12 +540,31 @@ class StructureController extends Controller
         if ($data) {
             $response = [
                 'status' => 200,
-                'message' => 'Successfully updated data user mapping'
+                'message' => 'Successfully updated data structure'
             ];
         } else {
             $response = [
                 'status' => 500,
-                'message' => 'Failed to update data user mapping'
+                'message' => 'Failed to update data structure'
+            ];
+        }
+
+        return response()->json($response);
+    }
+
+    public function updateStructureHistories(Request $request)
+    {
+        $data = $this->service->updateStructureHistories($request);
+
+        if ($data) {
+            $response = [
+                'status' => 200,
+                'message' => 'Successfully updated data structure histories'
+            ];
+        } else {
+            $response = [
+                'status' => 500,
+                'message' => 'Failed to update data structure histories'
             ];
         }
 
@@ -559,12 +578,12 @@ class StructureController extends Controller
         if ($data) {
             $response = [
                 'status' => 200,
-                'message' => 'Successfully updated data user mapping'
+                'message' => 'Successfully updated data structure'
             ];
         } else {
             $response = [
                 'status' => 500,
-                'message' => 'Failed to update data user mapping'
+                'message' => 'Failed to update data structure'
             ];
         }
 
