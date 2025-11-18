@@ -150,6 +150,7 @@ class TrainingServices extends BaseServices
         }
     }
 
+    // Store Training no training neglected
     public function storeTrainingByTrainer(Request $request)
     {
         try {
@@ -163,21 +164,23 @@ class TrainingServices extends BaseServices
                 return false;
             }
 
-            $ikwRevisionID  = $this->ikwRevision->where('ikw_id', $request->ikw_id)->orderByDesc('revision_no')->first()->id ?? null;
-
-            if (!$ikwRevisionID) {
-                $this->setLog('info', 'store failed data not found');
-                return false;
-            }
 
             if (!empty($request->training) && is_array($request->training)) {
                 foreach ($request->training as $trainingData) {
-                    Training::create([
-                        'trainer_id'                     => $this->getUserByUUID($request->trainer_id) ?? NULL,
-                        'ikw_revision_id'                => $ikwRevisionID,
-                        'trainer_id'                     => $this->getUserByUUID($trainingData['trainer_id']) ?? NULL,
-                        'training_plan_date'             => $request['training_plan_date'] ? $this->parseDateUTC($request['training_plan_date']) : null,
-                    ]);
+                    foreach ($trainingData['ikws'] as $ikwToTrain) {
+                        $ikwRevisionID  = $this->ikwRevision->where('ikw_id', $ikwToTrain['ikw_id'])->orderByDesc('revision_no')->first()->id ?? null;
+
+                        if (!$ikwRevisionID) {
+                            $this->setLog('info', 'store failed data not found');
+                            return false;
+                        }
+                        Training::create([
+                            'trainer_id'                     => $this->getUserByUUID($request->trainer_id) ?? NULL,
+                            'ikw_revision_id'                => $ikwRevisionID,
+                            'trainee_id'                     => $this->getUserByUUID($trainingData['trainee_id']) ?? NULL,
+                            'training_plan_date'             => $ikwToTrain['training_plan_date'] ? $this->parseDateUTC($ikwToTrain['training_plan_date']) : null,
+                        ]);
+                    }
                 }
             }
 
@@ -195,6 +198,7 @@ class TrainingServices extends BaseServices
             return null;
         }
     }
+
     public function updateTraining(Request $request, $id_training)
     {
         try {
@@ -228,6 +232,44 @@ class TrainingServices extends BaseServices
             } else {
                 DB::rollBack();
                 return false;
+            }
+
+            $this->setLog('info', 'updated data Training ' . json_encode($request->all()));
+            DB::commit();
+            $this->setLog('info', 'End');
+
+            return true;
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            $this->setLog('error', 'Error update data Training = ' . $exception->getMessage());
+            $this->setLog('error', 'Error update data Training = ' . $exception->getLine());
+            $this->setLog('error', 'Error update data Training = ' . $exception->getFile());
+            $this->setLog('error', 'Error update data Training = ' . $exception->getTraceAsString());
+            return null;
+        }
+    }
+
+    // print FRT + generate no training
+    public function updateTrainingDataByFRT(Request $request)
+    {
+        try {
+            $this->setLog('info', 'Request update data Training ' . json_encode($request->all()));
+            $this->setLog('info', 'Start');
+
+            DB::beginTransaction();
+
+            $nextNoTraining = (Training::max('no_training') ?? 0) + 1;
+
+            foreach ($request->trainings as $data) {
+                $training = Training::find($data->id_training);
+                if ($training) {
+                    $training->update([
+                        'no_training' => $nextNoTraining++,
+                    ]);
+                } else {
+                    DB::rollBack();
+                    return false;
+                }
             }
 
             $this->setLog('info', 'updated data Training ' . json_encode($request->all()));
@@ -302,6 +344,14 @@ class TrainingServices extends BaseServices
                 ];
             });
         }
+
+        return $training;
+    }
+
+    // get training data for form
+    public function getTrainingSelected($request)
+    {
+        $training = $this->training->whereIn('id', [$request->id_training])->get();
 
         return $training;
     }
