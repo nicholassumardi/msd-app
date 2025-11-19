@@ -34,7 +34,7 @@ class CreateTrainingsTable extends Migration
             $table->string('assessment_result')->nullable()->comment('K | BK | RK');
             // $table->tinyInteger('status')->nullable()->comment('1:Done | 0:Not Done');
             $table->text('description')->nullable();
-            // $table->tinyInteger('status_active')->nullable()->comment('1:Active | 0:Not Active');
+            $table->tinyInteger('status_active')->nullable()->comment('4:Remedial | 3: Cancelled | 2: Pending | 1:Active | 0:Not Active');
             $table->unique(['no_training', 'trainee_id']);
             $table->timestamps();
             $table->softDeletes();

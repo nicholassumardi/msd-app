@@ -347,11 +347,52 @@ class TrainingServices extends BaseServices
 
         return $training;
     }
+    // 
+    public function getDataTrainingProgress($request)
+    {
+        $self = $this;
+        $queryPlannedTrainings = function () use ($self) {
+            return (clone $self->training)->whereNull('no_training');
+        };
+
+        $queryPlannedRealisationTrainings = function () use ($self) {
+            return (clone $self->training)->whereNotNull('no_training')->whereNull('training_realisation_date');
+        };
+
+        $queryRealisedTrainings = function () use ($self) {
+            return (clone $self->training)->whereNotNull('no_training')->whereNotNull('training_realisation_date');
+        };
+
+        $queryAllTrainings = function () use ($self) {
+            return (clone $self->training);
+        };
+
+        $planned = $queryPlannedTrainings()
+            ->cursorPaginate(10, ['*'], 'planned_cursor', $request->planned_cursor ?? null);
+
+        $plannedRealisation = $queryPlannedRealisationTrainings()
+            ->cursorPaginate(10, ['*'], 'planned_realisation_cursor', $request->planned_realisation_cursor ?? null);
+
+        $realised = $queryRealisedTrainings()
+            ->cursorPaginate(10, ['*'], 'realised_cursor', $request->realised_cursor ?? null);
+
+        $all = $queryAllTrainings()
+            ->cursorPaginate(10, ['*'], 'all_cursor', $request->all_cursor ?? null);
+
+        return [
+            'planned' => $planned,
+            'planned_realisation' => $plannedRealisation,
+            'realised' => $realised,
+            'all' => $all,
+        ];
+    }
+
+
 
     // get training data for form
     public function getTrainingSelected($request)
     {
-        $training = $this->training->whereIn('id', [$request->id_training])->get();
+        $training = $this->training->whereIn('id', $request->id_training)->get();
 
         return $training;
     }

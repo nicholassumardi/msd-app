@@ -219,6 +219,7 @@ Route::prefix('admin')->namespace('Admin')->group(function () {
         Route::get('show/{id}', [TrainingController::class, 'show']);
         Route::get('show_by_uuid/{uuid}', [TrainingController::class, 'showByUUID']);
         Route::get('show', [TrainingController::class, 'showAll']);
+        Route::get('show_training_progress_pagination', [TrainingController::class, 'showTrainingProgressPaginated']);
         Route::get('show_training_pagination', [TrainingController::class, 'showTrainingPagination']);
         Route::put('update/{id}', [TrainingController::class, 'update']);
         Route::put('update_status/{id}', [TrainingController::class, 'updateStatus']);
