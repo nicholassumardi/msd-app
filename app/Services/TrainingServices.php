@@ -348,25 +348,37 @@ class TrainingServices extends BaseServices
         return $training;
     }
     // 
-    public function getDataTrainingProgress($request)
+    public function getDataTrainingProgressPagination($request)
     {
         $self = $this;
+
         $queryPlannedTrainings = function () use ($self) {
             return (clone $self->training)->whereNull('no_training');
         };
 
         $queryPlannedRealisationTrainings = function () use ($self) {
-            return (clone $self->training)->whereNotNull('no_training')->whereNull('training_realisation_date');
+            return (clone $self->training)
+                ->whereNotNull('no_training')
+                ->whereNull('training_realisation_date');
         };
 
         $queryRealisedTrainings = function () use ($self) {
-            return (clone $self->training)->whereNotNull('no_training')->whereNotNull('training_realisation_date');
+            return (clone $self->training)
+                ->whereNotNull('no_training')
+                ->whereNotNull('training_realisation_date');
         };
 
         $queryAllTrainings = function () use ($self) {
             return (clone $self->training);
         };
 
+        // === TOTAL COUNTS ===
+        $plannedTotalCount             = $queryPlannedTrainings()->count();
+        $plannedRealisationTotalCount  = $queryPlannedRealisationTrainings()->count();
+        $realisedTotalCount            = $queryRealisedTrainings()->count();
+        $allTotalCount                 = $queryAllTrainings()->count();
+
+        // === PAGINATION DATA ===
         $planned = $queryPlannedTrainings()
             ->cursorPaginate(10, ['*'], 'planned_cursor', $request->planned_cursor ?? null);
 
@@ -380,14 +392,24 @@ class TrainingServices extends BaseServices
             ->cursorPaginate(10, ['*'], 'all_cursor', $request->all_cursor ?? null);
 
         return [
-            'planned' => $planned,
-            'planned_realisation' => $plannedRealisation,
-            'realised' => $realised,
-            'all' => $all,
+            'planned' => [
+                'data'       => $planned,
+                'totalCount' => $plannedTotalCount
+            ],
+            'planned_realisation' => [
+                'data'       => $plannedRealisation,
+                'totalCount' => $plannedRealisationTotalCount
+            ],
+            'realised' => [
+                'data'       => $realised,
+                'totalCount' => $realisedTotalCount
+            ],
+            'all' => [
+                'data'       => $all,
+                'totalCount' => $allTotalCount
+            ],
         ];
     }
-
-
 
     // get training data for form
     public function getTrainingSelected($request)

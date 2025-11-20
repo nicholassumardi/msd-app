@@ -120,9 +120,9 @@ class TrainingController extends Controller
         return response()->json($response);
     }
 
-    public function showTrainingProgressPaginated(Request $request)
+    public function showTrainingProgressPagination(Request $request)
     {
-        $data = $this->service->getDataTrainingProgress($request);
+        $data = $this->service->getDataTrainingProgressPagination($request);
 
         if ($data) {
             $response = [
